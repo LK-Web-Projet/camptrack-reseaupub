@@ -1,9 +1,9 @@
-import DashboardLayout from "@/components/Layouts/DashboardLayout"
-export default function AdminPage() {
+import UserTable from "@/components/user/UserTable";
+export default function UsersPage() {
+  
   return (
-    <DashboardLayout>
-      <h1 className="text-2xl font-semibold mb-4 ">Tableau de bord - Admin</h1>
-      <p>Bienvenue sur le dashboard administrateur.</p>
-    </DashboardLayout>
+    <div>
+        <UserTable/>
+    </div>
   );
 }

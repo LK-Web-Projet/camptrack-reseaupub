@@ -1,5 +1,16 @@
+"use client";
 import * as React from "react"
-import { GalleryVerticalEnd, Minus, Plus } from "lucide-react"
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Megaphone,
+  Users,
+  Truck,
+  AlertTriangle,
+  LineChart,
+  Minus,
+  Plus,
+} from "lucide-react"
 
 import { SearchForm } from "@/components/search-form"
 import {
@@ -12,7 +23,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -23,140 +33,127 @@ import {
 } from "@/components/ui/sidebar"
 import { Logo } from "./ui/logo"
 
-// This is sample data.
 const data = {
   versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
   navMain: [
     {
       title: "Tableau de bord",
-      items: [
-           { title: "Tableau de bord", url: "/dashboard" },
-      ],
+            icon: LayoutDashboard,
+      items: [{ title: "Tableau de bord", url: "/dashboard/admin" }],
     },
     {
       title: "Campagnes",
-      items: [
-        { title: "Gestion des campagnes", url: "/campagnes" },
-    
-      ],
+            icon: Megaphone,
+      items: [{ title: "Gestion des campagnes", url: "/campagnes" }],
     },
     {
       title: "Tricycles",
-      items: [
-        { title: "Liste des tricycles", url: "/tricycles" },
-      ],
+            icon: Truck,
+      items: [{ title: "Liste des tricycles", url: "/tricycles" }],
+    },
+    {
+      title: "Prestataires",
+            icon: Users,
+      items: [{ title: "Gestion des prestataires", url: "/prestataires" }],
+    },
+    {
+      title: "Incidents",
+            icon: AlertTriangle,
+      items: [{ title: "Liste des clients", url: "/clients" }],
+    },
+    {
+      title: "Suivi",
+            icon: LineChart,
+      items: [{ title: "Suivi des performances", url: "/performences" }],
     },
    
-     {
-      title: "Prestataires",
-      items: [
-        { title: "Gestion des prestataires", url: "/prestataires" },
-      ],
-    },
-     {
-      title: "Incidents",
-      items: [
-        { title: "Liste des clients", url: "/clients" },
-      ],
-    },
-     {
-      title: "Suivi",
-      items: [
-        { title: "Suivi des performences", url: "/performences" },
-      ],
-    },
-     {
-      title: "Déconnexion",
-      items: [
-        { title: "Se Déconnecter", url: "/logout" },
-      ],
-    },
   ],
-
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ isOpen }: { isOpen: boolean }) {
+  const pathname = usePathname();
+
   return (
-    <Sidebar {...props}>
-     
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                {/* <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <GalleryVerticalEnd className="size-4" />
-                </div> */}
-               
-                  <Logo
-                  />
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">CampTrack</span>
-                 
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SearchForm />
-     
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            {data.navMain.map((item, index) => (
-              <Collapsible
-                key={item.title}
-                defaultOpen={index === 1}
-                className="group/collapsible space-y-4 mb-4"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="font-semibold text-md">
-                      {item.title}{""}
-                      <Plus className="ml-auto text-[#d61353] group-data-[state=open]/collapsible:hidden" />
-<Minus className="ml-auto text-[#d61353] group-data-[state=closed]/collapsible:hidden" />
+    <div
+      className={`h-full transition-all duration-300 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col ${
+        isOpen ? "w-64" : "w-16"
+      }`}
+    >
+      {/* ---- LOGO ---- */}
+      <div className="p-4 flex  items-center justify-center border-b border-gray-200 dark:border-gray-700">
+        {isOpen ? (
+          <div className="flex flex-col items-center gap-2">
+            <Logo />
+            <span className="text-lg font-semibold">CampTrack</span>
+          </div>
+        ) : (
+          <Logo />
+        )}
+      </div>
 
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  {item.items?.length ? (
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items.map((item) => (
-                          <SidebarMenuSubItem key={item.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={item.isActive}
-                            >
-                              <a href={item.url}>{item.title}</a>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  ) : null}
-                </SidebarMenuItem>
-              </Collapsible>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-        <SidebarFooter>
-  <div className="px-4 py-3 text-sm text-sidebar-foreground space-y-2">
-    {/* Avatar + Username */}
-    <div className="flex items-center justify-center gap-3">
-      <img
-        src="/avatar.jpg" // Remplace par ton image ou un avatar par défaut
-        alt="Avatar"
-        className="w-8 h-8 rounded-full object-cover border border-[--sidebar-border]"
-      />
-      <span className="font-medium">Ichmella</span>
+      {/* ---- CONTENU ---- */}
+      <div className="flex-1 overflow-y-auto p-2 ">
+        {data.navMain.map((group, index) => (
+          <Collapsible
+            key={group.title}
+            defaultOpen={index === 0}
+            className="group/collapsible space-y-4 mb-6"
+          >
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+              <SidebarMenuButton className="font-semibold text-md flex items-center gap-2">
+  <group.icon className="w-5 h-5" />
+  {isOpen && <span>{group.title}</span>}
+</SidebarMenuButton>
+
+
+              </CollapsibleTrigger>
+              {group.items?.length ? (
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {group.items.map((item) => (
+                      <SidebarMenuSubItem key={item.title}>
+                        <SidebarMenuSubButton asChild>
+                          <a
+  href={item.url}
+  className={`block text-sm rounded-md px-3 py-2 transition-colors ${
+    pathname === item.url
+      ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30"
+      : "hover:bg-gray-100 dark:hover:bg-gray-800"
+  }`}
+>
+ {isOpen ? item.title : (
+  <span title={item.title}>
+    <group.icon className="w-4 h-4" />
+  </span>
+)}
+
+</a>
+
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              ) : null}
+            </SidebarMenuItem>
+          </Collapsible>
+        ))}
+      </div>
+
+      {/* ---- FOOTER ---- */}
+      <SidebarFooter>
+        <div className="px-4 py-3 text-sm text-sidebar-foreground space-y-2">
+          <div className="flex items-center justify-center gap-3">
+            <img
+              src="/avatar.jpg"
+              alt="Avatar"
+              className="w-8 h-8 rounded-full object-cover border border-[--sidebar-border]"
+            />
+            {isOpen && <span className="font-medium">Ichmella</span>}
+          </div>
+        </div>
+      </SidebarFooter>
     </div>
-
-    
-  </div>
-</SidebarFooter>
-      <SidebarRail />
-   
-
-    </Sidebar>
   )
 }
