@@ -53,14 +53,29 @@ model User {
   prenom            String
   nom_utilisateur   String?   @unique
   type_user         UserType
-  email             String?   @unique
+  email             String    @unique          
+  password          String                       
   contact           String?
+  is_active         Boolean   @default(true)    
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
 
-  campagnes         Campagne[]  // 1 → N Campagne (id_gestionnaire)
+  campagnes         Campagne[]                    
+  refreshTokens     RefreshToken[]                
 
   @@map("users")
+}
+
+model RefreshToken {
+  id           String   @id @default(cuid())
+  token_hash   String
+  user         User     @relation(fields: [userId], references: [id_user])
+  userId       String
+  expires_at   DateTime
+  revoked      Boolean  @default(false)
+  created_at   DateTime @default(now())
+
+  @@map("refresh_tokens")
 }
 
 model Client {
