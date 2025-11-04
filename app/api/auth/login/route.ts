@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     const ok = await comparePassword(password, user.password);
     if (!ok) {
-      throw new AppError("Mot de passe incorrect", 401);
+      throw new AppError("Email ou Mot de passe incorrect", 401);
     }
 
     // Générer les tokens
