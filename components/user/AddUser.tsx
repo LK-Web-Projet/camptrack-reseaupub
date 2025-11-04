@@ -3,15 +3,18 @@
 import { useFormik } from "formik"
 import * as Yup from "yup"
 import { X } from "lucide-react"
+import { useAuth } from "@/app/context/AuthContext"
+import { toast } from "react-toastify"
 
 interface AddUserModalProps {
   isOpen: boolean
   onClose: () => void
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddUser: (user: any) => void
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+onAddUser: (user: any) => void
 }
 
 export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) {
+  const { token } = useAuth()
   const formik = useFormik({
     initialValues: {
       nom: "",
@@ -19,6 +22,7 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
       type_user: "",
       email: "",
       contact: "",
+      password: "",
     },
     validationSchema: Yup.object({
       nom: Yup.string().required("Champ obligatoire"),
@@ -26,26 +30,44 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
       type_user: Yup.string().required("Champ obligatoire"),
       email: Yup.string().email("Email invalide").required("Champ obligatoire"),
       contact: Yup.string().required("Champ obligatoire"),
+      password: Yup.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").required("Champ obligatoire"),
     }),
-    onSubmit: (values) => {
-      const newUser = {
-        ...values,
-        id_user: `u${Date.now()}`,
-        created_at: new Date().toISOString().split("T")[0],
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        const res = await fetch("/api/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(values),
+        })
+        if (!res.ok) throw new Error("Erreur lors de l'ajout")
+        const created = await res.json()
+        onAddUser(created)
+        toast.success("Utilisateur ajouté avec succès")
+        window.location.href = "/dashboard/admin"; // Actualiser la page pour refléter les changements
+
+        resetForm()
+        onClose()
+      } catch {
+        toast.error("Erreur lors de l'ajout de l'utilisateur")
       }
-      onAddUser(newUser)
-      onClose()
     },
   })
 
   if (!isOpen) return null
 
-  const fields = ["nom", "prenom","email", "contact"] as const
+  const fields = ["nom", "prenom", "email", "contact", "password"] as const
   type FieldKey = typeof fields[number]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-xl relative border border-gray-200 dark:border-gray-700">
+ <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Fond semi-transparent */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>      <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-xl relative border border-gray-200 dark:border-gray-700">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -57,10 +79,10 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
           {fields.map((field: FieldKey) => (
             <div key={field}>
               <label className="block text-sm font-medium mb-1 capitalize">
-                {field.replace("_", " ")}
+                {field === "password" ? "Mot de passe" : field.replace("_", " ")}
               </label>
               <input
-                type="text"
+                type={field === "password" ? "password" : "text"}
                 name={field}
                 value={formik.values[field]}
                 onChange={formik.handleChange}

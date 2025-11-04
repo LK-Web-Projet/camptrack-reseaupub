@@ -83,6 +83,9 @@ importers:
       react-dom:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
+      react-toastify:
+        specifier: ^11.0.5
+        version: 11.0.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -3179,6 +3182,12 @@ packages:
     resolution: {integrity: sha512-DgXrc+AZF47+HvAPEmn7Ua/1p10jNoVZVI/LoPiYdtY+OM+/nG5yefLHKJwdKqY1adMuHFbeyBaG9j64ML7vTw==}
     peerDependencies:
       react: '>= 0.14.0'
+
+  react-toastify@11.0.5:
+    resolution: {integrity: sha512-EpqHBGvnSTtHYhCPLxML05NLY2ZX0JURbAdNYa6BUkk+amz4wbKBQvoKQAB0ardvSarUBuY4Q4s1sluAzZwkmA==}
+    peerDependencies:
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
 
   react@19.2.0:
     resolution: {integrity: sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==}
@@ -7058,6 +7067,12 @@ snapshots:
       prismjs: 1.30.0
       react: 19.2.0
       refractor: 3.6.0
+
+  react-toastify@11.0.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      clsx: 2.1.1
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
 
   react@19.2.0: {}
 

@@ -1,15 +1,25 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from "react"
+import { createContext, useContext, useState, ReactNode, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 type User = {
+  id_user: string
+  nom: string
+  prenom: string
+  nom_utilisateur: string
+  type_user: string
   email: string
-  role: "ADMIN" | "STAFF"
+  contact: string
+  created_at?: string
+  updated_at?: string
+  is_active?: boolean
 }
 
 type AuthContextType = {
   user: User | null
+  token: string | null
+  refreshToken: string | null
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
 }
@@ -18,7 +28,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const [refreshToken, setRefreshToken] = useState<string | null>(null)
   const router = useRouter()
+
+  // Restaure l'état depuis le localStorage au chargement
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user")
+    const storedToken = localStorage.getItem("accessToken")
+    const storedRefresh = localStorage.getItem("refreshToken")
+    if (storedUser && storedToken) {
+      setUser(JSON.parse(storedUser))
+      setToken(storedToken)
+      setRefreshToken(storedRefresh || null)
+    }
+  }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -26,36 +50,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      });
+      })
       if (!res.ok) {
-        return false;
+        return false
       }
-      const data = await res.json();
-      // On suppose que l'API retourne un objet { user: { email, role }, token }
-      setUser(data.user);
-      // Stockage du token si besoin (localStorage, cookie, etc.)
-      // localStorage.setItem('token', data.token);
+      const data = await res.json()
+      // Stocke tout dans le localStorage
+      setUser(data.user)
+      setToken(data.accessToken)
+      setRefreshToken(data.refreshToken)
+      localStorage.setItem("user", JSON.stringify(data.user))
+      localStorage.setItem("accessToken", data.accessToken)
+      localStorage.setItem("refreshToken", data.refreshToken)
       // Redirection selon le rôle
-      if (data.user.role === "ADMIN") {
-        router.push("/dashboard/admin");
-      } else if (data.user.role === "STAFF") {
-        router.push("/dashboard/staff");
+      if (data.user.type_user === "ADMIN") {
+        router.push("/dashboard/admin")
       } else {
-        router.push("/dashboard");
+        router.push("/dashboard")
       }
-      return true;
+      return true
     } catch (e) {
-      return false;
+      return false
     }
-  };
+  }
 
   const logout = () => {
     setUser(null)
+    setToken(null)
+    setRefreshToken(null)
+    localStorage.removeItem("user")
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("refreshToken")
     router.push("/login")
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, token, refreshToken, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

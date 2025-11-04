@@ -8,40 +8,48 @@ import { useAuth } from "@/app/context/AuthContext"
 import Image from "next/image"
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton"
 import { Logo } from "@/components/ui/logo"
-import { Eye, EyeOff } from "lucide-react" 
+import { Eye, EyeOff } from "lucide-react"
+import { toast, ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false)
+    const { login } = useAuth()
+    const router = useRouter()
 
-  const { login } = useAuth()
-  const router = useRouter()
-
-  const formik = useFormik({
+  const formik = useFormik<{ email: string; password: string }>({
     initialValues: {
       email: "",
       password: "",
     },
-    validationSchema: Yup.object({
-      email: Yup.string()
-        .email("Adresse email invalide")
-        .required("L’email est obligatoire"),
-      password: Yup.string()
-        .min(6, "Le mot de passe doit contenir au moins 6 caractères")
-        .required("Le mot de passe est obligatoire"),
-    }),
-    onSubmit: (values) => {
-      const success = login(values.email, values.password)
-      if (success) {
-        router.push("/dashboard/admin")
-      } else {
-        alert("Identifiants incorrects")
-      }
-    },
-  })
+        validationSchema: Yup.object({
+            email: Yup.string()
+                .email("Adresse email invalide")
+                .required("L’email est obligatoire"),
+            password: Yup.string()
+                .min(6, "Le mot de passe doit contenir au moins 6 caractères")
+                .required("Le mot de passe est obligatoire"),
+        }),
+        onSubmit: async (values) => {
+            try {
+                const success = await login(values.email, values.password)
+                if (success) {
+                    toast.success("Connexion réussie !")
+                    // Si la redirection n'est pas gérée dans le contexte :
+                    // router.push("/dashboard/admin")
+                } else {
+                    toast.error("Identifiants incorrects")
+                }
+            } catch {
+                toast.error("Erreur lors de la connexion")
+            }
+        },
+    })
 
-  return (
-    <div className="flex min-h-screen">
+    return (
+        <div className="flex min-h-screen">
+            <ToastContainer />
       {/* Partie gauche : présentation */}
 <div className="hidden md:flex flex-1 w-1/2 flex-col justify-center items-center bg-[#d61353] text-white p-12">
        <Logo />
