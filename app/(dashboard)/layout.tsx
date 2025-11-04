@@ -12,12 +12,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider>
       <div className="flex h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-        <div className={`transition-all duration-300 shrink-0 ${isSidebarOpen ? "w-64" : "w-16"}`}>
+        {/* Sidebar : visible uniquement sur md+ */}
+        <div className={`transition-all duration-300 shrink-0 hidden md:block ${isSidebarOpen ? "w-64" : "w-16"}`}>
           <AppSidebar isOpen={isSidebarOpen}/>
         </div>
 
-        {/* Zone principale : prend tout l'espace restant */}
-        <div className="flex-1 min-w-0 flex flex-col">
+        {/* Zone principale : prend toute la largeur sur mobile */}
+        <div className="flex-1 min-w-0 flex flex-col w-full">
           {/* Header (doit être full width du container) */}
           <div className="w-full">
             <DashboardHeader onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}/>

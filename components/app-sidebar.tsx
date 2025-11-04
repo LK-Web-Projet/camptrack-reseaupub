@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Megaphone,
+ Briefcase,
   Users,
   Truck,
   AlertTriangle,
@@ -12,7 +13,7 @@ import {
   Plus,
 } from "lucide-react"
 
-import { SearchForm } from "@/components/search-form"
+// import { SearchForm } from "@/components/search-form"
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,6 +32,8 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
+
+import { useIsMobile } from "@/hooks/use-mobile"
 import { Logo } from "./ui/logo"
 
 const data = {
@@ -44,7 +47,12 @@ const data = {
     {
       title: "Campagnes",
             icon: Megaphone,
-      items: [{ title: "Gestion des campagnes", url: "/campagnes" }],
+      items: [{ title: "Gestion des campagnes", url: "/dashboard/campagnes" }],
+    },
+    {
+      title: "Services",
+            icon: Briefcase,
+      items: [{ title: "Liste des services", url: "/dashboard/services" }],
     },
     {
       title: "Tricycles",
@@ -68,27 +76,21 @@ const data = {
     },
    
   ],
+
 }
 
 export function AppSidebar({ isOpen }: { isOpen: boolean }) {
   const pathname = usePathname();
-
+  // On laisse la gestion responsive à <Sidebar />
   return (
-    <div
-      className={`h-full transition-all duration-300 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col ${
-        isOpen ? "w-64" : "w-16"
-      }`}
-    >
+    <Sidebar>
+      <div className="h-full flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300">
       {/* ---- LOGO ---- */}
       <div className="p-4 flex  items-center justify-center border-b border-gray-200 dark:border-gray-700">
-        {isOpen ? (
-          <div className="flex flex-col items-center gap-2">
-            <Logo />
-            <span className="text-lg font-semibold">CampTrack</span>
-          </div>
-        ) : (
+        <div className="flex flex-col items-center gap-2">
           <Logo />
-        )}
+          <span className="text-lg font-semibold">CampTrack</span>
+        </div>
       </div>
 
       {/* ---- CONTENU ---- */}
@@ -97,16 +99,14 @@ export function AppSidebar({ isOpen }: { isOpen: boolean }) {
           <Collapsible
             key={group.title}
             defaultOpen={index === 0}
-            className="group/collapsible space-y-4 mb-6"
+            className="group/collapsible space-y-4 mb-4"
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-              <SidebarMenuButton className="font-semibold text-md flex items-center gap-2">
-  <group.icon className="w-5 h-5" />
-  {isOpen && <span>{group.title}</span>}
-</SidebarMenuButton>
-
-
+                <SidebarMenuButton className="font-semibold text-md flex items-center gap-2">
+                  <group.icon className="w-5 h-5" />
+                  <span>{group.title}</span>
+                </SidebarMenuButton>
               </CollapsibleTrigger>
               {group.items?.length ? (
                 <CollapsibleContent>
@@ -115,21 +115,15 @@ export function AppSidebar({ isOpen }: { isOpen: boolean }) {
                       <SidebarMenuSubItem key={item.title}>
                         <SidebarMenuSubButton asChild>
                           <a
-  href={item.url}
-  className={`block text-sm rounded-md px-3 py-2 transition-colors ${
-    pathname === item.url
-      ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30"
-      : "hover:bg-gray-100 dark:hover:bg-gray-800"
-  }`}
->
- {isOpen ? item.title : (
-  <span title={item.title}>
-    <group.icon className="w-4 h-4" />
-  </span>
-)}
-
-</a>
-
+                            href={item.url}
+                            className={`block text-sm rounded-md px-3 py-2 transition-colors ${
+                              pathname === item.url
+                                ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30"
+                                : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                            }`}
+                          >
+                            {item.title}
+                          </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -150,10 +144,11 @@ export function AppSidebar({ isOpen }: { isOpen: boolean }) {
               alt="Avatar"
               className="w-8 h-8 rounded-full object-cover border border-[--sidebar-border]"
             />
-            {isOpen && <span className="font-medium">Ichmella</span>}
+            <span className="font-medium">Ichmella</span>
           </div>
         </div>
       </SidebarFooter>
     </div>
-  )
+    </Sidebar>
+  );
 }

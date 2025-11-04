@@ -8,7 +8,7 @@ async function main() {
   console.log('🌱 Démarrage du seeding...')
 
   // Créer l'admin principal
-  const adminPassword = await hashPassword('admin123') // CHANGE CE MOT DE PASSE !
+  const adminPassword = await hashPassword('admin123')
   
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@camptrack.com' },

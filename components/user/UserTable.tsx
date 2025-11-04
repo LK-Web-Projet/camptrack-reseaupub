@@ -74,7 +74,7 @@ const confirmDeleteUser = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 text-black dark:text-white bg-white dark:bg-black p-4 rounded-lg shadow">
+      <div className="md:flex items-center justify-between mb-6 text-black dark:text-white bg-white dark:bg-black p-4 rounded-lg shadow">
         <h1 className="text-2xl font-semibold text-[#d61353]">Liste des utilisateurs</h1>
         <button
           onClick={() => setIsModalOpen(true)}

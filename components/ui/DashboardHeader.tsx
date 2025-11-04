@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSidebar } from "@/components/ui/sidebar";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/common/NotificationDropdown";
 
@@ -10,6 +11,7 @@ export default function DashboardHeader({
   onToggleSidebar: () => void;
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { isMobile, openMobile, setOpenMobile } = useSidebar();
 
   const user = {
     name: "Elcy Codjia",
@@ -22,7 +24,13 @@ export default function DashboardHeader({
       <div className="flex items-center gap-6">
         {/* Bouton hamburger pour sidebar */}
         <button
-          onClick={onToggleSidebar}
+          onClick={() => {
+            if (isMobile) {
+              setOpenMobile(!openMobile);
+            } else {
+              onToggleSidebar();
+            }
+          }}
           className="items-center justify-center w-10 h-10 text-gray-500 border-gray-200 rounded-lg dark:border-gray-800 lg:flex dark:text-gray-400 lg:h-11 lg:w-11 lg:border"
           aria-label="Toggle Sidebar"
         >
