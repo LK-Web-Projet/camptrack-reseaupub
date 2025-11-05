@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Pencil, Trash2, Plus } from "lucide-react"
+import { Pencil, Trash2, Plus, Megaphone } from "lucide-react"
 import AddCampagneModal from "@/components/campagnes/AddCampagne"
 import EditCampagneModal from "@/components/campagnes/EditCampagne"
 import DeleteCampagneModal from "@/components/campagnes/DeleteCampagne"
@@ -72,11 +72,13 @@ export default function CampagneTable() {
   }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="md:flex items-center justify-between mb-6 text-black dark:text-white bg-white dark:bg-black p-4 rounded-lg shadow">
-        <h1 className="text-xl md:text-2xl font-semibold text-[#d61353]">Liste des campagnes</h1>
-        <button
+   <div className="p-6 text-gray-900 dark:text-white">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800">
+ <div className="flex items-center gap-2 text-[#d61353]">
+          <Megaphone className="w-6 h-6" />
+          <h1 className="text-xl sm:text-2xl font-bold">Gestion des campagnes</h1>
+        </div>        <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-[#d61353] text-white px-3 py-2 md:px-4 md:py-2 rounded-lg hover:bg-[#b01044] transition text-sm md:text-base"
         >
@@ -126,22 +128,27 @@ export default function CampagneTable() {
                   </div>
                 </td>
                 <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm text-center">
-                  <div className="flex justify-center gap-2">
-                    <Pencil
-                      className="w-4 h-4 md:w-5 md:h-5 cursor-pointer text-blue-600 hover:text-blue-800"
-                      onClick={() => {
-                        setCampagneToEdit(campagne);
-                        setIsEditModalOpen(true);
-                      }}
-                    />
-                    <Trash2
-                      className="w-4 h-4 md:w-5 md:h-5 cursor-pointer text-red-600 hover:text-red-800"
-                      onClick={() => {
-                        setCampagneToDelete(campagne)
-                        setIsDeleteOpen(true)
-                      }}
-                    />
-                  </div>
+                  <div className="flex justify-center gap-3">
+                     <button
+  onClick={() => {
+    setCampagneToEdit(campagne) // 👈 On stocke l'utilisateur sélectionné
+    setIsEditModalOpen(true)
+  }}
+  className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+>
+  <Pencil className="w-4 h-4" />
+</button>
+
+                      <button
+                        onClick={() => {
+                          setCampagneToDelete(campagne)
+                          setIsDeleteOpen(true)
+                        }}
+                        className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                 </td>
               </tr>
             ))}
