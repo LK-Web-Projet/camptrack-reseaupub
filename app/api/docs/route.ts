@@ -1512,6 +1512,697 @@ const openApi = {
           }
         }
       }
+    }, 
+
+    // ==================== GESTION DES CLIENTS ====================
+    "/clients": {
+      get: {
+        tags: ["Clients"],
+        summary: "Lister tous les clients",
+        description: "Récupère la liste paginée de tous les clients avec leurs statistiques",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            description: "Numéro de page",
+            schema: { type: "integer", default: 1, minimum: 1 }
+          },
+          {
+            name: "limit",
+            in: "query", 
+            required: false,
+            description: "Nombre de clients par page",
+            schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des clients récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    clients: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/ClientWithStats" }
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        totalPages: { type: "integer" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  clients: [
+                    {
+                      id_client: "cmclient001",
+                      nom: "Dupont",
+                      prenom: "Jean",
+                      entreprise: "Entreprise ABC",
+                      domaine_entreprise: "Informatique",
+                      adresse: "123 Rue Example",
+                      contact: "+225 01 23 45 67 89",
+                      mail: "jean.dupont@example.com",
+                      type_client: "Entreprise",
+                      created_at: "2025-01-03T10:00:00.000Z",
+                      updated_at: "2025-01-03T10:00:00.000Z",
+                      _count: {
+                        campagnes: 5
+                      }
+                    }
+                  ],
+                  pagination: {
+                    page: 1,
+                    limit: 50,
+                    total: 1,
+                    totalPages: 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Accès refusé - Admin requis"
+                }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ["Clients"],
+        summary: "Créer un nouveau client (ADMIN seulement)",
+        description: "Crée un nouveau client dans le système",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["nom", "prenom", "type_client"],
+                properties: {
+                  nom: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Dupont"
+                  },
+                  prenom: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Jean"
+                  },
+                  entreprise: {
+                    type: "string",
+                    example: "Entreprise ABC"
+                  },
+                  domaine_entreprise: {
+                    type: "string",
+                    example: "Informatique"
+                  },
+                  adresse: {
+                    type: "string",
+                    example: "123 Rue Example"
+                  },
+                  contact: {
+                    type: "string",
+                    example: "+225 01 23 45 67 89"
+                  },
+                  mail: {
+                    type: "string",
+                    format: "email",
+                    example: "jean.dupont@example.com"
+                  },
+                  type_client: {
+                    type: "string",
+                    example: "Entreprise"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Client créé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    client: { $ref: "#/components/schemas/Client" }
+                  }
+                },
+                example: {
+                  message: "Client créé avec succès",
+                  client: {
+                    id_client: "cmclient001",
+                    nom: "Dupont",
+                    prenom: "Jean",
+                    entreprise: "Entreprise ABC",
+                    domaine_entreprise: "Informatique",
+                    adresse: "123 Rue Example",
+                    contact: "+225 01 23 45 67 89",
+                    mail: "jean.dupont@example.com",
+                    type_client: "Entreprise",
+                    created_at: "2025-01-03T10:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Le nom doit contenir au moins 2 caractères"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            description: "Email déjà utilisé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un client avec cet email existe déjà"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/clients/{id}": {
+      get: {
+        tags: ["Clients"],
+        summary: "Récupérer un client spécifique",
+        description: "Récupère les détails d'un client par son ID avec ses campagnes associées",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du client",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Client récupéré avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    client: { $ref: "#/components/schemas/ClientWithDetails" }
+                  }
+                },
+                example: {
+                  client: {
+                    id_client: "cmclient001",
+                    nom: "Dupont",
+                    prenom: "Jean",
+                    entreprise: "Entreprise ABC",
+                    domaine_entreprise: "Informatique",
+                    adresse: "123 Rue Example",
+                    contact: "+225 01 23 45 67 89",
+                    mail: "jean.dupont@example.com",
+                    type_client: "Entreprise",
+                    created_at: "2025-01-03T10:00:00.000Z",
+                    updated_at: "2025-01-03T10:00:00.000Z",
+                    campagnes: [
+                      {
+                        id_campagne: "cmcamp001",
+                        nom_campagne: "Campagne Printemps 2025",
+                        date_debut: "2025-03-01T00:00:00.000Z",
+                        date_fin: "2025-03-15T00:00:00.000Z",
+                        status: "PLANIFIEE",
+                        lieu: {
+                          nom: "Abidjan",
+                          ville: "Abidjan"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Client non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Client non trouvé"
+                }
+              }
+            }
+          }
+        }
+      },
+      put: {
+        tags: ["Clients"],
+        summary: "Modifier un client (ADMIN seulement)",
+        description: "Modifie les informations d'un client existant",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du client à modifier",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  nom: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouveau nom"
+                  },
+                  prenom: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouveau prénom"
+                  },
+                  entreprise: {
+                    type: "string",
+                    example: "Nouvelle entreprise"
+                  },
+                  domaine_entreprise: {
+                    type: "string",
+                    example: "Nouveau domaine"
+                  },
+                  adresse: {
+                    type: "string",
+                    example: "Nouvelle adresse"
+                  },
+                  contact: {
+                    type: "string",
+                    example: "+225 07 12 34 56 78"
+                  },
+                  mail: {
+                    type: "string",
+                    format: "email",
+                    example: "nouveau@example.com"
+                  },
+                  type_client: {
+                    type: "string",
+                    example: "Nouveau type"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Client modifié avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    client: { $ref: "#/components/schemas/Client" }
+                  }
+                },
+                example: {
+                  message: "Client modifié avec succès",
+                  client: {
+                    id_client: "cmclient001",
+                    nom: "Nouveau nom",
+                    prenom: "Nouveau prénom",
+                    entreprise: "Nouvelle entreprise",
+                    domaine_entreprise: "Nouveau domaine",
+                    adresse: "Nouvelle adresse",
+                    contact: "+225 07 12 34 56 78",
+                    mail: "nouveau@example.com",
+                    type_client: "Nouveau type",
+                    created_at: "2025-01-03T10:00:00.000Z",
+                    updated_at: "2025-01-03T15:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Au moins un champ doit être fourni pour la modification"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Client non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            description: "Email déjà utilisé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un client avec cet email existe déjà"
+                }
+              }
+            }
+          }
+        }
+      },
+      delete: {
+        tags: ["Clients"],
+        summary: "Supprimer un client (ADMIN seulement)",
+        description: "Supprime un client du système. Impossible de supprimer un client ayant des campagnes associées.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du client à supprimer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Client supprimé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Client supprimé avec succès"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Client utilisé dans des campagnes",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Impossible de supprimer ce client car il a des campagnes associées"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Client non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/clients/{id}/campagnes": {
+      get: {
+        tags: ["Clients"],
+        summary: "Lister les campagnes d'un client",
+        description: "Récupère la liste paginée des campagnes associées à un client spécifique",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du client",
+            schema: { type: "string" }
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            description: "Numéro de page",
+            schema: { type: "integer", default: 1, minimum: 1 }
+          },
+          {
+            name: "limit",
+            in: "query", 
+            required: false,
+            description: "Nombre de campagnes par page",
+            schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
+          },
+          {
+            name: "status",
+            in: "query",
+            required: false,
+            description: "Filtrer par statut",
+            schema: { 
+              type: "string",
+              enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des campagnes récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    client: {
+                      type: "object",
+                      properties: {
+                        id_client: { type: "string" },
+                        nom: { type: "string" },
+                        prenom: { type: "string" }
+                      }
+                    },
+                    campagnes: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id_campagne: { type: "string" },
+                          nom_campagne: { type: "string" },
+                          description: { type: "string" },
+                          objectif: { type: "string" },
+                          type_campagne: { type: "string" },
+                          date_debut: { type: "string", format: "date-time" },
+                          date_fin: { type: "string", format: "date-time" },
+                          status: { 
+                            type: "string",
+                            enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+                          },
+                          date_creation: { type: "string", format: "date-time" },
+                          lieu: {
+                            type: "object",
+                            properties: {
+                              nom: { type: "string" },
+                              ville: { type: "string" }
+                            }
+                          },
+                          service: {
+                            type: "object",
+                            properties: {
+                              nom: { type: "string" }
+                            }
+                          },
+                          _count: {
+                            type: "object",
+                            properties: {
+                              affectations: { type: "integer" },
+                              fichiers: { type: "integer" }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        totalPages: { type: "integer" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  client: {
+                    id_client: "cmclient001",
+                    nom: "Dupont",
+                    prenom: "Jean"
+                  },
+                  campagnes: [
+                    {
+                      id_campagne: "cmcamp001",
+                      nom_campagne: "Campagne Printemps 2025",
+                      description: "Campagne de publicité pour le printemps",
+                      objectif: "Augmenter la visibilité",
+                      type_campagne: "MASSE",
+                      date_debut: "2025-03-01T00:00:00.000Z",
+                      date_fin: "2025-03-15T00:00:00.000Z",
+                      status: "PLANIFIEE",
+                      created_at: "2025-01-03T10:00:00.000Z",
+                      lieu: {
+                        nom: "Abidjan",
+                        ville: "Abidjan"
+                      },
+                      service: {
+                        nom: "Publicité sur tricycles"
+                      },
+                      _count: {
+                        affectations: 5,
+                        fichiers: 2
+                      }
+                    }
+                  ],
+                  pagination: {
+                    page: 1,
+                    limit: 50,
+                    total: 1,
+                    totalPages: 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Client non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
     }
   },
 
@@ -1537,6 +2228,7 @@ const openApi = {
           }
         },
       },
+
       User: {
         type: "object",
         properties: {
@@ -1586,6 +2278,7 @@ const openApi = {
           }
         },
       },
+
       Service: {
         type: "object",
         properties: {
@@ -1727,6 +2420,194 @@ const openApi = {
             type: "object",
             properties: {
               affectations: { type: "integer" }
+            }
+          }
+        }
+      }, 
+
+      Client: {
+        type: "object",
+        properties: {
+          id_client: { 
+            type: "string",
+            description: "Identifiant unique du client" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du client" 
+          },
+          prenom: { 
+            type: "string",
+            description: "Prénom du client" 
+          },
+          entreprise: { 
+            type: "string",
+            description: "Nom de l'entreprise" 
+          },
+          domaine_entreprise: { 
+            type: "string",
+            description: "Domaine d'activité de l'entreprise" 
+          },
+          adresse: { 
+            type: "string",
+            description: "Adresse du client" 
+          },
+          contact: { 
+            type: "string",
+            description: "Numéro de contact" 
+          },
+          mail: { 
+            type: "string",
+            format: "email",
+            description: "Email du client" 
+          },
+          type_client: { 
+            type: "string",
+            description: "Type de client" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          },
+          updated_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de dernière modification" 
+          }
+        }
+      },
+
+      ClientWithStats: {
+        type: "object",
+        properties: {
+          id_client: { 
+            type: "string",
+            description: "Identifiant unique du client" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du client" 
+          },
+          prenom: { 
+            type: "string",
+            description: "Prénom du client" 
+          },
+          entreprise: { 
+            type: "string",
+            description: "Nom de l'entreprise" 
+          },
+          domaine_entreprise: { 
+            type: "string",
+            description: "Domaine d'activité de l'entreprise" 
+          },
+          adresse: { 
+            type: "string",
+            description: "Adresse du client" 
+          },
+          contact: { 
+            type: "string",
+            description: "Numéro de contact" 
+          },
+          mail: { 
+            type: "string",
+            format: "email",
+            description: "Email du client" 
+          },
+          type_client: { 
+            type: "string",
+            description: "Type de client" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          },
+          updated_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de dernière modification" 
+          },
+          _count: {
+            type: "object",
+            properties: {
+              campagnes: { type: "integer" }
+            }
+          }
+        }
+      },
+
+      ClientWithDetails: {
+        type: "object",
+        properties: {
+          id_client: { 
+            type: "string",
+            description: "Identifiant unique du client" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du client" 
+          },
+          prenom: { 
+            type: "string",
+            description: "Prénom du client" 
+          },
+          entreprise: { 
+            type: "string",
+            description: "Nom de l'entreprise" 
+          },
+          domaine_entreprise: { 
+            type: "string",
+            description: "Domaine d'activité de l'entreprise" 
+          },
+          adresse: { 
+            type: "string",
+            description: "Adresse du client" 
+          },
+          contact: { 
+            type: "string",
+            description: "Numéro de contact" 
+          },
+          mail: { 
+            type: "string",
+            format: "email",
+            description: "Email du client" 
+          },
+          type_client: { 
+            type: "string",
+            description: "Type de client" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          },
+          updated_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de dernière modification" 
+          },
+          campagnes: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id_campagne: { type: "string" },
+                nom_campagne: { type: "string" },
+                date_debut: { type: "string", format: "date-time" },
+                date_fin: { type: "string", format: "date-time" },
+                status: { 
+                  type: "string",
+                  enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+                },
+                lieu: {
+                  type: "object",
+                  properties: {
+                    nom: { type: "string" },
+                    ville: { type: "string" }
+                  }
+                }
+              }
             }
           }
         }
