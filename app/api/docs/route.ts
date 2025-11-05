@@ -2203,7 +2203,625 @@ const openApi = {
           }
         }
       }
+    },
+
+    // ==================== GESTION DES LIEUX ====================
+    "/lieux": {
+      get: {
+        tags: ["Lieux"],
+        summary: "Lister tous les lieux",
+        description: "Récupère la liste paginée de tous les lieux avec leurs statistiques",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            description: "Numéro de page",
+            schema: { type: "integer", default: 1, minimum: 1 }
+          },
+          {
+            name: "limit",
+            in: "query", 
+            required: false,
+            description: "Nombre de lieux par page",
+            schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des lieux récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    lieux: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/LieuWithStats" }
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        totalPages: { type: "integer" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  lieux: [
+                    {
+                      id_lieu: "cmlieu001",
+                      nom: "Abidjan Plateau",
+                      ville: "Abidjan",
+                      created_at: "2025-01-03T10:00:00.000Z",
+                      _count: {
+                        campagnes: 8
+                      }
+                    }
+                  ],
+                  pagination: {
+                    page: 1,
+                    limit: 50,
+                    total: 1,
+                    totalPages: 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Accès refusé - Admin requis"
+                }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ["Lieux"],
+        summary: "Créer un nouveau lieu (ADMIN seulement)",
+        description: "Crée un nouveau lieu dans le système",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["nom", "ville"],
+                properties: {
+                  nom: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Abidjan Plateau"
+                  },
+                  ville: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Abidjan"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Lieu créé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    lieu: { $ref: "#/components/schemas/Lieu" }
+                  }
+                },
+                example: {
+                  message: "Lieu créé avec succès",
+                  lieu: {
+                    id_lieu: "cmlieu001",
+                    nom: "Abidjan Plateau",
+                    ville: "Abidjan",
+                    created_at: "2025-01-03T10:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Le nom doit contenir au moins 2 caractères"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            description: "Lieu déjà existant",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un lieu avec ce nom et cette ville existe déjà"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/lieux/{id}": {
+      get: {
+        tags: ["Lieux"],
+        summary: "Récupérer un lieu spécifique",
+        description: "Récupère les détails d'un lieu par son ID avec ses campagnes associées",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du lieu",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Lieu récupéré avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    lieu: { $ref: "#/components/schemas/LieuWithDetails" }
+                  }
+                },
+                example: {
+                  lieu: {
+                    id_lieu: "cmlieu001",
+                    nom: "Abidjan Plateau",
+                    ville: "Abidjan",
+                    created_at: "2025-01-03T10:00:00.000Z",
+                    campagnes: [
+                      {
+                        id_campagne: "cmcamp001",
+                        nom_campagne: "Campagne Printemps 2025",
+                        date_debut: "2025-03-01T00:00:00.000Z",
+                        date_fin: "2025-03-15T00:00:00.000Z",
+                        status: "PLANIFIEE",
+                        client: {
+                          nom: "Dupont",
+                          prenom: "Jean",
+                          entreprise: "Entreprise ABC"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Lieu non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Lieu non trouvé"
+                }
+              }
+            }
+          }
+        }
+      },
+      put: {
+        tags: ["Lieux"],
+        summary: "Modifier un lieu (ADMIN seulement)",
+        description: "Modifie les informations d'un lieu existant",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du lieu à modifier",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  nom: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouveau nom"
+                  },
+                  ville: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouvelle ville"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Lieu modifié avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    lieu: { $ref: "#/components/schemas/Lieu" }
+                  }
+                },
+                example: {
+                  message: "Lieu modifié avec succès",
+                  lieu: {
+                    id_lieu: "cmlieu001",
+                    nom: "Nouveau nom",
+                    ville: "Nouvelle ville",
+                    created_at: "2025-01-03T10:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Au moins un champ doit être fourni pour la modification"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Lieu non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            description: "Lieu déjà existant",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un lieu avec ce nom et cette ville existe déjà"
+                }
+              }
+            }
+          }
+        }
+      },
+      delete: {
+        tags: ["Lieux"],
+        summary: "Supprimer un lieu (ADMIN seulement)",
+        description: "Supprime un lieu du système. Impossible de supprimer un lieu utilisé dans des campagnes.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du lieu à supprimer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Lieu supprimé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Lieu supprimé avec succès"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Lieu utilisé dans des campagnes",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Impossible de supprimer ce lieu car il est utilisé dans des campagnes"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Lieu non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/lieux/{id}/campagnes": {
+      get: {
+        tags: ["Lieux"],
+        summary: "Lister les campagnes d'un lieu",
+        description: "Récupère la liste paginée des campagnes associées à un lieu spécifique",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du lieu",
+            schema: { type: "string" }
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            description: "Numéro de page",
+            schema: { type: "integer", default: 1, minimum: 1 }
+          },
+          {
+            name: "limit",
+            in: "query", 
+            required: false,
+            description: "Nombre de campagnes par page",
+            schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
+          },
+          {
+            name: "status",
+            in: "query",
+            required: false,
+            description: "Filtrer par statut",
+            schema: { 
+              type: "string",
+              enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des campagnes récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    lieu: {
+                      type: "object",
+                      properties: {
+                        id_lieu: { type: "string" },
+                        nom: { type: "string" },
+                        ville: { type: "string" }
+                      }
+                    },
+                    campagnes: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id_campagne: { type: "string" },
+                          nom_campagne: { type: "string" },
+                          description: { type: "string" },
+                          objectif: { type: "string" },
+                          type_campagne: { type: "string" },
+                          date_debut: { type: "string", format: "date-time" },
+                          date_fin: { type: "string", format: "date-time" },
+                          status: { 
+                            type: "string",
+                            enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+                          },
+                          date_creation: { type: "string", format: "date-time" },
+                          client: {
+                            type: "object",
+                            properties: {
+                              nom: { type: "string" },
+                              prenom: { type: "string" },
+                              entreprise: { type: "string" }
+                            }
+                          },
+                          service: {
+                            type: "object",
+                            properties: {
+                              nom: { type: "string" }
+                            }
+                          },
+                          _count: {
+                            type: "object",
+                            properties: {
+                              affectations: { type: "integer" },
+                              fichiers: { type: "integer" }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        totalPages: { type: "integer" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  lieu: {
+                    id_lieu: "cmlieu001",
+                    nom: "Abidjan Plateau",
+                    ville: "Abidjan"
+                  },
+                  campagnes: [
+                    {
+                      id_campagne: "cmcamp001",
+                      nom_campagne: "Campagne Printemps 2025",
+                      description: "Campagne de publicité pour le printemps",
+                      objectif: "Augmenter la visibilité",
+                      type_campagne: "MASSE",
+                      date_debut: "2025-03-01T00:00:00.000Z",
+                      date_fin: "2025-03-15T00:00:00.000Z",
+                      status: "PLANIFIEE",
+                      date_creation: "2025-01-03T10:00:00.000Z",
+                      client: {
+                        nom: "Dupont",
+                        prenom: "Jean",
+                        entreprise: "Entreprise ABC"
+                      },
+                      service: {
+                        nom: "Publicité sur tricycles"
+                      },
+                      _count: {
+                        affectations: 5,
+                        fichiers: 2
+                      }
+                    }
+                  ],
+                  pagination: {
+                    page: 1,
+                    limit: 50,
+                    total: 1,
+                    totalPages: 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Lieu non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
     }
+
   },
 
   components: {
@@ -2605,6 +3223,105 @@ const openApi = {
                   properties: {
                     nom: { type: "string" },
                     ville: { type: "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }, 
+
+      Lieu: {
+        type: "object",
+        properties: {
+          id_lieu: { 
+            type: "string",
+            description: "Identifiant unique du lieu" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du lieu" 
+          },
+          ville: { 
+            type: "string",
+            description: "Ville du lieu" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          }
+        }
+      },
+
+      LieuWithStats: {
+        type: "object",
+        properties: {
+          id_lieu: { 
+            type: "string",
+            description: "Identifiant unique du lieu" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du lieu" 
+          },
+          ville: { 
+            type: "string",
+            description: "Ville du lieu" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          },
+          _count: {
+            type: "object",
+            properties: {
+              campagnes: { type: "integer" }
+            }
+          }
+        }
+      },
+
+      LieuWithDetails: {
+        type: "object",
+        properties: {
+          id_lieu: { 
+            type: "string",
+            description: "Identifiant unique du lieu" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du lieu" 
+          },
+          ville: { 
+            type: "string",
+            description: "Ville du lieu" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          },
+          campagnes: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id_campagne: { type: "string" },
+                nom_campagne: { type: "string" },
+                date_debut: { type: "string", format: "date-time" },
+                date_fin: { type: "string", format: "date-time" },
+                status: { 
+                  type: "string",
+                  enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+                },
+                client: {
+                  type: "object",
+                  properties: {
+                    nom: { type: "string" },
+                    prenom: { type: "string" },
+                    entreprise: { type: "string" }
                   }
                 }
               }
