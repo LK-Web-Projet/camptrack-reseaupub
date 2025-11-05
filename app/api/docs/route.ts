@@ -935,6 +935,583 @@ const openApi = {
           }
         }
       }
+    }, 
+    // ==================== GESTION DES SERVICES ====================
+    "/services": {
+      get: {
+        tags: ["Services"],
+        summary: "Lister tous les services",
+        description: "Récupère la liste paginée de tous les services avec leurs statistiques",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            description: "Numéro de page",
+            schema: { type: "integer", default: 1, minimum: 1 }
+          },
+          {
+            name: "limit",
+            in: "query", 
+            required: false,
+            description: "Nombre de services par page",
+            schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des services récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    services: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/ServiceWithStats" }
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        totalPages: { type: "integer" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  services: [
+                    {
+                      id_service: "cmservice001",
+                      nom: "Publicité sur tricycles",
+                      description: "Service de publicité mobile sur tricycles",
+                      created_at: "2025-01-03T10:00:00.000Z",
+                      _count: {
+                        campagnes: 5,
+                        prestataires: 12
+                      }
+                    }
+                  ],
+                  pagination: {
+                    page: 1,
+                    limit: 50,
+                    total: 1,
+                    totalPages: 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Accès refusé - Admin requis"
+                }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ["Services"],
+        summary: "Créer un nouveau service (ADMIN seulement)",
+        description: "Crée un nouveau service dans le système",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["nom"],
+                properties: {
+                  nom: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Publicité digitale"
+                  },
+                  description: {
+                    type: "string",
+                    example: "Service de publicité sur écrans digitaux"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Service créé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    service: { $ref: "#/components/schemas/Service" }
+                  }
+                },
+                example: {
+                  message: "Service créé avec succès",
+                  service: {
+                    id_service: "cmservice002",
+                    nom: "Publicité digitale",
+                    description: "Service de publicité sur écrans digitaux",
+                    created_at: "2025-01-03T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Le nom doit contenir au moins 2 caractères"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            description: "Nom de service déjà utilisé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un service avec ce nom existe déjà"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/services/{id}": {
+      get: {
+        tags: ["Services"],
+        summary: "Récupérer un service spécifique",
+        description: "Récupère les détails d'un service par son ID avec ses prestataires et campagnes associées",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du service",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Service récupéré avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    service: { $ref: "#/components/schemas/ServiceWithDetails" }
+                  }
+                },
+                example: {
+                  service: {
+                    id_service: "cmservice001",
+                    nom: "Publicité sur tricycles",
+                    description: "Service de publicité mobile sur tricycles",
+                    created_at: "2025-01-03T10:00:00.000Z",
+                    prestataires: [
+                      {
+                        id_prestataire: "cmpresta001",
+                        nom: "Koné",
+                        prenom: "Moussa",
+                        contact: "+225 07 12 34 56 78",
+                        disponible: true,
+                        created_at: "2025-01-03T11:00:00.000Z"
+                      }
+                    ],
+                    campagnes: [
+                      {
+                        id_campagne: "cmcamp001",
+                        nom_campagne: "Campagne Coca-Cola",
+                        date_debut: "2025-01-10T00:00:00.000Z",
+                        date_fin: "2025-01-20T00:00:00.000Z",
+                        status: "PLANIFIEE",
+                        client: {
+                          nom: "Traoré",
+                          prenom: "Aïcha",
+                          entreprise: "Coca-Cola CI"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Service non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Service non trouvé"
+                }
+              }
+            }
+          }
+        }
+      },
+      put: {
+        tags: ["Services"],
+        summary: "Modifier un service (ADMIN seulement)",
+        description: "Modifie les informations d'un service existant",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du service à modifier",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  nom: { 
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouveau nom du service"
+                  },
+                  description: {
+                    type: "string",
+                    example: "Nouvelle description du service"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Service modifié avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    service: { $ref: "#/components/schemas/Service" }
+                  }
+                },
+                example: {
+                  message: "Service modifié avec succès",
+                  service: {
+                    id_service: "cmservice001",
+                    nom: "Nouveau nom du service",
+                    description: "Nouvelle description du service",
+                    created_at: "2025-01-03T10:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Au moins un champ doit être fourni pour la modification"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Service non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            description: "Nom de service déjà utilisé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un service avec ce nom existe déjà"
+                }
+              }
+            }
+          }
+        }
+      },
+      delete: {
+        tags: ["Services"],
+        summary: "Supprimer un service (ADMIN seulement)",
+        description: "Supprime un service du système. Impossible de supprimer un service utilisé dans des campagnes ou par des prestataires.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du service à supprimer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Service supprimé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Service supprimé avec succès"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Service utilisé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Impossible de supprimer ce service car il est utilisé dans des campagnes ou par des prestataires"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Service non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/services/{id}/prestataires": {
+      get: {
+        tags: ["Services"],
+        summary: "Lister les prestataires d'un service",
+        description: "Récupère la liste paginée des prestataires associés à un service spécifique",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du service",
+            schema: { type: "string" }
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            description: "Numéro de page",
+            schema: { type: "integer", default: 1, minimum: 1 }
+          },
+          {
+            name: "limit",
+            in: "query", 
+            required: false,
+            description: "Nombre de prestataires par page",
+            schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
+          },
+          {
+            name: "disponible",
+            in: "query",
+            required: false,
+            description: "Filtrer par disponibilité",
+            schema: { type: "boolean" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des prestataires récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    service: {
+                      type: "object",
+                      properties: {
+                        id_service: { type: "string" },
+                        nom: { type: "string" }
+                      }
+                    },
+                    prestataires: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/PrestataireWithStats" }
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        totalPages: { type: "integer" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  service: {
+                    id_service: "cmservice001",
+                    nom: "Publicité sur tricycles"
+                  },
+                  prestataires: [
+                    {
+                      id_prestataire: "cmpresta001",
+                      nom: "Koné",
+                      prenom: "Moussa",
+                      contact: "+225 07 12 34 56 78",
+                      disponible: true,
+                      created_at: "2025-01-03T11:00:00.000Z",
+                      vehicule: {
+                        type_panneau: "GRAND",
+                        marque: "Toyota",
+                        modele: "Hilux",
+                        plaque: "AB-123-CD"
+                      },
+                      _count: {
+                        affectations: 3
+                      }
+                    }
+                  ],
+                  pagination: {
+                    page: 1,
+                    limit: 50,
+                    total: 1,
+                    totalPages: 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Service non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
     }
   },
 
@@ -1009,6 +1586,151 @@ const openApi = {
           }
         },
       },
+      Service: {
+        type: "object",
+        properties: {
+          id_service: { 
+            type: "string",
+            description: "Identifiant unique du service" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du service" 
+          },
+          description: { 
+            type: "string",
+            description: "Description du service" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          }
+        }
+      },
+
+      ServiceWithStats: {
+        type: "object",
+        properties: {
+          id_service: { 
+            type: "string",
+            description: "Identifiant unique du service" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du service" 
+          },
+          description: { 
+            type: "string",
+            description: "Description du service" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          },
+          _count: {
+            type: "object",
+            properties: {
+              campagnes: { type: "integer" },
+              prestataires: { type: "integer" }
+            }
+          }
+        }
+      },
+
+      ServiceWithDetails: {
+        type: "object",
+        properties: {
+          id_service: { 
+            type: "string",
+            description: "Identifiant unique du service" 
+          },
+          nom: { 
+            type: "string",
+            description: "Nom du service" 
+          },
+          description: { 
+            type: "string",
+            description: "Description du service" 
+          },
+          created_at: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création" 
+          },
+          prestataires: {
+            type: "array",
+            items: { $ref: "#/components/schemas/Prestataire" }
+          },
+          campagnes: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id_campagne: { type: "string" },
+                nom_campagne: { type: "string" },
+                date_debut: { type: "string", format: "date-time" },
+                date_fin: { type: "string", format: "date-time" },
+                status: { 
+                  type: "string",
+                  enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+                },
+                client: {
+                  type: "object",
+                  properties: {
+                    nom: { type: "string" },
+                    prenom: { type: "string" },
+                    entreprise: { type: "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+
+      Prestataire: {
+        type: "object",
+        properties: {
+          id_prestataire: { type: "string" },
+          nom: { type: "string" },
+          prenom: { type: "string" },
+          contact: { type: "string" },
+          disponible: { type: "boolean" },
+          created_at: { type: "string", format: "date-time" }
+        }
+      },
+
+      PrestataireWithStats: {
+        type: "object",
+        properties: {
+          id_prestataire: { type: "string" },
+          nom: { type: "string" },
+          prenom: { type: "string" },
+          contact: { type: "string" },
+          disponible: { type: "boolean" },
+          created_at: { type: "string", format: "date-time" },
+          vehicule: {
+            type: "object",
+            properties: {
+              type_panneau: { 
+                type: "string",
+                enum: ["PETIT", "GRAND"]
+              },
+              marque: { type: "string" },
+              modele: { type: "string" },
+              plaque: { type: "string" }
+            }
+          },
+          _count: {
+            type: "object",
+            properties: {
+              affectations: { type: "integer" }
+            }
+          }
+        }
+      }
     },
     responses: {
       Unauthorized: {
