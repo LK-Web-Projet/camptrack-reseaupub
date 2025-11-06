@@ -22,6 +22,11 @@ export interface EditServiceModalProps {
 const EditSchema = Yup.object().shape({
   nom: Yup.string().required("Le nom est obligatoire"),
   description: Yup.string().nullable(),
+  prix_unitaire: Yup.number()
+  .typeError("Le prix doit être un nombre")
+  .required("Le prix est obligatoire")
+  .positive("Le prix doit être positif")
+
 });
 
 export default function EditServiceModal({
@@ -41,7 +46,7 @@ export default function EditServiceModal({
       <div className="relative z-10 w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6">
         {/* En-tête */}
         <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold mb-4 text-[#d61353]">Modifier la campagne</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#d61353]">Modifier les informations du service</h2>
 
           <button
             onClick={onClose}
@@ -58,6 +63,9 @@ export default function EditServiceModal({
           initialValues={{
             nom: service?.nom ?? "",
             description: service?.description ?? "",
+             prix_unitaire: "" ,
+              // prix_unitaire: service?. ""  // ← nouveau champ
+
           }}
           validationSchema={EditSchema}
           onSubmit={(values, { setSubmitting }) => {
@@ -106,6 +114,17 @@ export default function EditServiceModal({
                   </div>
                 )}
               </div>
+                <div>
+  <label className="block text-sm mb-1">Prix unitaire</label>
+  <Field 
+    name="prix_unitaire" 
+    type="number"
+    className="w-full px-3 py-2 border rounded" 
+  />
+  {errors.prix_unitaire && touched.prix_unitaire && (
+    <div className="text-red-500 text-sm mt-1">{errors.prix_unitaire}</div>
+  )}
+</div>
 
               {/* Boutons */}
               <div className="flex justify-between gap-4 mt-6">

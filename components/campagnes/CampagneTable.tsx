@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Pencil, Trash2, Plus, Megaphone } from "lucide-react"
+import { Pencil, Trash2, Plus, Megaphone, Eye } from "lucide-react"
 import AddCampagneModal from "@/components/campagnes/AddCampagne"
 import EditCampagneModal from "@/components/campagnes/EditCampagne"
 import DeleteCampagneModal from "@/components/campagnes/DeleteCampagne"
@@ -12,6 +12,7 @@ interface Campagne {
   type_campagne: "MASSE" | "PROXIMITE";
   status: "PLANIFIEE" | "EN_COURS" | "TERMINEE" | "ANNULEE";
   services: string[];
+  quantite_service: number;
   date_debut: string;
   date_fin: string;
 }
@@ -25,6 +26,7 @@ export default function CampagneTable() {
       status: "EN_COURS",
       services: ["Distribution", "Affichage"],
       date_debut: "2025-06-01",
+      quantite_service: 1000,
       date_fin: "2025-08-31"
     },
     {
@@ -33,6 +35,7 @@ export default function CampagneTable() {
       type_campagne: "PROXIMITE",
       status: "PLANIFIEE",
       services: ["Distribution"],
+      quantite_service: 500,
       date_debut: "2025-12-01",
       date_fin: "2025-12-31"
     },
@@ -42,6 +45,7 @@ export default function CampagneTable() {
       type_campagne: "MASSE",
       status: "TERMINEE",
       services: ["Affichage", "Animation"],
+      quantite_service: 750,
       date_debut: "2025-05-01",
       date_fin: "2025-05-15"
     },
@@ -83,7 +87,7 @@ export default function CampagneTable() {
           className="flex items-center gap-2 bg-[#d61353] text-white px-3 py-2 md:px-4 md:py-2 rounded-lg hover:bg-[#b01044] transition text-sm md:text-base"
         >
           <Plus className="w-4 h-4 md:w-5 md:h-5 cursor-pointer" />
-          <span>Ajouter</span>
+          <span>Ajouter une campagne</span>
         </button>
       </div>
 
@@ -97,7 +101,8 @@ export default function CampagneTable() {
               <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Status</th>
               <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Date début</th>
               <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Date fin</th>
-              <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Services</th>
+              <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Services &Quantités</th>
+              
               <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold text-center">Actions</th>
             </tr>
           </thead>
@@ -119,16 +124,22 @@ export default function CampagneTable() {
                 <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{new Date(campagne.date_debut).toLocaleDateString('fr-FR')}</td>
                 <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{new Date(campagne.date_fin).toLocaleDateString('fr-FR')}</td>
                 <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">
-                  <div className="flex flex-wrap gap-1">
-                    {campagne.services.map((service, index) => (
-                      <span key={index} className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full text-xs">
-                        {service}
-                      </span>
-                    ))}
-                  </div>
+                <div className="flex flex-col">
+                  {campagne.services.join(", ")} - {campagne.quantite_service}
+
+                </div>
                 </td>
                 <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm text-center">
                   <div className="flex justify-center gap-3">
+                    <button
+      onClick={() => {
+        // Ici tu pourras ouvrir ton modal détail plus tard
+        console.log("Ouvrir modal détail pour", campagne.nom_campagne);
+      }}
+      className="p-2 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 transition"
+    >
+      <Eye className="w-4 h-4" />
+    </button>
                      <button
   onClick={() => {
     setCampagneToEdit(campagne) // 👈 On stocke l'utilisateur sélectionné

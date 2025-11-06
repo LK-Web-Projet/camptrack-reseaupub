@@ -20,6 +20,7 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
       date_debut: "",
       date_fin: "",
       Id_service: "",
+      quantite_service: "",
     },
     validationSchema: Yup.object({
       nom_campagne: Yup.string().required("Champ obligatoire"),
@@ -28,6 +29,7 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
       date_debut: Yup.string().required("Champ obligatoire"),
       date_fin: Yup.string().required("Champ obligatoire"),
       Id_service: Yup.string().required("Champ obligatoire"),
+      quantite_service: Yup.number().typeError("La quantité doit être un nombre").required("Champ obligatoire").positive("La quantité doit être positive"),
     }),
     onSubmit: (values) => {
       const newCampagne = {
@@ -132,6 +134,19 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
             />
             {formik.touched.Id_service && formik.errors.Id_service && (
               <div className="text-red-500 text-xs">{formik.errors.Id_service}</div>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Quantité de service</label>
+            <input
+              type="number"
+              name="quantite_service"
+              onChange={formik.handleChange}
+              value={formik.values.quantite_service}
+              className="w-full border rounded px-3 py-2"
+            />
+            {formik.touched.quantite_service && formik.errors.quantite_service && (
+              <div className="text-red-500 text-xs">{formik.errors.quantite_service}</div>
             )}
           </div>
            <div className="flex justify-between gap-4 mt-6">

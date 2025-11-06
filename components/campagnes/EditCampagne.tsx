@@ -12,6 +12,7 @@ interface Campagne {
   date_debut: string;
   date_fin: string;
   services: string[];
+  quantite_service: number;
 }
 
 interface EditCampagneModalProps {
@@ -31,6 +32,7 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
       date_debut: campagne.date_debut ? campagne.date_debut.slice(0,10) : "",
       date_fin: campagne.date_fin ? campagne.date_fin.slice(0,10) : "",
       services: campagne.services ? campagne.services.join(", ") : "",
+      quantite_service: campagne.quantite_service || "",
     },
     validationSchema: Yup.object({
       nom_campagne: Yup.string().required("Champ obligatoire"),
@@ -39,6 +41,7 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
       date_debut: Yup.string().required("Champ obligatoire"),
       date_fin: Yup.string().required("Champ obligatoire"),
       services: Yup.string().required("Champ obligatoire"),
+      quantite_service: Yup.number().typeError("La quantité doit être un nombre").required("Champ obligatoire").positive("La quantité doit être positive"),
     }),
     onSubmit: (values) => {
       const updatedCampagne = {
@@ -62,7 +65,7 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
         >
           <X className="w-5 h-5" />
         </button>
-        <h2 className="text-xl font-semibold mb-4 text-[#d61353]">Modifier la campagne</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#d61353]">Modifier les informations de la  campagne</h2>
         <form onSubmit={formik.handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Nom de la campagne</label>
@@ -149,6 +152,20 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
             />
             {formik.touched.services && formik.errors.services && (
               <p className="text-red-500 text-sm mt-1">{formik.errors.services}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Quantité de service</label>
+            <input
+              type="number"
+              name="quantite_service"
+              value={formik.values.quantite_service}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className="w-full px-4 py-2 border rounded-md dark:bg-gray-800 dark:text-white"
+            />
+            {formik.touched.quantite_service && formik.errors.quantite_service && (
+              <p className="text-red-500 text-sm mt-1">{formik.errors.quantite_service}</p>
             )}
           </div>
           <div className="flex justify-between gap-4 mt-6">

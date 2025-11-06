@@ -75,7 +75,7 @@ export default function ServiceTable() {
           className="flex items-center gap-2 bg-[#d61353] text-white px-3 py-2 md:px-4 md:py-2 rounded-lg hover:bg-[#b01044] transition text-sm md:text-base"
         >
           <Plus className="w-4 h-4 md:w-5 md:h-5" />
-          <span>Ajouter</span>
+          <span>Ajouter un service </span>
         </button>
       </div>
 

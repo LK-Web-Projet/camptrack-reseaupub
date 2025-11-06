@@ -21,6 +21,11 @@ interface AddServiceModalProps {
 const AddSchema = Yup.object().shape({
   nom: Yup.string().required("Le nom est obligatoire"),
   description: Yup.string().nullable(),
+  prix_unitaire: Yup.number()
+  .typeError("Le prix doit être un nombre")
+  .required("Le prix est obligatoire")
+  .positive("Le prix doit être positif")
+
 });
 
 export default function AddServiceModal({ isOpen, onClose, onAddService }: AddServiceModalProps) {
@@ -38,7 +43,8 @@ export default function AddServiceModal({ isOpen, onClose, onAddService }: AddSe
         </div>
 
         <Formik
-          initialValues={{ nom: "", description: "" }}
+          initialValues={{ nom: "", description: ""  ,prix_unitaire: ""  
+ }}
           validationSchema={AddSchema}
           onSubmit={(values, { setSubmitting, resetForm }) => {
             setSubmitting(true);
@@ -46,6 +52,7 @@ export default function AddServiceModal({ isOpen, onClose, onAddService }: AddSe
               id_service: `s_${Date.now()}`,
               nom: values.nom.trim(),
               description: values.description?.trim() || null,
+                // prix_unitaire: parseFloat(values.prix_unitaire), 
               created_at: new Date().toISOString().slice(0, 10),
             };
             onAddService(newService);
@@ -67,6 +74,17 @@ export default function AddServiceModal({ isOpen, onClose, onAddService }: AddSe
                 <Field as="textarea" name="description" rows={3} className="w-full px-3 py-2 border rounded" />
                 {errors.description && touched.description && <div className="text-red-500 text-sm mt-1">{errors.description}</div>}
               </div>
+              <div>
+  <label className="block text-sm mb-1">Prix unitaire</label>
+  <Field 
+    name="prix_unitaire" 
+    type="number"
+    className="w-full px-3 py-2 border rounded" 
+  />
+  {errors.prix_unitaire && touched.prix_unitaire && (
+    <div className="text-red-500 text-sm mt-1">{errors.prix_unitaire}</div>
+  )}
+</div>
 
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700">Annuler</button>
