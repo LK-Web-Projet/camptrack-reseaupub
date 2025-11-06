@@ -1,5 +1,3 @@
-// CAMPTRACK - SCHÉMA BASE DE DONNÉES
-
 generator client {
   provider = "prisma-client-js"
   output   = "../app/generated/prisma"
@@ -10,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// === ENUMS ===
 enum UserType {
   ADMIN
   SUPERVISEUR_CAMPAGNE
@@ -18,7 +17,7 @@ enum UserType {
   EQUIPE
 }
 
-enum TypeCampagne{
+enum TypeCampagne {
   MASSE
   PROXIMITE
 }
@@ -47,174 +46,179 @@ enum TypeFichier {
   PIGE
 }
 
-model User {
-  id_user           String    @id @default(cuid())
-  nom               String
-  prenom            String
-  nom_utilisateur   String?   @unique
-  type_user         UserType
-  email             String    @unique          
-  password          String                       
-  contact           String?
-  is_active         Boolean   @default(true)    
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
+// === MODÈLES ===
 
-  campagnes         Campagne[]                    
-  refreshTokens     RefreshToken[]                
+model User {
+  id_user         String    @id @default(cuid())
+  nom             String
+  prenom          String
+  nom_utilisateur String?   @unique
+  type_user       UserType
+  email           String    @unique
+  password        String
+  contact         String?
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  campagnes       Campagne[]
+  refreshTokens   RefreshToken[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id           String   @id @default(cuid())
-  token_hash   String
-  user         User     @relation(fields: [userId], references: [id_user])
-  userId       String
-  expires_at   DateTime
-  revoked      Boolean  @default(false)
-  created_at   DateTime @default(now())
+  id         String   @id @default(cuid())
+  token_hash String
+  user       User     @relation(fields: [userId], references: [id_user])
+  userId     String
+  expires_at DateTime
+  revoked    Boolean  @default(false)
+  created_at DateTime @default(now())
 
   @@map("refresh_tokens")
 }
 
 model Client {
-  id_client           String      @id @default(cuid())
-  nom                 String
-  prenom              String
-  entreprise          String?
-  domaine_entreprise  String?
-  adresse             String?
-  contact             String?
-  mail                String?     @unique
-  type_client         String
-  created_at          DateTime    @default(now())
-  updated_at          DateTime    @updatedAt
+  id_client        String     @id @default(cuid())
+  nom              String
+  prenom           String
+  entreprise       String?
+  domaine_entreprise String?
+  adresse          String?
+  contact          String?
+  mail             String?    @unique
+  type_client      String
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
 
-  campagnes           Campagne[]  // 1 → N Campagne
+  campagnes        Campagne[]
 
   @@map("clients")
 }
 
 model Lieu {
-  id_lieu       String    @id @default(cuid())
-  nom           String
-  ville         String
-  created_at    DateTime  @default(now())
+  id_lieu    String    @id @default(cuid())
+  nom        String
+  ville      String
+  created_at DateTime  @default(now())
 
-  campagnes     Campagne[]  // 1 → N Campagne (N → N implémenté via id_lieu dans Campagne)
+  campagnes  Campagne[]
 
   @@map("lieux")
 }
 
 model Service {
-  id_service    String    @id @default(cuid())
-  nom           String
-  description   String?
-  created_at    DateTime  @default(now())
+  id_service  String    @id @default(cuid())
+  nom         String
+  description String?
+  created_at  DateTime  @default(now())
 
-  prestataires  Prestataire[]  // 1 → N Prestataire
-  campagnes     Campagne[]     // 1 → N Campagne (via Id_service)
+  prestataires Prestataire[]
+  campagnes    Campagne[]
 
   @@map("services")
 }
 
 model Prestataire {
-  id_prestataire    String                  @id @default(cuid())
-  id_service        String
-  id_vehicule       String?                 @unique
-  nom               String
-  prenom            String
-  contact           String
-  disponible        Boolean                 @default(true)
-  created_at        DateTime                @default(now())
-  updated_at        DateTime                @updatedAt
+  id_prestataire String    @id @default(cuid())
+  id_service     String
+  id_vehicule    String?   @unique
+  nom            String
+  prenom         String
+  contact        String
+  disponible     Boolean   @default(true)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
 
-  service           Service                 @relation(fields: [id_service], references: [id_service])
-  vehicule          VehiculePrestataire?    @relation(fields: [id_vehicule], references: [id_vehicule])
-  affectations      PrestataireCampagne[]   // 1 → N PrestataireCampagne
+  service        Service           @relation(fields: [id_service], references: [id_service])
+  vehicule       VehiculePrestataire? @relation(fields: [id_vehicule], references: [id_vehicule])
+  affectations   PrestataireCampagne[]
 
   @@map("prestataires")
 }
 
 model VehiculePrestataire {
-  id_vehicule       String        @id @default(cuid())
-  type_panneau      TypePanneau
-  couleur           String?
-  marque            String?
-  modele            String?
-  plaque            String?       @unique
-  id_verification   String?
-  created_at        DateTime      @default(now())
+  id_vehicule     String      @id @default(cuid())
+  type_panneau    TypePanneau
+  couleur         String?
+  marque          String?
+  modele          String?
+  plaque          String?     @unique
+  id_verification String?
+  created_at      DateTime    @default(now())
 
-  prestataire       Prestataire?
-  dommages          MaterielsCase[]  // 1 → N MaterielsCase
+  prestataire     Prestataire?
+  dommages        MaterielsCase[]
 
   @@map("vehicules_prestataire")
 }
 
 model Campagne {
-  id_campagne       String          @id @default(cuid())
-  id_client         String
-  id_lieu           String
-  id_gestionnaire   String
-  Id_service        String
-  nom_campagne      String
-  description       String?
-  objectif          String?
-  type_campagne     String?
-  date_debut        DateTime
-  date_fin          DateTime
-  date_creation     DateTime        @default(now())
-  status            CampagneStatus  @default(PLANIFIEE)
-  updated_at        DateTime        @updatedAt
+  id_campagne     String    @id @default(cuid())
+  id_client       String
+  id_lieu         String
+  id_gestionnaire String
+  id_service      String 
+  nom_campagne    String
+  description     String?
+  objectif        String?
+  quantite_service Int?
+  nbr_prestataire Int?
+  type_campagne   TypeCampagne? 
+  date_debut      DateTime
+  date_fin        DateTime
+  date_creation   DateTime  @default(now())
+  status          CampagneStatus @default(PLANIFIEE)
+  updated_at      DateTime  @updatedAt
 
-  client            Client                @relation(fields: [id_client], references: [id_client])
-  lieu              Lieu                  @relation(fields: [id_lieu], references: [id_lieu])
-  gestionnaire      User                  @relation(fields: [id_gestionnaire], references: [id_user])
-  service           Service               @relation(fields: [Id_service], references: [id_service])
-  affectations      PrestataireCampagne[] // 1 → N PrestataireCampagne
-  fichiers          FichierCampagne[]     // 1 → N Fichier_campagne
-  dommages          MaterielsCase[]       // 1 → N MaterielsCase
+  client          Client            @relation(fields: [id_client], references: [id_client])
+  lieu            Lieu              @relation(fields: [id_lieu], references: [id_lieu])
+  gestionnaire    User              @relation(fields: [id_gestionnaire], references: [id_user])
+  service         Service           @relation(fields: [id_service], references: [id_service])
+
+  affectations    PrestataireCampagne[]
+  fichiers        FichierCampagne[]
+  dommages        MaterielsCase[]
 
   @@map("campagnes")
 }
 
 model PrestataireCampagne {
-  id_campagne       String
-  id_prestataire    String
-  date_creation     DateTime  @default(now())
-  date_fin          DateTime?
-  status            String?
-  image_affiche     String?
+  id_campagne   String
+  id_prestataire String
+  date_creation DateTime  @default(now())
+  date_fin      DateTime?
+  status        String?
+  image_affiche String?
 
-  campagne          Campagne  @relation(fields: [id_campagne], references: [id_campagne])
-  prestataire       Prestataire @relation(fields: [id_prestataire], references: [id_prestataire])
-  paiement          PaiementPrestataire?
+  campagne      Campagne          @relation(fields: [id_campagne], references: [id_campagne])
+  prestataire   Prestataire       @relation(fields: [id_prestataire], references: [id_prestataire])
+  paiement      PaiementPrestataire?
 
-  @@id([id_campagne, id_prestataire])  // Clé composite pour pivot
+  @@id([id_campagne, id_prestataire])
   @@map("prestataires_campagne")
 }
 
 model PaiementPrestataire {
-  id_paiement       String    @id @default(cuid())
-  id_campagne       String
-  id_prestataire    String
-  paiement_base     Float
-  paiement_final    Float
-  date_paiement     DateTime?
-  statut_paiement   Boolean   @default(false)
-  sanction_montant  Float     @default(0)
-  created_at        DateTime  @default(now())
+  id_paiement      String   @id @default(cuid())
+  id_campagne      String
+  id_prestataire   String
+  paiement_base    Float
+  paiement_final   Float
+  date_paiement    DateTime?
+  statut_paiement  Boolean  @default(false)
+  sanction_montant Float    @default(0)
+  created_at       DateTime @default(now())
 
-  affectation       PrestataireCampagne @relation(fields: [id_campagne, id_prestataire], references: [id_campagne, id_prestataire])
+  affectation      PrestataireCampagne @relation(fields: [id_campagne, id_prestataire], references: [id_campagne, id_prestataire])
 
   @@unique([id_campagne, id_prestataire])
   @@map("paiements_prestataire")
 }
 
 model MaterielsCase {
-  id_materiels_case String       @id @default(cuid())
+  id_materiels_case String      @id @default(cuid())
   id_campagne       String?
   id_vehicule       String?
   etat              EtatMateriel
@@ -222,37 +226,37 @@ model MaterielsCase {
   montant_penalite  Float
   penalite_appliquer Boolean     @default(false)
   photo_url         String?
-  date_creation     DateTime     @default(now())
+  date_creation     DateTime    @default(now())
   preuve_media      String?
 
-  campagne          Campagne?    @relation(fields: [id_campagne], references: [id_campagne])
+  campagne          Campagne?           @relation(fields: [id_campagne], references: [id_campagne])
   vehicule          VehiculePrestataire? @relation(fields: [id_vehicule], references: [id_vehicule])
 
   @@map("materiels_case")
 }
 
 model FichierCampagne {
-  id_fichier          String      @id @default(cuid())
-  id_campagne         String
-  nom_fichier         String
-  description         String?
-  lien_canva_drive    String
-  type_fichier        TypeFichier
-  date_creation       DateTime    @default(now())
+  id_fichier       String      @id @default(cuid())
+  id_campagne      String
+  nom_fichier      String
+  description      String?
+  lien_canva_drive String
+  type_fichier     TypeFichier
+  date_creation    DateTime    @default(now())
 
-  campagne            Campagne    @relation(fields: [id_campagne], references: [id_campagne])
+  campagne         Campagne    @relation(fields: [id_campagne], references: [id_campagne])
 
   @@map("fichiers_campagne")
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  user_id     String
-  action      String
-  ressource   String
-  details     Json?
-  ip_address  String?
-  timestamp   DateTime @default(now())
+  id         String    @id @default(cuid())
+  user_id    String
+  action     String
+  ressource  String
+  details    Json?
+  ip_address String?
+  timestamp  DateTime  @default(now())
 
   @@map("audit_logs")
 }

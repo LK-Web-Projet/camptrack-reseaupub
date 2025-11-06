@@ -2899,6 +2899,8 @@ const openApi = {
                       nom_campagne: "Campagne Printemps 2025",
                       description: "Campagne de publicité mobile pour la saison printanière",
                       objectif: "Augmenter la visibilité de la marque de 30%",
+                      quantite_service: 100,
+                      nbr_prestataire: 3,
                       type_campagne: "MASSE",
                       date_debut: "2025-03-01T00:00:00.000Z",
                       date_fin: "2025-03-15T00:00:00.000Z",
@@ -2969,7 +2971,7 @@ const openApi = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["id_client", "id_lieu", "Id_service", "nom_campagne", "date_debut", "date_fin"],
+                required: ["id_client", "id_lieu", "id_service", "nom_campagne", "date_debut", "date_fin"],
                 properties: {
                   id_client: { 
                     type: "string",
@@ -2981,7 +2983,7 @@ const openApi = {
                     description: "ID du lieu où se déroule la campagne",
                     example: "cmlieu001"
                   },
-                  Id_service: { 
+                  id_service: { 
                     type: "string",
                     description: "ID du service publicitaire utilisé",
                     example: "cmservice001"
@@ -3001,6 +3003,18 @@ const openApi = {
                     type: "string",
                     description: "Objectifs marketing de la campagne",
                     example: "Augmenter la notoriété de la marque de 25%"
+                  },
+                  quantite_service: {
+                    type: "integer",
+                    minimum: 1,
+                    description: "Quantité de services publicitaires requis",
+                    example: 100
+                  },
+                  nbr_prestataire: {
+                    type: "integer",
+                    minimum: 1,
+                    description: "Nombre de prestataires à affecter à la campagne",
+                    example: 3
                   },
                   type_campagne: {
                     type: "string",
@@ -3044,6 +3058,8 @@ const openApi = {
                     nom_campagne: "Campagne Printemps 2025",
                     description: "Campagne de publicité mobile pour promouvoir les nouveaux produits",
                     objectif: "Augmenter la notoriété de la marque de 25%",
+                    quantite_service: 100,
+                    nbr_prestataire: 3,
                     type_campagne: "MASSE",
                     date_debut: "2025-03-01T00:00:00.000Z",
                     date_fin: "2025-03-15T00:00:00.000Z",
@@ -3151,6 +3167,8 @@ const openApi = {
                     nom_campagne: "Campagne Printemps 2025",
                     description: "Campagne de publicité mobile pour promouvoir les nouveaux produits",
                     objectif: "Augmenter la notoriété de la marque de 25%",
+                    quantite_service: 100,
+                    nbr_prestataire: 3,
                     type_campagne: "MASSE",
                     date_debut: "2025-03-01T00:00:00.000Z",
                     date_fin: "2025-03-15T00:00:00.000Z",
@@ -3281,6 +3299,16 @@ const openApi = {
                     type: "string",
                     example: "Nouveaux objectifs"
                   },
+                  quantite_service: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 150
+                  },
+                  nbr_prestataire: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 4
+                  },
                   type_campagne: {
                     type: "string",
                     enum: ["MASSE", "PROXIMITE"],
@@ -3325,6 +3353,8 @@ const openApi = {
                     nom_campagne: "Nouveau nom de campagne",
                     description: "Nouvelle description",
                     objectif: "Nouveaux objectifs",
+                    quantite_service: 150,
+                    nbr_prestataire: 4,
                     type_campagne: "PROXIMITE",
                     date_debut: "2025-03-05T00:00:00.000Z",
                     date_fin: "2025-03-20T00:00:00.000Z",
@@ -4798,6 +4828,16 @@ const openApi = {
             type: "string",
             description: "Objectifs de la campagne" 
           },
+          quantite_service: { 
+            type: "integer",
+            description: "Quantité de service demandée", 
+            example: 100
+          },
+          nbr_prestataire: { 
+            type: "integer",
+            description: "Nombre de prestataires affectés" , 
+            example: 10
+          },
           type_campagne: { 
             type: "string",
             enum: ["MASSE", "PROXIMITE"],
@@ -4880,6 +4920,14 @@ const openApi = {
           objectif: { 
             type: "string",
             description: "Objectifs de la campagne" 
+          },
+          quantite_service: { 
+            type: "integer",
+            description: "Quantité de service demandée"
+          },
+          nbr_prestataire: { 
+            type: "integer",
+            description: "Nombre de prestataires affectés" 
           },
           type_campagne: { 
             type: "string",

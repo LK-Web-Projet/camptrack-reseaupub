@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
         nom_campagne: true,
         description: true,
         objectif: true,
+        quantite_service: true,
+        nbr_prestataire: true,
         type_campagne: true,
         date_debut: true,
         date_fin: true,
@@ -106,10 +108,12 @@ export async function POST(request: NextRequest) {
     const { 
       id_client, 
       id_lieu, 
-      Id_service, 
+      id_service, 
       nom_campagne, 
       description, 
       objectif, 
+      quantite_service,
+      nbr_prestataire,
       type_campagne, 
       date_debut, 
       date_fin 
@@ -133,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier que le service existe
     const service = await prisma.service.findUnique({
-      where: { id_service: Id_service }
+      where: { id_service: id_service }
     });
     if (!service) {
       throw new AppError("Service non trouvé", 404);
@@ -165,11 +169,13 @@ export async function POST(request: NextRequest) {
       data: {
         id_client,
         id_lieu,
-        Id_service,
+        id_service,
         id_gestionnaire: authCheck.user.id_user, // L'admin qui crée devient gestionnaire
         nom_campagne,
         description: description || null,
         objectif: objectif || null,
+        quantite_service: quantite_service || null,
+        nbr_prestataire: nbr_prestataire || null,
         type_campagne: type_campagne || null,
         date_debut: new Date(date_debut),
         date_fin: new Date(date_fin)
@@ -179,6 +185,8 @@ export async function POST(request: NextRequest) {
         nom_campagne: true,
         description: true,
         objectif: true,
+        quantite_service: true,
+        nbr_prestataire: true,
         type_campagne: true,
         date_debut: true,
         date_fin: true,

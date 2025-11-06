@@ -23,12 +23,26 @@ CREATE TABLE "users" (
     "prenom" TEXT NOT NULL,
     "nom_utilisateur" TEXT,
     "type_user" "UserType" NOT NULL,
-    "email" TEXT,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
     "contact" TEXT,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id_user")
+);
+
+-- CreateTable
+CREATE TABLE "refresh_tokens" (
+    "id" TEXT NOT NULL,
+    "token_hash" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "revoked" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "refresh_tokens_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -103,11 +117,13 @@ CREATE TABLE "campagnes" (
     "id_client" TEXT NOT NULL,
     "id_lieu" TEXT NOT NULL,
     "id_gestionnaire" TEXT NOT NULL,
-    "Id_service" TEXT NOT NULL,
+    "id_service" TEXT NOT NULL,
     "nom_campagne" TEXT NOT NULL,
     "description" TEXT,
     "objectif" TEXT,
-    "type_campagne" TEXT,
+    "quantite_service" INTEGER,
+    "nbr_prestataire" INTEGER,
+    "type_campagne" "TypeCampagne",
     "date_debut" TIMESTAMP(3) NOT NULL,
     "date_fin" TIMESTAMP(3) NOT NULL,
     "date_creation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -205,6 +221,9 @@ CREATE UNIQUE INDEX "vehicules_prestataire_plaque_key" ON "vehicules_prestataire
 CREATE UNIQUE INDEX "paiements_prestataire_id_campagne_id_prestataire_key" ON "paiements_prestataire"("id_campagne", "id_prestataire");
 
 -- AddForeignKey
+ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id_user") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "prestataires" ADD CONSTRAINT "prestataires_id_service_fkey" FOREIGN KEY ("id_service") REFERENCES "services"("id_service") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -220,7 +239,7 @@ ALTER TABLE "campagnes" ADD CONSTRAINT "campagnes_id_lieu_fkey" FOREIGN KEY ("id
 ALTER TABLE "campagnes" ADD CONSTRAINT "campagnes_id_gestionnaire_fkey" FOREIGN KEY ("id_gestionnaire") REFERENCES "users"("id_user") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "campagnes" ADD CONSTRAINT "campagnes_Id_service_fkey" FOREIGN KEY ("Id_service") REFERENCES "services"("id_service") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "campagnes" ADD CONSTRAINT "campagnes_id_service_fkey" FOREIGN KEY ("id_service") REFERENCES "services"("id_service") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "prestataires_campagne" ADD CONSTRAINT "prestataires_campagne_id_campagne_fkey" FOREIGN KEY ("id_campagne") REFERENCES "campagnes"("id_campagne") ON DELETE RESTRICT ON UPDATE CASCADE;
