@@ -21,10 +21,8 @@ export default function DashboardHeader({
 
   return (
     <header className="flex items-center justify-between px-8 py-3 bg-white dark:bg-gray-800 border-b w-full shadow-sm">
-      {/* ---- SECTION GAUCHE ---- */}
       <div className="flex items-center gap-6">
-        {/* Bouton hamburger pour sidebar */}
-        <button
+$        <button
           onClick={() => {
             if (isMobile) {
               setOpenMobile(!openMobile);
