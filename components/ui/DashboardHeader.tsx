@@ -4,9 +4,7 @@ import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/common/NotificationDropdown";
-<<<<<<< HEAD
 import Link from "next/link";
-=======
 async function logoutUser() {
   try {
     await fetch("/api/auth/logout", {
@@ -26,7 +24,6 @@ async function logoutUser() {
   }
 }
 
->>>>>>> feature/admin_and_auth
 
 export default function DashboardHeader({
   onToggleSidebar,
@@ -44,11 +41,7 @@ export default function DashboardHeader({
   return (
     <header className="flex items-center justify-between px-8 py-3 bg-white dark:bg-gray-800 border-b w-full shadow-sm">
       <div className="flex items-center gap-6">
-<<<<<<< HEAD
-$        <button
-=======
         <button
->>>>>>> feature/admin_and_auth
           onClick={() => {
             if (isMobile) {
               setOpenMobile(!openMobile);
@@ -102,7 +95,6 @@ $        <button
           </button>
 
           {isUserMenuOpen && (
-<<<<<<< HEAD
            <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
   <ul className="py-2">
     <li>
@@ -123,26 +115,6 @@ $        <button
     </li>
   </ul>
 </div>
-=======
-            <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
-              <ul className="py-2">
-                <li>
-                  <button className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">
-                    Mon profil
-                  </button>
-                </li>
-                <li>
-                  <button
-  onClick={logoutUser}
-  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500"
->
-  Déconnexion
-</button>
-
-                </li>
-              </ul>
-            </div>
->>>>>>> feature/admin_and_auth
           )}
         </div>
       </div>
