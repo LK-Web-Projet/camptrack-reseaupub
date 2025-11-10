@@ -1,0 +1,180 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/middleware/authMiddleware";
+import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+
+// GET /api/campagnes/[id]/prestataires - Lister les prestataires d'une campagne
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> } 
+) {
+  try {
+    const authCheck = await requireAdmin(request);
+    if (!authCheck.ok) return authCheck.response;
+
+    const { id } = await params; 
+    const campagneId = id;
+
+    // Vérifier que la campagne existe
+    const campagne = await prisma.campagne.findUnique({
+      where: { id_campagne: campagneId },
+      select: { id_campagne: true, nom_campagne: true }
+    });
+
+    if (!campagne) {
+      throw new AppError("Campagne non trouvée", 404);
+    }
+
+    const affectations = await prisma.prestataireCampagne.findMany({
+      where: { id_campagne: campagneId },
+      select: {
+        prestataire: {
+          select: {
+            id_prestataire: true,
+            nom: true,
+            prenom: true,
+            contact: true,
+            disponible: true,
+            service: {
+              select: {
+                nom: true
+              }
+            },
+            vehicule: {
+              select: {
+                type_panneau: true,
+                marque: true,
+                modele: true,
+                plaque: true
+              }
+            }
+          }
+        },
+        date_creation: true,
+        date_fin: true,
+        status: true,
+        image_affiche: true,
+        paiement: {
+          select: {
+            paiement_base: true,
+            paiement_final: true,
+            statut_paiement: true
+          }
+        }
+      },
+      orderBy: { date_creation: 'desc' }
+    });
+
+    return NextResponse.json({
+      campagne: {
+        id_campagne: campagne.id_campagne,
+        nom_campagne: campagne.nom_campagne
+      },
+      affectations
+    });
+
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+// POST /api/campagnes/[id]/prestataires - Ajouter un prestataire à une campagne
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> } 
+) {
+  try {
+    const authCheck = await requireAdmin(request);
+    if (!authCheck.ok) return authCheck.response;
+
+    const { id } = await params; 
+    const campagneId = id;
+
+    const body = await request.json();
+    
+    if (!body.id_prestataire) {
+      throw new AppError("ID prestataire requis", 400);
+    }
+
+    const { id_prestataire } = body;
+
+    // Vérifier que la campagne existe
+    const campagne = await prisma.campagne.findUnique({
+      where: { id_campagne: campagneId }
+    });
+
+    if (!campagne) {
+      throw new AppError("Campagne non trouvée", 404);
+    }
+
+    // Vérifier que le prestataire existe
+    const prestataire = await prisma.prestataire.findUnique({
+      where: { id_prestataire },
+      include: {
+        service: true
+      }
+    });
+
+    if (!prestataire) {
+      throw new AppError("Prestataire non trouvé", 404);
+    }
+
+    // Vérifier que le prestataire n'est pas déjà affecté
+    const existingAffectation = await prisma.prestataireCampagne.findUnique({
+      where: {
+        id_campagne_id_prestataire: {
+          id_campagne: campagneId,
+          id_prestataire
+        }
+      }
+    });
+
+    if (existingAffectation) {
+      throw new AppError("Ce prestataire est déjà affecté à cette campagne", 409);
+    }
+
+    // Vérifier que le prestataire est disponible
+    if (!prestataire.disponible) {
+      throw new AppError("Ce prestataire n'est pas disponible", 400);
+    }
+
+    // Créer l'affectation
+    const affectation = await prisma.prestataireCampagne.create({
+      data: {
+        id_campagne: campagneId,
+        id_prestataire
+      },
+      select: {
+        prestataire: {
+          select: {
+            id_prestataire: true,
+            nom: true,
+            prenom: true,
+            contact: true,
+            service: {
+              select: {
+                nom: true
+              }
+            },
+            vehicule: {
+              select: {
+                type_panneau: true,
+                plaque: true
+              }
+            }
+          }
+        },
+        date_creation: true,
+        status: true
+      }
+    });
+
+    return NextResponse.json({ 
+      message: "Prestataire affecté à la campagne avec succès",
+      affectation 
+    }, { status: 201 });
+
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
