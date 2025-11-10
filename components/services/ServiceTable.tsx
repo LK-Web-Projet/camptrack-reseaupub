@@ -105,7 +105,7 @@ export default function ServiceTable() {
     setServiceToEdit(service) // 👈 On stocke l'utilisateur sélectionné
     setIsEditModalOpen(true)
   }}
-  className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+  className="p-2  cursor-pointer  rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
 >
   <Pencil className="w-4 h-4" />
 </button>
@@ -115,7 +115,7 @@ export default function ServiceTable() {
                           setServiceToDelete(service)
                           setIsDeleteModalOpen(true)
                         }}
-                        className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                        className="p-2  cursor-pointer  rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

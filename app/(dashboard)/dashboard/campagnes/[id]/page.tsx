@@ -56,17 +56,34 @@ export default function DetailCampagnePage() {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
         <h2 className="text-lg font-semibold mb-4">Informations générales</h2>
 
-        <div className="space-y-2 text-sm">
-          <p><strong>ID :</strong> {campagne.id_campagne}</p>
-          <p><strong>Nom :</strong> {campagne.nom_campagne}</p>
-          <p><strong>Description :</strong> {campagne.description}</p>
-          <p><strong>Objectif :</strong> {campagne.objectif}</p>
-          <p><strong>Type :</strong> {campagne.type_campagne}</p>
-          <p><strong>Date début :</strong> {campagne.date_debut}</p>
-          <p><strong>Date fin :</strong> {campagne.date_fin}</p>
-          <p><strong>Status :</strong> {campagne.status}</p>
-        </div>
+       <div className="space-y-4 text-sm">
+
+  {/* ✅ Informations principales */}
+  <div className="space-y-2">
+    <p><strong>ID :</strong> {campagne.id_campagne}</p>
+    <p><strong>Nom :</strong> {campagne.nom_campagne}</p>
+    <p><strong>Description :</strong> {campagne.description}</p>
+    <p><strong>Objectif :</strong> {campagne.objectif}</p>
+    <p><strong>Type :</strong> {campagne.type_campagne}</p>
+    <p><strong>Date début :</strong> {campagne.date_debut}</p>
+    <p><strong>Date fin :</strong> {campagne.date_fin}</p>
+    <p><strong>Status :</strong> {campagne.status}</p>
+  </div>
+    <h3 className="text-md font-bold mb-2">Fichiers:</h3>
+    <input
+      type="file"
+      accept=".pdf,.doc,.docx,image/*"
+      multiple
+      className="block w-full text-sm text-gray-700 bg-gray-50 dark:bg-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer p-2"
+    />
+
+   
+
+
+</div>
+
       </div>
+   
 
       {/* ✅ Client */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
