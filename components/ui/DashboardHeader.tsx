@@ -107,11 +107,12 @@ export default function DashboardHeader({
     </li>
 
     <li>
-      <button
-        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500"
-      >
-        Déconnexion
-      </button>
+     <button
+          onClick={logoutUser}
+          className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500"
+        >
+          Déconnexion
+        </button>
     </li>
   </ul>
 </div>
