@@ -4,6 +4,25 @@ import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/common/NotificationDropdown";
+async function logoutUser() {
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    document.cookie = "accessToken=; Max-Age=0; path=/;";
+    document.cookie = "refreshToken=; Max-Age=0; path=/;";
+
+    window.location.href = "/";
+
+  } catch (error) {
+    console.error("Erreur lors de la déconnexion :", error);
+  }
+}
+
 
 export default function DashboardHeader({
   onToggleSidebar,
@@ -20,9 +39,7 @@ export default function DashboardHeader({
 
   return (
     <header className="flex items-center justify-between px-8 py-3 bg-white dark:bg-gray-800 border-b w-full shadow-sm">
-      {/* ---- SECTION GAUCHE ---- */}
       <div className="flex items-center gap-6">
-        {/* Bouton hamburger pour sidebar */}
         <button
           onClick={() => {
             if (isMobile) {
@@ -50,26 +67,19 @@ export default function DashboardHeader({
           </svg>
         </button>
 
-        {/* Titre */}
         <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 md:block hidden">
           Tableau de bord
         </h1>
       </div>
 
-      {/* ---- SECTION CENTRALE ---- */}
       <div className="flex-1 flex justify-center">
-        {/* Champ de recherche ou placeholder ici */}
       </div>
 
-      {/* ---- SECTION DROITE ---- */}
       <div className="flex items-center gap-8 relative">
-        {/* Thème */}
         <ThemeToggleButton />
 
-        {/* Notifications */}
         <NotificationDropdown />
 
-        {/* Utilisateur */}
         <div className="relative">
           <button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -83,7 +93,6 @@ export default function DashboardHeader({
             <span className="font-medium hidden sm:block">{user.name}</span>
           </button>
 
-          {/* Dropdown utilisateur */}
           {isUserMenuOpen && (
             <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
               <ul className="py-2">
@@ -93,9 +102,13 @@ export default function DashboardHeader({
                   </button>
                 </li>
                 <li>
-                  <button className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500">
-                    Déconnexion
-                  </button>
+                  <button
+  onClick={logoutUser}
+  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500"
+>
+  Déconnexion
+</button>
+
                 </li>
               </ul>
             </div>
