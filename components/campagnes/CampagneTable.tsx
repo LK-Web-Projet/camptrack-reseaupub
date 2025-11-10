@@ -5,6 +5,7 @@ import { Pencil, Trash2, Plus, Megaphone, Eye } from "lucide-react"
 import AddCampagneModal from "@/components/campagnes/AddCampagne"
 import EditCampagneModal from "@/components/campagnes/EditCampagne"
 import DeleteCampagneModal from "@/components/campagnes/DeleteCampagne"
+import Link from "next/link"
 
 interface Campagne {
   id_campagne: string;
@@ -131,21 +132,21 @@ export default function CampagneTable() {
                 </td>
                 <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm text-center">
                   <div className="flex justify-center gap-3">
-                    <button
-      onClick={() => {
-        // Ici tu pourras ouvrir ton modal détail plus tard
-        console.log("Ouvrir modal détail pour", campagne.nom_campagne);
-      }}
-      className="p-2 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 transition"
-    >
-      <Eye className="w-4 h-4" />
-    </button>
+   
+   <Link href={`/dashboard/campagnes/${campagne.id_campagne}`}>
+  <button
+    className="p-2 rounded-lg cursor-pointer bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 transition"
+  >
+    <Eye className="w-4 h-4" />
+  </button>
+</Link>
+
                      <button
   onClick={() => {
     setCampagneToEdit(campagne) // 👈 On stocke l'utilisateur sélectionné
     setIsEditModalOpen(true)
   }}
-  className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+  className="p-2 rounded-lg bg-blue-50 cursor-pointer dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
 >
   <Pencil className="w-4 h-4" />
 </button>
@@ -155,7 +156,7 @@ export default function CampagneTable() {
                           setCampagneToDelete(campagne)
                           setIsDeleteOpen(true)
                         }}
-                        className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                        className="p-2 rounded-lg cursor-pointer bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

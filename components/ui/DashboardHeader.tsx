@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/common/NotificationDropdown";
+import Link from "next/link";
 
 export default function DashboardHeader({
   onToggleSidebar,
@@ -85,20 +86,26 @@ export default function DashboardHeader({
 
           {/* Dropdown utilisateur */}
           {isUserMenuOpen && (
-            <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
-              <ul className="py-2">
-                <li>
-                  <button className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">
-                    Mon profil
-                  </button>
-                </li>
-                <li>
-                  <button className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500">
-                    Déconnexion
-                  </button>
-                </li>
-              </ul>
-            </div>
+           <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
+  <ul className="py-2">
+    <li>
+      <Link
+        href="/dashboard/profil"
+        className="w-full block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
+      >
+        Mon profil
+      </Link>
+    </li>
+
+    <li>
+      <button
+        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500"
+      >
+        Déconnexion
+      </button>
+    </li>
+  </ul>
+</div>
           )}
         </div>
       </div>
