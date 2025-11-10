@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
         id_client,
         id_lieu,
         id_service,
-        id_gestionnaire: authCheck.user.id_user, // L'admin qui crée devient gestionnaire
+        id_gestionnaire: authCheck.user.id_user, 
         nom_campagne,
         description: description || null,
         objectif: objectif || null,

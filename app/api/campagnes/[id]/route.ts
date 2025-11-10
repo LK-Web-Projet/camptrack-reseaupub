@@ -73,12 +73,12 @@ export async function GET(
                 prenom: true,
                 contact: true,
                 disponible: true,
-                vehicule: {
-                  select: {
-                    type_panneau: true,
-                    plaque: true
-                  }
-                }
+                type_panneau: true,
+                plaque: true,
+                couleur: true,
+                marque: true,
+                modele: true,
+                id_verification: true
               }
             },
             date_creation: true,

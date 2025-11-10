@@ -23,7 +23,16 @@ export async function DELETE(
         }
       },
       include: {
-        paiement: true
+        paiement: true,
+        prestataire: {
+          include: {
+            dommages: {
+              where: {
+                id_campagne: id
+              }
+            }
+          }
+        }
       }
     });
 
@@ -35,6 +44,13 @@ export async function DELETE(
     if (affectation.paiement) {
       throw new AppError(
         "Impossible de retirer ce prestataire car un paiement est associé",
+        400
+      );
+    }
+
+    if (affectation.prestataire.dommages && affectation.prestataire.dommages.length > 0) {
+      throw new AppError(
+        "Impossible de retirer ce prestataire car des dommages sont associés à cette campagne",
         400
       );
     }

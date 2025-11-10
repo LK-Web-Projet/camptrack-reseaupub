@@ -121,37 +121,27 @@ model Service {
 }
 
 model Prestataire {
-  id_prestataire String    @id @default(cuid())
-  id_service     String
-  id_vehicule    String?   @unique
-  nom            String
-  prenom         String
-  contact        String
-  disponible     Boolean   @default(true)
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
-
-  service        Service           @relation(fields: [id_service], references: [id_service])
-  vehicule       VehiculePrestataire? @relation(fields: [id_vehicule], references: [id_vehicule])
-  affectations   PrestataireCampagne[]
-
-  @@map("prestataires")
-}
-
-model VehiculePrestataire {
-  id_vehicule     String      @id @default(cuid())
-  type_panneau    TypePanneau
+  id_prestataire  String      @id @default(cuid())
+  id_service      String
+  nom             String
+  prenom          String
+  contact         String
+  disponible      Boolean     @default(true)
+  type_panneau    TypePanneau?
   couleur         String?
   marque          String?
   modele          String?
   plaque          String?     @unique
-  id_verification String?
+  id_verification String?  
   created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
 
-  prestataire     Prestataire?
-  dommages        MaterielsCase[]
+  // Relations
+  service         Service               @relation(fields: [id_service], references: [id_service])
+  affectations    PrestataireCampagne[]
+  dommages        MaterielsCase[]       
 
-  @@map("vehicules_prestataire")
+  @@map("prestataires")
 }
 
 model Campagne {
@@ -220,7 +210,7 @@ model PaiementPrestataire {
 model MaterielsCase {
   id_materiels_case String      @id @default(cuid())
   id_campagne       String?
-  id_vehicule       String?
+  id_prestataire    String?     
   etat              EtatMateriel
   description       String
   montant_penalite  Float
@@ -229,8 +219,8 @@ model MaterielsCase {
   date_creation     DateTime    @default(now())
   preuve_media      String?
 
-  campagne          Campagne?           @relation(fields: [id_campagne], references: [id_campagne])
-  vehicule          VehiculePrestataire? @relation(fields: [id_vehicule], references: [id_vehicule])
+  campagne          Campagne?    @relation(fields: [id_campagne], references: [id_campagne])
+  prestataire       Prestataire? @relation(fields: [id_prestataire], references: [id_prestataire]) 
 
   @@map("materiels_case")
 }

@@ -35,17 +35,15 @@ export async function GET(
             prenom: true,
             contact: true,
             disponible: true,
+            type_panneau: true,
+            marque: true,
+            modele: true,
+            plaque: true,
+            couleur: true,
+            id_verification: true,
             service: {
               select: {
                 nom: true
-              }
-            },
-            vehicule: {
-              select: {
-                type_panneau: true,
-                marque: true,
-                modele: true,
-                plaque: true
               }
             }
           }
@@ -156,12 +154,11 @@ export async function POST(
                 nom: true
               }
             },
-            vehicule: {
-              select: {
-                type_panneau: true,
-                plaque: true
-              }
-            }
+            type_panneau: true,
+            plaque: true,
+            marque: true,
+            modele: true,
+            couleur: true
           }
         },
         date_creation: true,

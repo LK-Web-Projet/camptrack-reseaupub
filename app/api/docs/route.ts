@@ -3200,21 +3200,24 @@ const openApi = {
                       email: "admin@camptrack.com",
                       type_user: "ADMIN"
                     },
-                    affectations: [
+                    "affectations": [
                       {
-                        prestataire: {
-                          id_prestataire: "cmpresta001",
-                          nom: "Koné",
-                          prenom: "Moussa",
-                          contact: "+225 07 12 34 56 78",
-                          disponible: true,
-                          vehicule: {
-                            type_panneau: "GRAND",
-                            plaque: "AB-123-CD"
-                          }
+                        "prestataire": {
+                          "id_prestataire": "cmpresta001",
+                          "nom": "Koné",
+                          "prenom": "Moussa",
+                          "contact": "+225 07 12 34 56 78",
+                          "disponible": true,
+                          // ⚠️ CORRECTION : Champs directs au lieu de vehicule
+                          "type_panneau": "GRAND",
+                          "plaque": "AB-123-CD",
+                          "marque": "Toyota", 
+                          "modele": "Hilux",
+                          "couleur": "Bleu"
+                          // ⚠️ FIN CORRECTION
                         },
-                        date_creation: "2025-01-03T11:00:00.000Z",
-                        status: "ACTIF"
+                        "date_creation": "2025-01-03T11:00:00.000Z",
+                        "status": "ACTIF"
                       }
                     ],
                     fichiers: [
@@ -3546,37 +3549,39 @@ const openApi = {
                     }
                   }
                 },
-                example: {
-                  campagne: {
-                    id_campagne: "cmcamp001",
-                    nom_campagne: "Campagne Printemps 2025"
+                "example": {
+                  "campagne": {
+                    "id_campagne": "cmcamp001",
+                    "nom_campagne": "Campagne Printemps 2025"
                   },
-                  affectations: [
+                  "affectations": [
                     {
-                      prestataire: {
-                        id_prestataire: "cmpresta001",
-                        nom: "Koné",
-                        prenom: "Moussa",
-                        contact: "+225 07 12 34 56 78",
-                        disponible: true,
-                        service: {
-                          nom: "Publicité sur tricycles"
-                        },
-                        vehicule: {
-                          type_panneau: "GRAND",
-                          marque: "Toyota",
-                          modele: "Hilux",
-                          plaque: "AB-123-CD"
+                      "prestataire": {
+                        "id_prestataire": "cmpresta001",
+                        "nom": "Koné",
+                        "prenom": "Moussa",
+                        "contact": "+225 07 12 34 56 78",
+                        "disponible": true,
+                        // ⚠️ NOUVEAUX CHAMPS DIRECTS
+                        "type_panneau": "GRAND",
+                        "marque": "Toyota",
+                        "modele": "Hilux",
+                        "plaque": "AB-123-CD",
+                        "couleur": "Bleu",
+                        "id_verification": "VERIF-001",
+                        // ⚠️ FIN CORRECTION
+                        "service": {
+                          "nom": "Publicité sur tricycles"
                         }
                       },
-                      date_creation: "2025-01-03T11:00:00.000Z",
-                      date_fin: null,
-                      status: "ACTIF",
-                      image_affiche: null,
-                      paiement: {
-                        paiement_base: 150000,
-                        paiement_final: 150000,
-                        statut_paiement: false
+                      "date_creation": "2025-01-03T11:00:00.000Z",
+                      "date_fin": null,
+                      "status": "ACTIF",
+                      "image_affiche": null,
+                      "paiement": {
+                        "paiement_base": 150000,
+                        "paiement_final": 150000,
+                        "statut_paiement": false
                       }
                     }
                   ]
@@ -3661,24 +3666,27 @@ const openApi = {
                     }
                   }
                 },
-                example: {
-                  message: "Prestataire affecté à la campagne avec succès",
-                  affectation: {
-                    prestataire: {
-                      id_prestataire: "cmpresta001",
-                      nom: "Koné",
-                      prenom: "Moussa",
-                      contact: "+225 07 12 34 56 78",
-                      service: {
-                        nom: "Publicité sur tricycles"
+                "example": {
+                  "message": "Prestataire affecté à la campagne avec succès",
+                  "affectation": {
+                    "prestataire": {
+                      "id_prestataire": "cmpresta001",
+                      "nom": "Koné",
+                      "prenom": "Moussa",
+                      "contact": "+225 07 12 34 56 78",
+                      "service": {
+                        "nom": "Publicité sur tricycles"
                       },
-                      vehicule: {
-                        type_panneau: "GRAND",
-                        plaque: "AB-123-CD"
-                      }
+                      // ⚠️ NOUVEAUX CHAMPS DIRECTS
+                      "type_panneau": "GRAND",
+                      "plaque": "AB-123-CD",
+                      "marque": "Toyota",
+                      "modele": "Hilux",
+                      "couleur": "Bleu"
+                      // ⚠️ FIN CORRECTION
                     },
-                    date_creation: "2025-01-03T11:00:00.000Z",
-                    status: "ACTIF"
+                    "date_creation": "2025-01-03T11:00:00.000Z",
+                    "status": "ACTIF"
                   }
                 }
               }
@@ -4301,6 +4309,731 @@ const openApi = {
       }
     },
 
+    // ==================== GESTION DES PRESTATAIRES ====================
+    "/prestataires": {
+      get: {
+        tags: ["Prestataires"],
+        summary: "Lister tous les prestataires",
+        description: "Récupère la liste paginée de tous les prestataires avec leurs véhicules intégrés",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            description: "Numéro de page",
+            schema: { type: "integer", default: 1, minimum: 1 }
+          },
+          {
+            name: "limit",
+            in: "query", 
+            required: false,
+            description: "Nombre de prestataires par page",
+            schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
+          },
+          {
+            name: "disponible",
+            in: "query",
+            required: false,
+            description: "Filtrer par disponibilité",
+            schema: { type: "boolean" }
+          },
+          {
+            name: "serviceId",
+            in: "query",
+            required: false,
+            description: "Filtrer par ID de service",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des prestataires récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    prestataires: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/PrestataireWithStats" }
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        totalPages: { type: "integer" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  prestataires: [
+                    {
+                      id_prestataire: "cmpresta001",
+                      nom: "Koné",
+                      prenom: "Moussa",
+                      contact: "+225 07 12 34 56 78",
+                      disponible: true,
+                      type_panneau: "GRAND",
+                      marque: "Toyota",
+                      modele: "Hilux",
+                      plaque: "AB-123-CD",
+                      couleur: "Bleu",
+                      id_verification: "VERIF-001",
+                      created_at: "2025-01-03T11:00:00.000Z",
+                      _count: {
+                        affectations: 3,
+                        dommages: 0
+                      }
+                    }
+                  ],
+                  pagination: {
+                    page: 1,
+                    limit: 50,
+                    total: 1,
+                    totalPages: 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ["Prestataires"],
+        summary: "Créer un nouveau prestataire",
+        description: "Crée un nouveau prestataire avec ses informations de véhicule intégrées",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["id_service", "nom", "prenom", "contact", "type_panneau"],
+                properties: {
+                  id_service: {
+                    type: "string",
+                    description: "ID du service auquel le prestataire est associé",
+                    example: "cmservice001"
+                  },
+                  nom: {
+                    type: "string",
+                    minLength: 2,
+                    description: "Nom du prestataire",
+                    example: "Koné"
+                  },
+                  prenom: {
+                    type: "string",
+                    minLength: 2,
+                    description: "Prénom du prestataire",
+                    example: "Moussa"
+                  },
+                  contact: {
+                    type: "string",
+                    description: "Numéro de contact",
+                    example: "+225 07 12 34 56 78"
+                  },
+                  disponible: {
+                    type: "boolean",
+                    description: "Statut de disponibilité",
+                    example: true
+                  },
+                  // CHAMPS VÉHICULE INTÉGRÉS
+                  type_panneau: {
+                    type: "string",
+                    enum: ["PETIT", "GRAND"],
+                    description: "Type de panneau publicitaire",
+                    example: "GRAND"
+                  },
+                  couleur: {
+                    type: "string",
+                    description: "Couleur du véhicule",
+                    example: "Bleu"
+                  },
+                  marque: {
+                    type: "string",
+                    description: "Marque du véhicule",
+                    example: "Toyota"
+                  },
+                  modele: {
+                    type: "string",
+                    description: "Modèle du véhicule",
+                    example: "Hilux"
+                  },
+                  plaque: {
+                    type: "string",
+                    description: "Plaque d'immatriculation",
+                    example: "AB-123-CD"
+                  },
+                  id_verification: {
+                    type: "string",
+                    description: "ID de vérification du véhicule",
+                    example: "VERIF-001"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Prestataire créé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    prestataire: { $ref: "#/components/schemas/PrestataireWithStats" }
+                  }
+                },
+                example: {
+                  message: "Prestataire créé avec succès",
+                  prestataire: {
+                    id_prestataire: "cmpresta001",
+                    nom: "Koné",
+                    prenom: "Moussa",
+                    contact: "+225 07 12 34 56 78",
+                    disponible: true,
+                    type_panneau: "GRAND",
+                    marque: "Toyota",
+                    modele: "Hilux",
+                    plaque: "AB-123-CD",
+                    couleur: "Bleu",
+                    id_verification: "VERIF-001",
+                    created_at: "2025-01-03T11:00:00.000Z",
+                    _count: {
+                      affectations: 0,
+                      dommages: 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Le nom doit contenir au moins 2 caractères"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Service non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Service non trouvé"
+                }
+              }
+            }
+          },
+          "409": {
+            description: "Plaque déjà utilisée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un prestataire avec cette plaque existe déjà"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/prestataires/{id}": {
+      get: {
+        tags: ["Prestataires"],
+        summary: "Récupérer un prestataire spécifique",
+        description: "Obtenir tous les détails d'un prestataire incluant son véhicule, affectations et dommages",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Détails du prestataire récupérés avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    prestataire: { $ref: "#/components/schemas/PrestataireWithFullDetails" }
+                  }
+                },
+                example: {
+                  prestataire: {
+                    id_prestataire: "cmpresta001",
+                    nom: "Koné",
+                    prenom: "Moussa",
+                    contact: "+225 07 12 34 56 78",
+                    disponible: true,
+                    type_panneau: "GRAND",
+                    couleur: "Bleu",
+                    marque: "Toyota",
+                    modele: "Hilux",
+                    plaque: "AB-123-CD",
+                    id_verification: "VERIF-001",
+                    created_at: "2025-01-03T11:00:00.000Z",
+                    updated_at: "2025-01-03T11:00:00.000Z",
+                    service: {
+                      id_service: "cmservice001",
+                      nom: "Publicité sur tricycles",
+                      description: "Service de publicité mobile sur tricycles"
+                    },
+                    affectations: [
+                      {
+                        campagne: {
+                          id_campagne: "cmcamp001",
+                          nom_campagne: "Campagne Printemps 2025",
+                          date_debut: "2025-03-01T00:00:00.000Z",
+                          date_fin: "2025-03-15T00:00:00.000Z",
+                          status: "PLANIFIEE"
+                        },
+                        date_creation: "2025-01-03T12:00:00.000Z",
+                        status: "ACTIF"
+                      }
+                    ],
+                    dommages: [
+                      {
+                        id_materiels_case: "cmdommage001",
+                        etat: "MAUVAIS",
+                        description: "Panneau endommagé lors de la campagne",
+                        montant_penalite: 50000,
+                        penalite_appliquer: true,
+                        date_creation: "2025-01-10T10:00:00.000Z",
+                        campagne: {
+                          nom_campagne: "Campagne Hiver 2024"
+                        }
+                      }
+                    ],
+                    _count: {
+                      affectations: 3,
+                      dommages: 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Prestataire non trouvé"
+                }
+              }
+            }
+          }
+        }
+      },
+      put: {
+        tags: ["Prestataires"],
+        summary: "Modifier un prestataire",
+        description: "Met à jour les informations d'un prestataire existant et son véhicule",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire à modifier",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  nom: {
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouveau nom"
+                  },
+                  prenom: {
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouveau prénom"
+                  },
+                  contact: {
+                    type: "string",
+                    example: "+225 08 76 54 32 10"
+                  },
+                  disponible: {
+                    type: "boolean",
+                    example: false
+                  },
+                  id_service: {
+                    type: "string",
+                    example: "cmservice002"
+                  },
+                  // CHAMPS VÉHICULE INTÉGRÉS
+                  type_panneau: {
+                    type: "string",
+                    enum: ["PETIT", "GRAND"],
+                    example: "PETIT"
+                  },
+                  couleur: {
+                    type: "string",
+                    example: "Rouge"
+                  },
+                  marque: {
+                    type: "string",
+                    example: "Nissan"
+                  },
+                  modele: {
+                    type: "string",
+                    example: "Navara"
+                  },
+                  plaque: {
+                    type: "string",
+                    example: "EF-456-GH"
+                  },
+                  id_verification: {
+                    type: "string",
+                    example: "VERIF-002"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Prestataire modifié avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    prestataire: { $ref: "#/components/schemas/PrestataireWithStats" }
+                  }
+                },
+                example: {
+                  message: "Prestataire modifié avec succès",
+                  prestataire: {
+                    id_prestataire: "cmpresta001",
+                    nom: "Nouveau nom",
+                    prenom: "Nouveau prénom",
+                    contact: "+225 08 76 54 32 10",
+                    disponible: false,
+                    type_panneau: "PETIT",
+                    marque: "Nissan",
+                    modele: "Navara",
+                    plaque: "EF-456-GH",
+                    couleur: "Rouge",
+                    id_verification: "VERIF-002",
+                    created_at: "2025-01-03T11:00:00.000Z",
+                    updated_at: "2025-01-03T15:30:00.000Z",
+                    _count: {
+                      affectations: 3,
+                      dommages: 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Au moins un champ doit être fourni pour la modification"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            description: "Plaque déjà utilisée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un autre prestataire avec cette plaque existe déjà"
+                }
+              }
+            }
+          }
+        }
+      },
+      delete: {
+        tags: ["Prestataires"],
+        summary: "Supprimer un prestataire",
+        description: "Supprime définitivement un prestataire. Impossible s'il a des affectations en cours.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire à supprimer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Prestataire supprimé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Prestataire supprimé avec succès"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Suppression impossible",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Impossible de supprimer ce prestataire car il a des affectations en cours"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/prestataires/{id}/statut": {
+      put: {
+        tags: ["Prestataires"],
+        summary: "Changer le statut de disponibilité",
+        description: "Active ou désactive un prestataire (pour maintenance, congés, etc.)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["disponible"],
+                properties: {
+                  disponible: {
+                    type: "boolean",
+                    description: "Nouveau statut de disponibilité",
+                    example: false
+                  },
+                  raison: {
+                    type: "string",
+                    description: "Raison du changement de statut",
+                    example: "Véhicule en réparation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Statut modifié avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    prestataire: {
+                      type: "object",
+                      properties: {
+                        id_prestataire: { type: "string" },
+                        nom: { type: "string" },
+                        prenom: { type: "string" },
+                        disponible: { type: "boolean" },
+                        updated_at: { type: "string", format: "date-time" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  message: "Prestataire désactivé avec succès",
+                  prestataire: {
+                    id_prestataire: "cmpresta001",
+                    nom: "Koné",
+                    prenom: "Moussa",
+                    disponible: false,
+                    updated_at: "2025-01-03T15:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Le champ 'disponible' doit être un booléen"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
   },
 
   components: {
@@ -4492,35 +5225,52 @@ const openApi = {
         }
       },
 
-      PrestataireWithStats: {
-        type: "object",
-        properties: {
-          id_prestataire: { type: "string" },
-          nom: { type: "string" },
-          prenom: { type: "string" },
-          contact: { type: "string" },
-          disponible: { type: "boolean" },
-          created_at: { type: "string", format: "date-time" },
-          vehicule: {
-            type: "object",
-            properties: {
-              type_panneau: { 
-                type: "string",
-                enum: ["PETIT", "GRAND"]
-              },
-              marque: { type: "string" },
-              modele: { type: "string" },
-              plaque: { type: "string" }
-            }
-          },
-          _count: {
-            type: "object",
-            properties: {
-              affectations: { type: "integer" }
-            }
-          }
-        }
-      }, 
+PrestataireWithStats: {
+  type: "object",
+  properties: {
+    id_prestataire: { type: "string" },
+    nom: { type: "string" },
+    prenom: { type: "string" },
+    contact: { type: "string" },
+    disponible: { type: "boolean" },
+    // ⚠️ NOUVEAUX CHAMPS DIRECTS (remplacement de vehicule)
+    type_panneau: { 
+      type: "string",
+      enum: ["PETIT", "GRAND"],
+      description: "Type de panneau publicitaire"
+    },
+    marque: { 
+      type: "string",
+      description: "Marque du véhicule" 
+    },
+    modele: { 
+      type: "string",
+      description: "Modèle du véhicule" 
+    },
+    plaque: { 
+      type: "string",
+      description: "Plaque d'immatriculation" 
+    },
+    couleur: {
+      type: "string",
+      description: "Couleur du véhicule"
+    },
+    id_verification: {
+      type: "string",
+      description: "ID de vérification du véhicule"
+    },
+    // ⚠️ FIN DES NOUVEAUX CHAMPS
+    created_at: { type: "string", format: "date-time" },
+    _count: {
+      type: "object",
+      properties: {
+        affectations: { type: "integer" },
+        dommages: { type: "integer" }
+      }
+    }
+  }
+},
+  
 
       Client: {
         type: "object",
@@ -5095,7 +5845,35 @@ const openApi = {
         }
       },
 
-      PrestataireWithDetails: {
+PrestataireWithDetails: {
+  type: "object",
+  properties: {
+    id_prestataire: { type: "string" },
+    nom: { type: "string" },
+    prenom: { type: "string" },
+    contact: { type: "string" },
+    disponible: { type: "boolean" },
+    // ⚠️ CHAMPS VÉHICULE INTÉGRÉS
+    type_panneau: { 
+      type: "string",
+      enum: ["PETIT", "GRAND"]
+    },
+    couleur: { type: "string" },
+    marque: { type: "string" },
+    modele: { type: "string" },
+    plaque: { type: "string" },
+    id_verification: { type: "string" },
+    // ⚠️ FIN CHAMPS VÉHICULE
+    service: {
+      type: "object",
+      properties: {
+        nom: { type: "string" }
+      }
+    }
+  }
+},
+
+      PrestataireWithFullDetails: {
         type: "object",
         properties: {
           id_prestataire: { type: "string" },
@@ -5103,22 +5881,78 @@ const openApi = {
           prenom: { type: "string" },
           contact: { type: "string" },
           disponible: { type: "boolean" },
+          // CHAMPS VÉHICULE INTÉGRÉS
+          type_panneau: { 
+            type: "string",
+            enum: ["PETIT", "GRAND"]
+          },
+          couleur: { type: "string" },
+          marque: { type: "string" },
+          modele: { type: "string" },
+          plaque: { type: "string" },
+          id_verification: { type: "string" },
+          // FIN CHAMPS VÉHICULE
+          created_at: { type: "string", format: "date-time" },
+          updated_at: { type: "string", format: "date-time" },
           service: {
             type: "object",
             properties: {
-              nom: { type: "string" }
+              id_service: { type: "string" },
+              nom: { type: "string" },
+              description: { type: "string" }
             }
           },
-          vehicule: {
+          affectations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                campagne: {
+                  type: "object",
+                  properties: {
+                    id_campagne: { type: "string" },
+                    nom_campagne: { type: "string" },
+                    date_debut: { type: "string", format: "date-time" },
+                    date_fin: { type: "string", format: "date-time" },
+                    status: { 
+                      type: "string",
+                      enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+                    }
+                  }
+                },
+                date_creation: { type: "string", format: "date-time" },
+                status: { type: "string" }
+              }
+            }
+          },
+          dommages: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id_materiels_case: { type: "string" },
+                etat: { 
+                  type: "string",
+                  enum: ["BON", "MOYEN", "MAUVAIS"]
+                },
+                description: { type: "string" },
+                montant_penalite: { type: "number" },
+                penalite_appliquer: { type: "boolean" },
+                date_creation: { type: "string", format: "date-time" },
+                campagne: {
+                  type: "object",
+                  properties: {
+                    nom_campagne: { type: "string" }
+                  }
+                }
+              }
+            }
+          },
+          _count: {
             type: "object",
             properties: {
-              type_panneau: { 
-                type: "string",
-                enum: ["PETIT", "GRAND"]
-              },
-              marque: { type: "string" },
-              modele: { type: "string" },
-              plaque: { type: "string" }
+              affectations: { type: "integer" },
+              dommages: { type: "integer" }
             }
           }
         }

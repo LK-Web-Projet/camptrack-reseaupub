@@ -86,29 +86,20 @@ CREATE TABLE "services" (
 CREATE TABLE "prestataires" (
     "id_prestataire" TEXT NOT NULL,
     "id_service" TEXT NOT NULL,
-    "id_vehicule" TEXT,
     "nom" TEXT NOT NULL,
     "prenom" TEXT NOT NULL,
     "contact" TEXT NOT NULL,
     "disponible" BOOLEAN NOT NULL DEFAULT true,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "prestataires_pkey" PRIMARY KEY ("id_prestataire")
-);
-
--- CreateTable
-CREATE TABLE "vehicules_prestataire" (
-    "id_vehicule" TEXT NOT NULL,
-    "type_panneau" "TypePanneau" NOT NULL,
+    "type_panneau" "TypePanneau",
     "couleur" TEXT,
     "marque" TEXT,
     "modele" TEXT,
     "plaque" TEXT,
     "id_verification" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "vehicules_prestataire_pkey" PRIMARY KEY ("id_vehicule")
+    CONSTRAINT "prestataires_pkey" PRIMARY KEY ("id_prestataire")
 );
 
 -- CreateTable
@@ -164,7 +155,7 @@ CREATE TABLE "paiements_prestataire" (
 CREATE TABLE "materiels_case" (
     "id_materiels_case" TEXT NOT NULL,
     "id_campagne" TEXT,
-    "id_vehicule" TEXT,
+    "id_prestataire" TEXT,
     "etat" "EtatMateriel" NOT NULL,
     "description" TEXT NOT NULL,
     "montant_penalite" DOUBLE PRECISION NOT NULL,
@@ -212,10 +203,7 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX "clients_mail_key" ON "clients"("mail");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "prestataires_id_vehicule_key" ON "prestataires"("id_vehicule");
-
--- CreateIndex
-CREATE UNIQUE INDEX "vehicules_prestataire_plaque_key" ON "vehicules_prestataire"("plaque");
+CREATE UNIQUE INDEX "prestataires_plaque_key" ON "prestataires"("plaque");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "paiements_prestataire_id_campagne_id_prestataire_key" ON "paiements_prestataire"("id_campagne", "id_prestataire");
@@ -225,9 +213,6 @@ ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_userId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "prestataires" ADD CONSTRAINT "prestataires_id_service_fkey" FOREIGN KEY ("id_service") REFERENCES "services"("id_service") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "prestataires" ADD CONSTRAINT "prestataires_id_vehicule_fkey" FOREIGN KEY ("id_vehicule") REFERENCES "vehicules_prestataire"("id_vehicule") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "campagnes" ADD CONSTRAINT "campagnes_id_client_fkey" FOREIGN KEY ("id_client") REFERENCES "clients"("id_client") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -254,7 +239,7 @@ ALTER TABLE "paiements_prestataire" ADD CONSTRAINT "paiements_prestataire_id_cam
 ALTER TABLE "materiels_case" ADD CONSTRAINT "materiels_case_id_campagne_fkey" FOREIGN KEY ("id_campagne") REFERENCES "campagnes"("id_campagne") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "materiels_case" ADD CONSTRAINT "materiels_case_id_vehicule_fkey" FOREIGN KEY ("id_vehicule") REFERENCES "vehicules_prestataire"("id_vehicule") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "materiels_case" ADD CONSTRAINT "materiels_case_id_prestataire_fkey" FOREIGN KEY ("id_prestataire") REFERENCES "prestataires"("id_prestataire") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "fichiers_campagne" ADD CONSTRAINT "fichiers_campagne_id_campagne_fkey" FOREIGN KEY ("id_campagne") REFERENCES "campagnes"("id_campagne") ON DELETE RESTRICT ON UPDATE CASCADE;
