@@ -1,91 +1,182 @@
-//  'use client'
-//  import { useState } from 'react'
-//  import { Lieu } from '@/app/types/lieu'
-//  import EditLieu from './EditLieu'
-//  import AddLieu from './AddLieu'
-//  import DeleteLieu from './DeleteLieu'
-//  import { FaEdit, FaTrash } from 'react-icons/fa
-//  interface LieuTableProps {
-//    lieux: Lieu[]
-//    onLieuUpdated: () => void
- 
-//  export default function LieuTable({ lieux, onLieuUpdated }: LieuTableProps) {
-//    const [showEditModal, setShowEditModal] = useState(false)
-//    const [showDeleteModal, setShowDeleteModal] = useState(false)
-//    const [showAddModal, setShowAddModal] = useState(false)
-//    const [selectedLieu, setSelectedLieu] = useState<Lieu | null>(null
-//    const handleEdit = (lieu: Lieu) => {
-//      setSelectedLieu(lieu)
-//      setShowEditModal(true)
-   
-//    const handleDelete = (lieu: Lieu) => {
-//      setSelectedLieu(lieu)
-//      setShowDeleteModal(true)
-   
-//    return (
-//      <div className="overflow-x-auto">
-//        <div className="flex justify-end mb-4">
-//          <button
-//            onClick={() => setShowAddModal(true)}
-//            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-//          >
-//            Ajouter un lieu
-//          </button>
-//        </div
-//        <table className="min-w-full bg-white">
-//          <thead>
-//            <tr className="bg-gray-200 text-gray-700">
-//              <th className="py-2 px-4 text-left">Nom</th>
-//              <th className="py-2 px-4 text-left">Ville</th>
-//              <th className="py-2 px-4 text-left">Actions</th>
-//            </tr>
-//          </thead>
-//          <tbody>
-//            {lieux.map((lieu) => (
-//              <tr key={lieu.id_lieu} className="border-b hover:bg-gray-100">
-//                <td className="py-2 px-4">{lieu.nom}</td>
-//                <td className="py-2 px-4">{lieu.ville}</td>
-//                <td className="py-2 px-4">
-//                  <button
-//                    onClick={() => handleEdit(lieu)}
-//                    className="text-blue-500 hover:text-blue-700 mr-2"
-//                  >
-//                    <FaEdit />
-//                  </button>
-//                  <button
-//                    onClick={() => handleDelete(lieu)}
-//                    className="text-red-500 hover:text-red-700"
-//                  >
-//                    <FaTrash />
-//                  </button>
-//                </td>
-//              </tr>
-//            ))}
-//          </tbody>
-//        </table
-//        {showEditModal && selectedLieu && (
-//          <EditLieu
-//            lieu={selectedLieu}
-//            isOpen={showEditModal}
-//            onClose={() => setShowEditModal(false)}
-//            onLieuUpdated={onLieuUpdated}
-//          />
-//        )
-//        {showDeleteModal && selectedLieu && (
-//          <DeleteLieu
-//            lieu={selectedLieu}
-//            isOpen={showDeleteModal}
-//            onClose={() => setShowDeleteModal(false)}
-//            onLieuUpdated={onLieuUpdated}
-//          />
-//        )
-//        {showAddModal && (
-//          <AddLieu
-//            isOpen={showAddModal}
-//            onClose={() => setShowAddModal(false)}
-//            onLieuUpdated={onLieuUpdated}
-//          />
-//        )}
-//      </div>
-//    )
-//  }
+"use client";
+
+import { useEffect, useState } from "react";
+import { Pencil, Trash2, Plus, MapPin } from "lucide-react";
+import AddLieuModal from "./AddLieu";
+import EditLieuModal from "./EditLieu";
+import DeleteLieuModal from "./DeleteLieu";
+import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "react-toastify";
+
+export type Lieu = {
+  id_lieu: string;
+  nom: string;
+  ville: string;
+  created_at: string;
+  _count?: { campagnes: number };
+};
+
+export default function LieuTable() {
+  const { token } = useAuth();
+
+  const [lieux, setLieux] = useState<Lieu[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const [lieuToEdit, setLieuToEdit] = useState<Lieu | null>(null);
+  const [lieuToDelete, setLieuToDelete] = useState<Lieu | null>(null);
+
+  // ✅ Recharger les lieux
+  const fetchLieux = async () => {
+    if (!token) return;
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/lieux/`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Erreur API");
+
+      const data = await res.json();
+      setLieux(data.lieux || []);
+
+    } catch (error) {
+      console.error("Erreur API :", error);
+      toast.error("Impossible de charger les lieux");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLieux();
+  }, [token]);
+
+  return (
+    <div className="p-6 text-gray-900 dark:text-white">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-2 text-[#d61353]">
+          <MapPin className="w-6 h-6" />
+          <h1 className="text-xl sm:text-2xl font-bold">Gestion des lieux</h1>
+        </div>
+
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center gap-2 bg-[#d61353] text-white px-4 py-2 rounded-lg hover:bg-[#b01044] transition"
+        >
+          <Plus className="w-5 h-5" />
+          Ajouter un lieu
+        </button>
+      </div>
+
+      {/* LOADING */}
+      {loading && (
+        <div className="text-center py-6 text-gray-500">
+          Chargement des lieux…
+        </div>
+      )}
+
+      {/* TABLE */}
+      {!loading && (
+        <div className="overflow-x-auto rounded-xl shadow">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800">
+                <th className="px-6 py-3 text-sm font-semibold">Nom du lieu</th>
+                <th className="px-6 py-3 text-sm font-semibold">Ville</th>
+                <th className="px-6 py-3 text-sm font-semibold">Campagnes</th>
+                <th className="px-6 py-3 text-sm font-semibold">Créé le</th>
+                <th className="px-6 py-3 text-sm font-semibold text-center">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+              {lieux.map((lieu) => (
+                <tr key={lieu.id_lieu}>
+                  <td className="px-6 py-3">{lieu.nom}</td>
+                  <td className="px-6 py-3">{lieu.ville}</td>
+                  <td className="px-6 py-3 text-center">{lieu._count?.campagnes || 0}</td>
+                  <td className="px-6 py-3">
+                    {new Date(lieu.created_at).toLocaleDateString("fr-FR")}
+                  </td>
+
+                  <td className="px-6 py-3 text-center">
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => {
+                          setLieuToEdit(lieu);
+                          setIsEditModalOpen(true);
+                        }}
+                        className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setLieuToDelete(lieu);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {lieux.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center py-6 text-gray-500">
+                    Aucun lieu trouvé.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* MODALS */}
+      <AddLieuModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onLieuUpdated={fetchLieux}
+      />
+
+      {lieuToEdit && (
+        <EditLieuModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setLieuToEdit(null);
+          }}
+          lieu={lieuToEdit}
+          onLieuUpdated={fetchLieux}
+        />
+      )}
+
+      {lieuToDelete && (
+        <DeleteLieuModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setLieuToDelete(null);
+          }}
+          lieu={lieuToDelete}
+          onLieuUpdated={fetchLieux}
+        />
+      )}
+    </div>
+  );
+}
