@@ -18,7 +18,11 @@ export async function GET(
     // Vérifier que la campagne existe
     const campagne = await prisma.campagne.findUnique({
       where: { id_campagne: campagneId },
-      select: { id_campagne: true, nom_campagne: true }
+      select: { 
+        id_campagne: true, 
+        nom_campagne: true,
+        nbr_prestataire: true 
+      }
     });
 
     if (!campagne) {
@@ -66,7 +70,10 @@ export async function GET(
     return NextResponse.json({
       campagne: {
         id_campagne: campagne.id_campagne,
-        nom_campagne: campagne.nom_campagne
+        nom_campagne: campagne.nom_campagne,
+        nbr_prestataire: campagne.nbr_prestataire,
+        // Ajout du comptage des affectations actives
+        affectations_actuelles: affectations.filter(a => a.date_fin === null).length
       },
       affectations
     });
@@ -96,9 +103,13 @@ export async function POST(
 
     const { id_prestataire } = body;
 
-    // Vérifier que la campagne existe
+    // Vérifier que la campagne existe AVEC nbr_prestataire
     const campagne = await prisma.campagne.findUnique({
-      where: { id_campagne: campagneId }
+      where: { id_campagne: campagneId },
+      select: { 
+        nbr_prestataire: true,
+        id_campagne: true
+      }
     });
 
     if (!campagne) {
@@ -117,7 +128,7 @@ export async function POST(
       throw new AppError("Prestataire non trouvé", 404);
     }
 
-    // Vérifier que le prestataire n'est pas déjà affecté
+    // Vérifier que le prestataire n'est pas déjà affecté (même terminé)
     const existingAffectation = await prisma.prestataireCampagne.findUnique({
       where: {
         id_campagne_id_prestataire: {
@@ -136,11 +147,29 @@ export async function POST(
       throw new AppError("Ce prestataire n'est pas disponible", 400);
     }
 
+    // Vérifier la contrainte de nbr_prestataire si définie
+    if (campagne.nbr_prestataire !== null) {
+      const affectationsActives = await prisma.prestataireCampagne.count({
+        where: {
+          id_campagne: campagneId,
+          date_fin: null 
+        }
+      });
+
+      if (affectationsActives >= campagne.nbr_prestataire) {
+        throw new AppError(
+          `Le nombre maximum de prestataires (${campagne.nbr_prestataire}) pour cette campagne est déjà atteint. Impossible d'ajouter un nouveau prestataire.`,
+          400
+        );
+      }
+    }
+
     // Créer l'affectation
     const affectation = await prisma.prestataireCampagne.create({
       data: {
         id_campagne: campagneId,
-        id_prestataire
+        id_prestataire,
+        status: "ACTIF" 
       },
       select: {
         prestataire: {

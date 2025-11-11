@@ -3496,336 +3496,6 @@ const openApi = {
       }
     },
 
-    "/campagnes/{id}/prestataires": {
-      get: {
-        tags: ["Campagnes"],
-        summary: "Lister les prestataires d'une campagne",
-        description: "Récupère la liste complète des prestataires affectés à une campagne spécifique avec leurs détails et informations de paiement",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Liste des prestataires récupérée avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    campagne: {
-                      type: "object",
-                      properties: {
-                        id_campagne: { type: "string" },
-                        nom_campagne: { type: "string" }
-                      }
-                    },
-                    affectations: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
-                          date_creation: { type: "string", format: "date-time" },
-                          date_fin: { type: "string", format: "date-time" },
-                          status: { type: "string" },
-                          image_affiche: { type: "string" },
-                          paiement: {
-                            type: "object",
-                            properties: {
-                              paiement_base: { type: "number" },
-                              paiement_final: { type: "number" },
-                              statut_paiement: { type: "boolean" }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "campagne": {
-                    "id_campagne": "cmcamp001",
-                    "nom_campagne": "Campagne Printemps 2025"
-                  },
-                  "affectations": [
-                    {
-                      "prestataire": {
-                        "id_prestataire": "cmpresta001",
-                        "nom": "Koné",
-                        "prenom": "Moussa",
-                        "contact": "+225 07 12 34 56 78",
-                        "disponible": true,
-                        // ⚠️ NOUVEAUX CHAMPS DIRECTS
-                        "type_panneau": "GRAND",
-                        "marque": "Toyota",
-                        "modele": "Hilux",
-                        "plaque": "AB-123-CD",
-                        "couleur": "Bleu",
-                        "id_verification": "VERIF-001",
-                        // ⚠️ FIN CORRECTION
-                        "service": {
-                          "nom": "Publicité sur tricycles"
-                        }
-                      },
-                      "date_creation": "2025-01-03T11:00:00.000Z",
-                      "date_fin": null,
-                      "status": "ACTIF",
-                      "image_affiche": null,
-                      "paiement": {
-                        "paiement_base": 150000,
-                        "paiement_final": 150000,
-                        "statut_paiement": false
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Campagne non trouvée",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      },
-      post: {
-        tags: ["Campagnes"],
-        summary: "Ajouter un prestataire à une campagne",
-        description: "Affecte un prestataire à une campagne existante avec vérification de disponibilité et prévention des doublons",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          }
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                required: ["id_prestataire"],
-                properties: {
-                  id_prestataire: {
-                    type: "string",
-                    description: "ID du prestataire à affecter",
-                    example: "cmpresta001"
-                  }
-                }
-              }
-            }
-          }
-        },
-        responses: {
-          "201": {
-            description: "Prestataire affecté avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string" },
-                    affectation: {
-                      type: "object",
-                      properties: {
-                        prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
-                        date_creation: { type: "string", format: "date-time" },
-                        status: { type: "string" }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "message": "Prestataire affecté à la campagne avec succès",
-                  "affectation": {
-                    "prestataire": {
-                      "id_prestataire": "cmpresta001",
-                      "nom": "Koné",
-                      "prenom": "Moussa",
-                      "contact": "+225 07 12 34 56 78",
-                      "service": {
-                        "nom": "Publicité sur tricycles"
-                      },
-                      // ⚠️ NOUVEAUX CHAMPS DIRECTS
-                      "type_panneau": "GRAND",
-                      "plaque": "AB-123-CD",
-                      "marque": "Toyota",
-                      "modele": "Hilux",
-                      "couleur": "Bleu"
-                      // ⚠️ FIN CORRECTION
-                    },
-                    "date_creation": "2025-01-03T11:00:00.000Z",
-                    "status": "ACTIF"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            description: "Données invalides ou prestataire non disponible",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Ce prestataire n'est pas disponible"
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Campagne ou prestataire non trouvé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Prestataire non trouvé"
-                }
-              }
-            }
-          },
-          "409": {
-            description: "Prestataire déjà affecté",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Ce prestataire est déjà affecté à cette campagne"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-
-    "/campagnes/{id}/prestataires/{prestataireId}": {
-      delete: {
-        tags: ["Campagnes"],
-        summary: "Retirer un prestataire d'une campagne",
-        description: "Retire un prestataire spécifique d'une campagne. Impossible si un paiement est déjà associé.",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          },
-          {
-            name: "prestataireId",
-            in: "path",
-            required: true,
-            description: "ID du prestataire à retirer",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Prestataire retiré avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string" }
-                  }
-                },
-                example: {
-                  message: "Prestataire retiré de la campagne avec succès"
-                }
-              }
-            }
-          },
-          "400": {
-            description: "Retrait impossible",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Impossible de retirer ce prestataire car un paiement est associé"
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Affectation non trouvée",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Cette affectation n'existe pas"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-
     "/campagnes/{id}/status": {
       put: {
         tags: ["Campagnes"],
@@ -3934,371 +3604,6 @@ const openApi = {
           },
           "404": {
             description: "Campagne non trouvée",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      }
-    },
-
-    "/campagnes/{id}/fichiers": {
-      get: {
-        tags: ["Campagnes"],
-        summary: "Lister les fichiers d'une campagne",
-        description: "Récupère tous les fichiers associés à une campagne avec possibilité de filtrage par type",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          },
-          {
-            name: "type",
-            in: "query",
-            required: false,
-            description: "Filtrer par type de fichier",
-            schema: {
-              type: "string",
-              enum: ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"]
-            }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Liste des fichiers récupérée avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    campagne: {
-                      type: "object",
-                      properties: {
-                        id_campagne: { type: "string" },
-                        nom_campagne: { type: "string" }
-                      }
-                    },
-                    fichiers: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/FichierCampagne" }
-                    }
-                  }
-                },
-                example: {
-                  campagne: {
-                    id_campagne: "cmcamp001",
-                    nom_campagne: "Campagne Printemps 2025"
-                  },
-                  fichiers: [
-                    {
-                      id_fichier: "cmfile001",
-                      nom_fichier: "rapport_journalier_20250301.pdf",
-                      description: "Rapport d'activité du premier jour",
-                      type_fichier: "RAPPORT_JOURNALIER",
-                      lien_canva_drive: "https://drive.google.com/file/...",
-                      date_creation: "2025-03-01T18:00:00.000Z"
-                    },
-                    {
-                      id_fichier: "cmfile002",
-                      nom_fichier: "photos_campagne.zip",
-                      description: "Photos de la campagne",
-                      type_fichier: "PIGE",
-                      lien_canva_drive: "https://drive.google.com/file/...",
-                      date_creation: "2025-03-02T10:00:00.000Z"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Campagne non trouvée",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      },
-      post: {
-        tags: ["Campagnes"],
-        summary: "Ajouter un fichier à une campagne",
-        description: "Associe un nouveau fichier (lien externe) à une campagne avec validation du type",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          }
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                required: ["nom_fichier", "lien_canva_drive", "type_fichier"],
-                properties: {
-                  nom_fichier: {
-                    type: "string",
-                    description: "Nom du fichier",
-                    example: "rapport_final_campagne.pdf"
-                  },
-                  description: {
-                    type: "string",
-                    description: "Description du fichier",
-                    example: "Rapport final de la campagne avec statistiques"
-                  },
-                  lien_canva_drive: {
-                    type: "string",
-                    description: "Lien vers le fichier sur Google Drive ou autre stockage",
-                    example: "https://drive.google.com/file/..."
-                  },
-                  type_fichier: {
-                    type: "string",
-                    enum: ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"],
-                    description: "Type de document",
-                    example: "RAPPORT_FINAL"
-                  }
-                }
-              }
-            }
-          }
-        },
-        responses: {
-          "201": {
-            description: "Fichier ajouté avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string" },
-                    fichier: { $ref: "#/components/schemas/FichierCampagne" }
-                  }
-                },
-                example: {
-                  message: "Fichier ajouté à la campagne avec succès",
-                  fichier: {
-                    id_fichier: "cmfile003",
-                    nom_fichier: "rapport_final_campagne.pdf",
-                    description: "Rapport final de la campagne avec statistiques",
-                    type_fichier: "RAPPORT_FINAL",
-                    lien_canva_drive: "https://drive.google.com/file/...",
-                    date_creation: "2025-01-03T16:00:00.000Z"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            description: "Données invalides",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                examples: {
-                  "Champs manquants": {
-                    value: {
-                      error: "Nom, lien et type de fichier sont requis"
-                    }
-                  },
-                  "Type invalide": {
-                    value: {
-                      error: "Type de fichier invalide"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Campagne non trouvée",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      }
-    },
-
-    "/campagnes/{id}/fichiers/{fichierId}": {
-      get: {
-        tags: ["Campagnes"],
-        summary: "Récupérer un fichier spécifique",
-        description: "Obtenir les détails d'un fichier spécifique associé à une campagne",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          },
-          {
-            name: "fichierId",
-            in: "path",
-            required: true,
-            description: "ID du fichier",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Fichier récupéré avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    fichier: { $ref: "#/components/schemas/FichierCampagneWithContext" }
-                  }
-                },
-                example: {
-                  fichier: {
-                    id_fichier: "cmfile001",
-                    nom_fichier: "rapport_journalier_20250301.pdf",
-                    description: "Rapport d'activité du premier jour",
-                    type_fichier: "RAPPORT_JOURNALIER",
-                    lien_canva_drive: "https://drive.google.com/file/...",
-                    date_creation: "2025-03-01T18:00:00.000Z",
-                    campagne: {
-                      nom_campagne: "Campagne Printemps 2025"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Fichier non trouvé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Fichier non trouvé"
-                }
-              }
-            }
-          }
-        }
-      },
-      delete: {
-        tags: ["Campagnes"],
-        summary: "Supprimer un fichier",
-        description: "Supprime un fichier spécifique associé à une campagne",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          },
-          {
-            name: "fichierId",
-            in: "path",
-            required: true,
-            description: "ID du fichier à supprimer",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Fichier supprimé avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string" }
-                  }
-                },
-                example: {
-                  message: "Fichier supprimé avec succès"
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Fichier non trouvé",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" }
@@ -5034,6 +4339,871 @@ const openApi = {
       }
     },
 
+    // ==================== GESTION DES CAMPAGNES - PRESTATAIRES ====================
+    "/campagnes/{id}/prestataires": {
+      get: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Lister les prestataires d'une campagne",
+        description: "Récupère la liste complète des prestataires affectés à une campagne spécifique avec leurs détails et informations de paiement. Inclut le comptage des affectations actives et la limite de prestataires.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des prestataires récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    campagne: {
+                      type: "object",
+                      properties: {
+                        id_campagne: { type: "string" },
+                        nom_campagne: { type: "string" },
+                        nbr_prestataire: { 
+                          type: "integer",
+                          nullable: true,
+                          description: "Nombre maximum de prestataires autorisés (null = pas de limite)"
+                        },
+                        affectations_actuelles: {
+                          type: "integer",
+                          description: "Nombre d'affectations actives (date_fin = null)"
+                        }
+                      }
+                    },
+                    affectations: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
+                          date_creation: { type: "string", format: "date-time" },
+                          date_fin: { 
+                            type: "string", 
+                            format: "date-time",
+                            nullable: true,
+                            description: "Date de fin d'affectation (null = actif)"
+                          },
+                          status: { 
+                            type: "string",
+                            description: "Statut de l'affectation (ACTIF/INACTIF)"
+                          },
+                          image_affiche: { 
+                            type: "string",
+                            nullable: true 
+                          },
+                          paiement: {
+                            type: "object",
+                            properties: {
+                              paiement_base: { type: "number" },
+                              paiement_final: { type: "number" },
+                              statut_paiement: { type: "boolean" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  campagne: {
+                    id_campagne: "cmcamp001",
+                    nom_campagne: "Campagne Printemps 2025",
+                    nbr_prestataire: 3,
+                    affectations_actuelles: 2
+                  },
+                  affectations: [
+                    {
+                      prestataire: {
+                        id_prestataire: "cmpresta001",
+                        nom: "Koné",
+                        prenom: "Moussa",
+                        contact: "+225 07 12 34 56 78",
+                        disponible: true,
+                        type_panneau: "GRAND",
+                        marque: "Toyota",
+                        modele: "Hilux",
+                        plaque: "AB-123-CD",
+                        couleur: "Bleu",
+                        id_verification: "VERIF-001",
+                        service: {
+                          nom: "Publicité sur tricycles"
+                        }
+                      },
+                      date_creation: "2025-01-03T11:00:00.000Z",
+                      date_fin: null,
+                      status: "ACTIF",
+                      image_affiche: null,
+                      paiement: {
+                        paiement_base: 150000,
+                        paiement_final: 150000,
+                        statut_paiement: false
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Campagne non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Ajouter un prestataire à une campagne",
+        description: "Affecte un prestataire à une campagne existante avec vérifications : disponibilité, non-doublon, et limite du nombre de prestataires actifs. Si la campagne a un nbr_prestataire défini, on vérifie qu'on ne dépasse pas la limite.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["id_prestataire"],
+                properties: {
+                  id_prestataire: {
+                    type: "string",
+                    description: "ID du prestataire à affecter",
+                    example: "cmpresta001"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Prestataire affecté avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    affectation: {
+                      type: "object",
+                      properties: {
+                        prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
+                        date_creation: { type: "string", format: "date-time" },
+                        status: { 
+                          type: "string",
+                          description: "Statut de l'affectation (ACTIF)"
+                        }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  message: "Prestataire affecté à la campagne avec succès",
+                  affectation: {
+                    prestataire: {
+                      id_prestataire: "cmpresta001",
+                      nom: "Koné",
+                      prenom: "Moussa",
+                      contact: "+225 07 12 34 56 78",
+                      service: {
+                        nom: "Publicité sur tricycles"
+                      },
+                      type_panneau: "GRAND",
+                      plaque: "AB-123-CD",
+                      marque: "Toyota",
+                      modele: "Hilux",
+                      couleur: "Bleu"
+                    },
+                    date_creation: "2025-01-03T11:00:00.000Z",
+                    status: "ACTIF"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides ou conditions non remplies",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                examples: {
+                  "Prestataire non disponible": {
+                    value: {
+                      error: "Ce prestataire n'est pas disponible"
+                    }
+                  },
+                  "Limite atteinte": {
+                    value: {
+                      error: "Le nombre maximum de prestataires (3) pour cette campagne est déjà atteint. Impossible d'ajouter un nouveau prestataire."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Campagne ou prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Prestataire non trouvé"
+                }
+              }
+            }
+          },
+          "409": {
+            description: "Prestataire déjà affecté",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Ce prestataire est déjà affecté à cette campagne"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/campagnes/{id}/prestataires/{prestataireId}": {
+      delete: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Retirer un prestataire d'une campagne (Soft Delete)",
+        description: "Retire un prestataire spécifique d'une campagne en utilisant un soft delete (mise à jour de date_fin et statut INACTIF). Impossible si un paiement est déjà finalisé ou si des dommages non résolus sont associés.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          },
+          {
+            name: "prestataireId",
+            in: "path",
+            required: true,
+            description: "ID du prestataire à retirer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Prestataire retiré avec succès (soft delete)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Prestataire retiré de la campagne avec succès"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Retrait impossible",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                examples: {
+                  "Paiement finalisé": {
+                    value: {
+                      error: "Impossible de retirer ce prestataire car son paiement a déjà été finalisé"
+                    }
+                  },
+                  "Dommages non résolus": {
+                    value: {
+                      error: "Impossible de retirer ce prestataire car des dommages non résolus sont associés à cette campagne"
+                    }
+                  },
+                  "Déjà retiré": {
+                    value: {
+                      error: "Ce prestataire a déjà été retiré de cette campagne"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Affectation non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Cette affectation n'existe pas"
+                }
+              }
+            }
+          }
+        }
+      },
+      put: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Modifier une affectation de prestataire",
+        description: "Met à jour les informations d'une affectation existante (statut, image_affiche)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          },
+          {
+            name: "prestataireId",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  status: {
+                    type: "string",
+                    description: "Nouveau statut de l'affectation",
+                    example: "ACTIF"
+                  },
+                  image_affiche: {
+                    type: "string",
+                    description: "URL de l'image d'affiche",
+                    example: "https://example.com/image.jpg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Affectation mise à jour avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    affectation: {
+                      type: "object",
+                      properties: {
+                        prestataire: {
+                          type: "object",
+                          properties: {
+                            id_prestataire: { type: "string" },
+                            nom: { type: "string" },
+                            prenom: { type: "string" }
+                          }
+                        },
+                        status: { type: "string" },
+                        image_affiche: { type: "string" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  message: "Affectation mise à jour avec succès",
+                  affectation: {
+                    prestataire: {
+                      id_prestataire: "cmpresta001",
+                      nom: "Koné",
+                      prenom: "Moussa"
+                    },
+                    status: "ACTIF",
+                    image_affiche: "https://example.com/image.jpg"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Statut invalide"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Affectation non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Cette affectation n'existe pas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    // ==================== GESTION DES CAMPAGNES - FICHIERS ====================
+    "/campagnes/{id}/fichiers": {
+      get: {
+        tags: ["Fichiers Campagnes"],
+        summary: "Lister les fichiers d'une campagne",
+        description: "Récupère tous les fichiers associés à une campagne avec possibilité de filtrage par type",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          },
+          {
+            name: "type",
+            in: "query",
+            required: false,
+            description: "Filtrer par type de fichier",
+            schema: {
+              type: "string",
+              enum: ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"]
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des fichiers récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    campagne: {
+                      type: "object",
+                      properties: {
+                        id_campagne: { type: "string" },
+                        nom_campagne: { type: "string" }
+                      }
+                    },
+                    fichiers: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/FichierCampagne" }
+                    }
+                  }
+                },
+                example: {
+                  campagne: {
+                    id_campagne: "cmcamp001",
+                    nom_campagne: "Campagne Printemps 2025"
+                  },
+                  fichiers: [
+                    {
+                      id_fichier: "cmfile001",
+                      nom_fichier: "rapport_journalier_20250301.pdf",
+                      description: "Rapport d'activité du premier jour",
+                      type_fichier: "RAPPORT_JOURNALIER",
+                      lien_canva_drive: "https://drive.google.com/file/...",
+                      date_creation: "2025-03-01T18:00:00.000Z"
+                    },
+                    {
+                      id_fichier: "cmfile002",
+                      nom_fichier: "photos_campagne.zip",
+                      description: "Photos de la campagne",
+                      type_fichier: "PIGE",
+                      lien_canva_drive: "https://drive.google.com/file/...",
+                      date_creation: "2025-03-02T10:00:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Campagne non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ["Fichiers Campagnes"],
+        summary: "Ajouter un fichier à une campagne",
+        description: "Associe un nouveau fichier (lien externe) à une campagne avec validation du type",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["nom_fichier", "lien_canva_drive", "type_fichier"],
+                properties: {
+                  nom_fichier: {
+                    type: "string",
+                    description: "Nom du fichier",
+                    example: "rapport_final_campagne.pdf"
+                  },
+                  description: {
+                    type: "string",
+                    description: "Description du fichier",
+                    example: "Rapport final de la campagne avec statistiques"
+                  },
+                  lien_canva_drive: {
+                    type: "string",
+                    description: "Lien vers le fichier sur Google Drive ou autre stockage",
+                    example: "https://drive.google.com/file/..."
+                  },
+                  type_fichier: {
+                    type: "string",
+                    enum: ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"],
+                    description: "Type de document",
+                    example: "RAPPORT_FINAL"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Fichier ajouté avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    fichier: { $ref: "#/components/schemas/FichierCampagne" }
+                  }
+                },
+                example: {
+                  message: "Fichier ajouté à la campagne avec succès",
+                  fichier: {
+                    id_fichier: "cmfile003",
+                    nom_fichier: "rapport_final_campagne.pdf",
+                    description: "Rapport final de la campagne avec statistiques",
+                    type_fichier: "RAPPORT_FINAL",
+                    lien_canva_drive: "https://drive.google.com/file/...",
+                    date_creation: "2025-01-03T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                examples: {
+                  "Champs manquants": {
+                    value: {
+                      error: "Nom, lien et type de fichier sont requis"
+                    }
+                  },
+                  "Type invalide": {
+                    value: {
+                      error: "Type de fichier invalide"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Campagne non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/campagnes/{id}/fichiers/{fichierId}": {
+      get: {
+        tags: ["Fichiers Campagnes"],
+        summary: "Récupérer un fichier spécifique",
+        description: "Obtenir les détails d'un fichier spécifique associé à une campagne",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          },
+          {
+            name: "fichierId",
+            in: "path",
+            required: true,
+            description: "ID du fichier",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Fichier récupéré avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    fichier: { $ref: "#/components/schemas/FichierCampagneWithContext" }
+                  }
+                },
+                example: {
+                  fichier: {
+                    id_fichier: "cmfile001",
+                    nom_fichier: "rapport_journalier_20250301.pdf",
+                    description: "Rapport d'activité du premier jour",
+                    type_fichier: "RAPPORT_JOURNALIER",
+                    lien_canva_drive: "https://drive.google.com/file/...",
+                    date_creation: "2025-03-01T18:00:00.000Z",
+                    campagne: {
+                      nom_campagne: "Campagne Printemps 2025"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Fichier non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Fichier non trouvé"
+                }
+              }
+            }
+          }
+        }
+      },
+      delete: {
+        tags: ["Fichiers Campagnes"],
+        summary: "Supprimer un fichier",
+        description: "Supprime un fichier spécifique associé à une campagne",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          },
+          {
+            name: "fichierId",
+            in: "path",
+            required: true,
+            description: "ID du fichier à supprimer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Fichier supprimé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Fichier supprimé avec succès"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Fichier non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
   },
 
   components: {
@@ -5225,53 +5395,52 @@ const openApi = {
         }
       },
 
-PrestataireWithStats: {
-  type: "object",
-  properties: {
-    id_prestataire: { type: "string" },
-    nom: { type: "string" },
-    prenom: { type: "string" },
-    contact: { type: "string" },
-    disponible: { type: "boolean" },
-    // ⚠️ NOUVEAUX CHAMPS DIRECTS (remplacement de vehicule)
-    type_panneau: { 
-      type: "string",
-      enum: ["PETIT", "GRAND"],
-      description: "Type de panneau publicitaire"
-    },
-    marque: { 
-      type: "string",
-      description: "Marque du véhicule" 
-    },
-    modele: { 
-      type: "string",
-      description: "Modèle du véhicule" 
-    },
-    plaque: { 
-      type: "string",
-      description: "Plaque d'immatriculation" 
-    },
-    couleur: {
-      type: "string",
-      description: "Couleur du véhicule"
-    },
-    id_verification: {
-      type: "string",
-      description: "ID de vérification du véhicule"
-    },
-    // ⚠️ FIN DES NOUVEAUX CHAMPS
-    created_at: { type: "string", format: "date-time" },
-    _count: {
-      type: "object",
-      properties: {
-        affectations: { type: "integer" },
-        dommages: { type: "integer" }
-      }
-    }
-  }
-},
+      PrestataireWithStats: {
+        type: "object",
+        properties: {
+          id_prestataire: { type: "string" },
+          nom: { type: "string" },
+          prenom: { type: "string" },
+          contact: { type: "string" },
+          disponible: { type: "boolean" },
+          // ⚠️ NOUVEAUX CHAMPS DIRECTS (remplacement de vehicule)
+          type_panneau: { 
+            type: "string",
+            enum: ["PETIT", "GRAND"],
+            description: "Type de panneau publicitaire"
+          },
+          marque: { 
+            type: "string",
+            description: "Marque du véhicule" 
+          },
+          modele: { 
+            type: "string",
+            description: "Modèle du véhicule" 
+          },
+          plaque: { 
+            type: "string",
+            description: "Plaque d'immatriculation" 
+          },
+          couleur: {
+            type: "string",
+            description: "Couleur du véhicule"
+          },
+          id_verification: {
+            type: "string",
+            description: "ID de vérification du véhicule"
+          },
+          // ⚠️ FIN DES NOUVEAUX CHAMPS
+          created_at: { type: "string", format: "date-time" },
+          _count: {
+            type: "object",
+            properties: {
+              affectations: { type: "integer" },
+              dommages: { type: "integer" }
+            }
+          }
+        }
+      },
   
-
       Client: {
         type: "object",
         properties: {
@@ -5845,33 +6014,61 @@ PrestataireWithStats: {
         }
       },
 
-PrestataireWithDetails: {
-  type: "object",
-  properties: {
-    id_prestataire: { type: "string" },
-    nom: { type: "string" },
-    prenom: { type: "string" },
-    contact: { type: "string" },
-    disponible: { type: "boolean" },
-    // ⚠️ CHAMPS VÉHICULE INTÉGRÉS
-    type_panneau: { 
-      type: "string",
-      enum: ["PETIT", "GRAND"]
-    },
-    couleur: { type: "string" },
-    marque: { type: "string" },
-    modele: { type: "string" },
-    plaque: { type: "string" },
-    id_verification: { type: "string" },
-    // ⚠️ FIN CHAMPS VÉHICULE
-    service: {
-      type: "object",
-      properties: {
-        nom: { type: "string" }
-      }
-    }
-  }
-},
+      PrestataireCampagne: {
+        type: "object",
+        properties: {
+          id_campagne: { type: "string" },
+          id_prestataire: { type: "string" },
+          date_creation: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création de l'affectation"
+          },
+          date_fin: { 
+            type: "string", 
+            format: "date-time",
+            nullable: true,
+            description: "Date de fin d'affectation (null = actif)"
+          },
+          status: { 
+            type: "string",
+            description: "Statut de l'affectation (ACTIF/INACTIF)"
+          },
+          image_affiche: { 
+            type: "string",
+            nullable: true,
+            description: "URL de l'image d'affiche"
+          }
+        }
+      },
+
+      PrestataireWithDetails: {
+        type: "object",
+        properties: {
+          id_prestataire: { type: "string" },
+          nom: { type: "string" },
+          prenom: { type: "string" },
+          contact: { type: "string" },
+          disponible: { type: "boolean" },
+          // ⚠️ CHAMPS VÉHICULE INTÉGRÉS
+          type_panneau: { 
+            type: "string",
+            enum: ["PETIT", "GRAND"]
+          },
+          couleur: { type: "string" },
+          marque: { type: "string" },
+          modele: { type: "string" },
+          plaque: { type: "string" },
+          id_verification: { type: "string" },
+          // ⚠️ FIN CHAMPS VÉHICULE
+          service: {
+            type: "object",
+            properties: {
+              nom: { type: "string" }
+            }
+          }
+        }
+      },
 
       PrestataireWithFullDetails: {
         type: "object",
