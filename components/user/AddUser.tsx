@@ -46,7 +46,7 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
         const created = await res.json()
         onAddUser(created)
         toast.success("Utilisateur ajouté avec succès")
-        window.location.href = "/dashboard/admin"; // Actualiser la page pour refléter les changements
+        window.location.href = "/dashboard/admin"; 
 
         resetForm()
         onClose()

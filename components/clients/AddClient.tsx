@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
-import { Formik, Form, Field } from "formik";
+import { useFormik } from "formik";
 import * as Yup from "yup";
 import { X } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "react-toastify";
 
 export type Client = {
   id_client: string;
@@ -25,19 +26,65 @@ interface AddClientProps {
   onAddClient: (client: Client) => void;
 }
 
-const Schema = Yup.object().shape({
-  nom: Yup.string().required("Nom requis"),
-  prenom: Yup.string().required("Prénom requis"),
-  mail: Yup.string().email("Email invalide").nullable(),
-  contact: Yup.string().nullable(),
-  type_client: Yup.string().required("Type requis"),
-});
-
 export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClientProps) {
+  const { token } = useAuth();
+
+  const formik = useFormik({
+    initialValues: {
+      nom: "",
+      prenom: "",
+      entreprise: "",
+      domaine_entreprise: "",
+      adresse: "",
+      contact: "",
+      mail: "",
+      type_client: "CLIENT",
+    },
+    validationSchema: Yup.object({
+      nom: Yup.string().required("Nom requis"),
+      prenom: Yup.string().required("Prénom requis"),
+      mail: Yup.string().email("Email invalide").nullable(),
+      contact: Yup.string().nullable(),
+      type_client: Yup.string().required("Type requis"),
+    }),
+    onSubmit: async (values, { resetForm }) => {
+      if (!token) {
+        toast.error("Vous devez être connecté pour ajouter un client");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/clients?page=1&limit=50", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(values),
+        });
+
+        if (!res.ok) throw new Error("Erreur lors de l'ajout");
+
+        const created: Client = await res.json();
+        onAddClient(created);
+        toast.success("Client ajouté avec succès");
+        window.location.href = "/dashboard/clients"; // Actualiser la page pour refléter les changements
+
+
+        resetForm();
+        onClose();
+      } catch (err) {
+        console.error(err);
+        toast.error("Erreur lors de l'ajout du client");
+      }
+    },
+  });
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Fond semi-transparent */}
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6">
         <div className="flex items-center justify-between mb-4">
@@ -47,103 +94,135 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
           </button>
         </div>
 
-        <Formik
-          initialValues={{
-            nom: "",
-            prenom: "",
-            entreprise: "",
-            domaine_entreprise: "",
-            adresse: "",
-            contact: "",
-            mail: "",
-            type_client: "CLIENT",
-          }}
-          validationSchema={Schema}
-          onSubmit={(values, { setSubmitting, resetForm }) => {
-            setSubmitting(true);
-            const now = new Date().toISOString().slice(0, 10);
-            const newClient: Client = {
-              id_client: `c_${Date.now()}`,
-              nom: values.nom.trim(),
-              prenom: values.prenom.trim(),
-              entreprise: values.entreprise?.trim() || null,
-              domaine_entreprise: values.domaine_entreprise?.trim() || null,
-              adresse: values.adresse?.trim() || null,
-              contact: values.contact?.trim() || null,
-              mail: values.mail?.trim() || null,
-              type_client: values.type_client,
-              created_at: now,
-              updated_at: now,
-            };
-            onAddClient(newClient);
-            resetForm();
-            setSubmitting(false);
-            onClose();
-          }}
-        >
-          {({ errors, touched, isSubmitting }) => (
-            <Form className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm mb-1">Nom</label>
-                  <Field name="nom" className="w-full px-3 py-2 border rounded" />
-                  {errors.nom && touched.nom && <div className="text-red-500 text-sm mt-1">{errors.nom}</div>}
-                </div>
+        <form onSubmit={formik.handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm mb-1">Nom</label>
+              <input
+                type="text"
+                name="nom"
+                value={formik.values.nom}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+              />
+              {formik.touched.nom && formik.errors.nom && (
+                <div className="text-red-500 text-sm mt-1">{formik.errors.nom}</div>
+              )}
+            </div>
 
-                <div>
-                  <label className="block text-sm mb-1">Prénom</label>
-                  <Field name="prenom" className="w-full px-3 py-2 border rounded" />
-                  {errors.prenom && touched.prenom && <div className="text-red-500 text-sm mt-1">{errors.prenom}</div>}
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm mb-1">Prénom</label>
+              <input
+                type="text"
+                name="prenom"
+                value={formik.values.prenom}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+              />
+              {formik.touched.prenom && formik.errors.prenom && (
+                <div className="text-red-500 text-sm mt-1">{formik.errors.prenom}</div>
+              )}
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm mb-1">Entreprise</label>
-                  <Field name="entreprise" className="w-full px-3 py-2 border rounded" />
-                </div>
-                <div>
-                  <label className="block text-sm mb-1">Domaine</label>
-                  <Field name="domaine_entreprise" className="w-full px-3 py-2 border rounded" />
-                </div>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm mb-1">Entreprise</label>
+              <input
+                type="text"
+                name="entreprise"
+                value={formik.values.entreprise}
+                onChange={formik.handleChange}
+                className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm mb-1">Adresse</label>
-                <Field name="adresse" className="w-full px-3 py-2 border rounded" />
-              </div>
+            <div>
+              <label className="block text-sm mb-1">Domaine</label>
+              <input
+                type="text"
+                name="domaine_entreprise"
+                value={formik.values.domaine_entreprise}
+                onChange={formik.handleChange}
+                className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm mb-1">Email</label>
-                  <Field name="mail" className="w-full px-3 py-2 border rounded" />
-                  {errors.mail && touched.mail && <div className="text-red-500 text-sm mt-1">{errors.mail}</div>}
-                </div>
-                <div>
-                  <label className="block text-sm mb-1">Contact</label>
-                  <Field name="contact" className="w-full px-3 py-2 border rounded" />
-                </div>
-              </div>
+          <div>
+            <label className="block text-sm mb-1">Adresse</label>
+            <input
+              type="text"
+              name="adresse"
+              value={formik.values.adresse}
+              onChange={formik.handleChange}
+              className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+            />
+          </div>
 
-              <div>
-                <label className="block text-sm mb-1">Type</label>
-                <Field as="select" name="type_client" className="w-full px-3 py-2 border rounded">
-                  <option value="CLIENT">CLIENT</option>
-                  <option value="PROSPECT">PROSPECT</option>
-                  <option value="PARTENAIRE">PARTENAIRE</option>
-                </Field>
-                {errors.type_client && touched.type_client && <div className="text-red-500 text-sm mt-1">{errors.type_client}</div>}
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm mb-1">Email</label>
+              <input
+                type="email"
+                name="mail"
+                value={formik.values.mail}
+                onChange={formik.handleChange}
+                className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+              />
+              {formik.touched.mail && formik.errors.mail && (
+                <div className="text-red-500 text-sm mt-1">{formik.errors.mail}</div>
+              )}
+            </div>
 
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700">Annuler</button>
-                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded bg-[#d61353] text-white">
-                  {isSubmitting ? "Ajout..." : "Ajouter"}
-                </button>
-              </div>
-            </Form>
-          )}
-        </Formik>
+            <div>
+              <label className="block text-sm mb-1">Contact</label>
+              <input
+                type="text"
+                name="contact"
+                value={formik.values.contact}
+                onChange={formik.handleChange}
+                className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Type</label>
+            <select
+              name="type_client"
+              value={formik.values.type_client}
+              onChange={formik.handleChange}
+              className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+            >
+              <option value="CLIENT">CLIENT</option>
+              <option value="PROSPECT">PROSPECT</option>
+              <option value="PARTENAIRE">PARTENAIRE</option>
+            </select>
+            {formik.touched.type_client && formik.errors.type_client && (
+              <div className="text-red-500 text-sm mt-1">{formik.errors.type_client}</div>
+            )}
+          </div>
+
+          <div className="flex justify-between gap-2 mt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={formik.isSubmitting}
+              className="px-4 py-2 rounded bg-[#d61353] text-white"
+            >
+              {formik.isSubmitting ? "Ajout..." : "Ajouter"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

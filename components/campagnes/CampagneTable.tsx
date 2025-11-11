@@ -156,7 +156,7 @@ export default function CampagneTable() {
                           setCampagneToDelete(campagne)
                           setIsDeleteOpen(true)
                         }}
-                        className="p-2rounded-lg cursor-pointer bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                        className="p-2 rounded-lg cursor-pointer bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

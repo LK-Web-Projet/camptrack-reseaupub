@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast, ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
 import { Pencil, Trash2, Plus, User } from "lucide-react"
 import AddUserModal from "@/components/user/AddUser"
 import EditUserModal from "@/components/user/EditUser"
@@ -147,7 +146,7 @@ export default function TableUser() {
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800 text-left text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">
                 <th className="px-6 py-3">Nom & Prénom</th>
-                <th className="px-6 py-3">Type d'utilisateur</th>
+                <th className="px-6 py-3">Type d&apos;utilisateur</th>
                 <th className="px-6 py-3">Email & Contact</th>
                 <th className="px-6 py-3">Date de création</th>
                 <th className="px-6 py-3 text-center">Actions</th>
@@ -233,7 +232,7 @@ export default function TableUser() {
     setUserToEdit(null)
   }}
   onEditUser={handleEditUser}
-  user={userToEdit} // 👈 On lui envoie l'utilisateur à éditer
+  user={userToEdit} 
 />
 
       <DeleteUserModal

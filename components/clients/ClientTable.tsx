@@ -5,6 +5,8 @@ import { Plus, Pencil, Trash2, User } from "lucide-react";
 import AddClientModal from "@/components/clients/AddClient";
 import EditClientModal from "@/components/clients/EditClient";
 import DeleteClientModal from "@/components/clients/DeleteClient";
+import { toast } from "react-toastify";
+import { useAuth } from "@/app/context/AuthContext";
 
 type Client = {
   id_client: string;
@@ -23,42 +25,63 @@ type Client = {
 const formatDate = (iso?: string | null) => {
   if (!iso) return "-";
   const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  return `${String(d.getDate()).padStart(2, "0")}/${String(
+    d.getMonth() + 1
+  ).padStart(2, "0")}/${d.getFullYear()}`;
 };
 
 export default function ClientTable() {
-  // données fictives initiales
-  const [clients, setClients] = useState<Client[]>([
-    {
-      id_client: "c_1",
-      nom: "Doe",
-      prenom: "John",
-      entreprise: "Acme Corp",
-      domaine_entreprise: "Distribution",
-      adresse: "12 rue de Test, Cotonou",
-      contact: "+229 90 00 00 01",
-      mail: "john.doe@acme.com",
-      type_client: "PROSPECT",
-      created_at: "2023-12-02",
-      updated_at: "2024-01-05",
-    },
-    {
-      id_client: "c_2",
-      nom: "Traoré",
-      prenom: "Aïcha",
-      entreprise: "Boutique Aïcha",
-      domaine_entreprise: "Commerce",
-      adresse: "Quartier X, Porto-Novo",
-      contact: "+229 90 00 00 02",
-      mail: "aicha@boutique.com",
-      type_client: "CLIENT",
-      created_at: "2024-06-10",
-      updated_at: "2024-06-12",
-    },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { token } = useAuth()
+  const [clients, setClients] = useState<Client[]>([]);
+
+  
+
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/clients?page=1&limit=50", {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+
+        if (!res.ok) throw new Error("Erreur lors du chargement des clients");
+
+        const data = await res.json();
+        setClients(Array.isArray(data) ? data : data?.clients || []);
+      } catch (e) {
+        setError("Impossible de charger les clients");
+        toast.error("Impossible de charger les clients");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) fetchClients();
+  }, [token]);
+
+   const handleAddClient = async (newUser: Client) => {
+    try {
+      const res = await fetch("/api/clients?page=1&limit=50", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(newUser),
+      })
+      if (!res.ok) throw new Error("Erreur lors de l'ajout")
+      const created = await res.json()
+      setClients((prev) => [...prev, created])
+      toast.success("Client ajouté avec succès")
+                            window.location.href = "/dashboard/clients"; // Actualiser la page pour refléter les changements
+
+    } catch {
+      toast.error("Erreur lors de l'ajout du client")
+    }
+  }
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -66,22 +89,50 @@ export default function ClientTable() {
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
-  // handlers
-  const handleAddClient = (newClient: Client) => {
-    setClients((prev) => [...prev, newClient]);
-  };
+ 
+ const handleEditClient = async (updatedClient: Client) => {
+    try {
+      const res = await fetch(`/api/clients?page=1&limit=50${updatedClient.id_client}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(updatedClient),
+      })
+      if (!res.ok) throw new Error("Erreur lors de la modification")
+      const client = await res.json()
+      setClients((prev) => prev.map((c) => (c.id_client === client.id_client ? client : c)))
+      toast.success("Utilisateur modifié avec succès")
+    } catch {
+      toast.error("Erreur lors de la modification de l'utilisateur")
+    }
+  }
 
-  const handleEditClient = (updated: Client) => {
-    setClients((prev) => prev.map((c) => (c.id_client === updated.id_client ? updated : c)));
-  };
 
-  const handleDeleteClient = (id: string) => {
-    setClients((prev) => prev.filter((c) => c.id_client !== id));
-  };
+const confirmDeleteClient = async (client: Client) => {
+    if (clientToDelete) {
+      try {
+    const res = await fetch(`/api/clients/${client.id_client}`, {
+          method: "DELETE",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        if (!res.ok) throw new Error("Erreur lors de la suppression")
+        setClients((prev) => prev.filter((c) => c.id_client !== clientToDelete.id_client))
+        toast.success("Client supprimé avec succès")
+
+
+      } catch {
+        toast.error("Erreur lors de la suppression de lu client")
+      } finally {
+        setClientToDelete(null)
+        setIsDeleteOpen(false)
+      }
+    }
+  }
 
   return (
     <div className="p-6 text-gray-900 dark:text-white">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3 text-[#d61353]">
           <User className="w-6 h-6" />
@@ -97,75 +148,102 @@ export default function ClientTable() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
-        <table className="min-w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-gray-50 dark:bg-gray-800 text-left text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">
-              <th className="px-6 py-3">Client</th>
-              <th className="px-6 py-3">Entreprise / Adresse</th>
-              <th className="px-6 py-3">Email / Contact</th>
-              <th className="px-6 py-3">Domaine / Type</th>
-              <th className="px-6 py-3">Créé</th>
-              <th className="px-6 py-3">Actions</th>
-            </tr>
-          </thead>
+       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
+       {loading ? (
+  <div className="flex flex-col items-center justify-center py-10">
+    <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
+    <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
+      Chargement des clients...
+    </p>
+  </div>
+)  : error ? (
 
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {clients.map((c, i) => (
-              <tr
-                key={c.id_client}
-                className={`transition hover:bg-gray-50 dark:hover:bg-gray-800 ${i % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-950"}`}
-              >
-                <td className="px-6 py-4 font-medium">
-                  <div>{c.nom} {c.prenom}</div>
-                </td>
-
-                <td className="px-6 py-4">
-                  <div className="font-medium">{c.entreprise || "-"}</div>
-                  <div className="text-xs text-gray-500">{c.adresse || "-"}</div>
-                </td>
-
-                <td className="px-6 py-4">
-                  <div className="font-medium">{c.mail || "-"}</div>
-                  <div className="text-xs text-gray-500">{c.contact || "-"}</div>
-                </td>
-
-                <td className="px-6 py-4">
-                  <div className="font-medium">{c.domaine_entreprise || "-"}</div>
-                  <div className="text-xs text-gray-500">{c.type_client || "-"}</div>
-                </td>
-
-                <td className="px-6 py-4">{formatDate(c.created_at)}</td>
-
-                <td className="px-6 py-4 text-center">
-                  <div className="flex justify-center gap-3">
-                    <button
-                      onClick={() => {
-                        setClientToEdit(c);
-                        setIsEditOpen(true);
-                      }}
-                      className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setClientToDelete(c);
-                        setIsDeleteOpen(true);
-                      }}
-                      className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
+          <div className="text-center text-red-500 py-8">{error}</div>
+        ) : clients.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">Aucun utilisateur trouvé</div>
+        ) : (
+          <table className="min-w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800 text-left text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">
+                <th className="px-6 py-3">Client</th>
+                <th className="px-6 py-3">Entreprise / Adresse</th>
+                <th className="px-6 py-3">Email / Contact</th>
+                <th className="px-6 py-3">Domaine / Type</th>
+                <th className="px-6 py-3">Date de création</th>
+                <th className="px-6 py-3">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {clients.map((c, i) => (
+                <tr
+                  key={c.id_client}
+                  className={`transition hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                    i % 2 === 0
+                      ? "bg-white dark:bg-gray-900"
+                      : "bg-gray-50 dark:bg-gray-950"
+                  }`}
+                >
+                  <td className="px-6 py-4 font-medium">
+                    {c.nom} {c.prenom}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="font-medium">{c.entreprise || "-"}</div>
+                    <div className="text-xs text-gray-500">
+                      {c.adresse || "-"}
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="font-medium">{c.mail || "-"}</div>
+                    <div className="text-xs text-gray-500">
+                      {c.contact || "-"}
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="font-medium">
+                      {c.domaine_entreprise || "-"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {c.type_client || "-"}
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4">{formatDate(c.created_at)}</td>
+
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => {
+                          setClientToEdit(c);
+                          setIsEditOpen(true);
+                        }}
+                        className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setClientToDelete(c);
+                          setIsDeleteOpen(true);
+                        }}
+                        className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+           )}
+        </div>
+        
+     
 
       {/* Modals */}
       <AddClientModal
@@ -190,19 +268,18 @@ export default function ClientTable() {
         />
       )}
 
-      <DeleteClientModal
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setClientToDelete(null);
-        }}
-        client={clientToDelete}
-        onDeleteClient={(id) => {
-          handleDeleteClient(id);
-          setIsDeleteOpen(false);
-          setClientToDelete(null);
-        }}
-      />
+       <DeleteClientModal
+              isOpen={isDeleteOpen}
+              onClose={() => {
+                setIsDeleteOpen(false)
+                setClientToDelete(null)
+              }}
+              onConfirm={() => {
+                if (clientToDelete) {
+                  confirmDeleteClient(clientToDelete)
+                }
+              }}
+            />
     </div>
   );
 }

@@ -66,11 +66,7 @@ const data = {
             icon: MapPin,
       items: [{ title: "Liste des lieux", url: "/dashboard/lieux" }],
     },
-    {
-      title: "Tricycles",
-            icon: Truck,
-      items: [{ title: "Liste des tricycles", url: "/tricycles" }],
-    },
+    
     {
       title: "Prestataires",
             icon: Users,

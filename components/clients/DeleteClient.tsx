@@ -1,42 +1,48 @@
 "use client";
 
-import React from "react";
-import { X } from "lucide-react";
-import { Client } from "./AddClient";
 
-interface DeleteProps {
-  isOpen: boolean;
-  onClose: () => void;
-  client: Client | null;
-  onDeleteClient: (id_client: string) => void;
+
+interface DeleteClientModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
 }
 
-export default function DeleteClientModal({ isOpen, onClose, client, onDeleteClient }: DeleteProps) {
-  if (!isOpen) return null;
+export default function DeleteClientModal({ isOpen, onClose, onConfirm }: DeleteClientModalProps) {
+  if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 text-center">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-red-600">Supprimer le client</h3>
-          <button onClick={onClose} className="text-gray-600 hover:text-red-600">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+   <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Fond semi-transparent */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
 
-        <p className="mb-4">Êtes-vous sûr de vouloir supprimer <strong>{client?.nom} {client?.prenom}</strong> ? Cette action est irréversible.</p>
-
-        <div className="flex justify-center gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Annuler</button>
+      {/* Modale compacte et centrée */}
+      <div className="relative z-10 bg-white dark:bg-gray-900 rounded-lg shadow-xl w-[90%] max-w-sm p-6 border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-bold mb-4 text-red-600 text-center">
+          Supprimer l&apos;utilisateur
+        </h3>
+        <p className="mb-6 text-center text-sm text-gray-700 dark:text-gray-300">
+          Voulez-vous vraiment supprimer cet utilisateur ?<br />
+          Cliquez sur <span className="font-semibold text-red-600">Valider</span> pour confirmer.
+        </p>
+        <div className="flex justify-between gap-3">
           <button
-            onClick={() => client && onDeleteClient(client.id_client)}
-            className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+            onClick={onClose}
+            className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
           >
-            Supprimer
+            Annuler
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-md bg-[#d61353] hover:bg-[#b01044] text-white"
+          >
+            Valider
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }
