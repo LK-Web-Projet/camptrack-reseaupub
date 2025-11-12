@@ -2899,6 +2899,8 @@ const openApi = {
                       nom_campagne: "Campagne Printemps 2025",
                       description: "Campagne de publicité mobile pour la saison printanière",
                       objectif: "Augmenter la visibilité de la marque de 30%",
+                      quantite_service: 100,
+                      nbr_prestataire: 3,
                       type_campagne: "MASSE",
                       date_debut: "2025-03-01T00:00:00.000Z",
                       date_fin: "2025-03-15T00:00:00.000Z",
@@ -2969,7 +2971,7 @@ const openApi = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["id_client", "id_lieu", "Id_service", "nom_campagne", "date_debut", "date_fin"],
+                required: ["id_client", "id_lieu", "id_service", "nom_campagne", "date_debut", "date_fin"],
                 properties: {
                   id_client: { 
                     type: "string",
@@ -2981,7 +2983,7 @@ const openApi = {
                     description: "ID du lieu où se déroule la campagne",
                     example: "cmlieu001"
                   },
-                  Id_service: { 
+                  id_service: { 
                     type: "string",
                     description: "ID du service publicitaire utilisé",
                     example: "cmservice001"
@@ -3001,6 +3003,18 @@ const openApi = {
                     type: "string",
                     description: "Objectifs marketing de la campagne",
                     example: "Augmenter la notoriété de la marque de 25%"
+                  },
+                  quantite_service: {
+                    type: "integer",
+                    minimum: 1,
+                    description: "Quantité de services publicitaires requis",
+                    example: 100
+                  },
+                  nbr_prestataire: {
+                    type: "integer",
+                    minimum: 1,
+                    description: "Nombre de prestataires à affecter à la campagne",
+                    example: 3
                   },
                   type_campagne: {
                     type: "string",
@@ -3044,6 +3058,8 @@ const openApi = {
                     nom_campagne: "Campagne Printemps 2025",
                     description: "Campagne de publicité mobile pour promouvoir les nouveaux produits",
                     objectif: "Augmenter la notoriété de la marque de 25%",
+                    quantite_service: 100,
+                    nbr_prestataire: 3,
                     type_campagne: "MASSE",
                     date_debut: "2025-03-01T00:00:00.000Z",
                     date_fin: "2025-03-15T00:00:00.000Z",
@@ -3151,6 +3167,8 @@ const openApi = {
                     nom_campagne: "Campagne Printemps 2025",
                     description: "Campagne de publicité mobile pour promouvoir les nouveaux produits",
                     objectif: "Augmenter la notoriété de la marque de 25%",
+                    quantite_service: 100,
+                    nbr_prestataire: 3,
                     type_campagne: "MASSE",
                     date_debut: "2025-03-01T00:00:00.000Z",
                     date_fin: "2025-03-15T00:00:00.000Z",
@@ -3182,21 +3200,24 @@ const openApi = {
                       email: "admin@camptrack.com",
                       type_user: "ADMIN"
                     },
-                    affectations: [
+                    "affectations": [
                       {
-                        prestataire: {
-                          id_prestataire: "cmpresta001",
-                          nom: "Koné",
-                          prenom: "Moussa",
-                          contact: "+225 07 12 34 56 78",
-                          disponible: true,
-                          vehicule: {
-                            type_panneau: "GRAND",
-                            plaque: "AB-123-CD"
-                          }
+                        "prestataire": {
+                          "id_prestataire": "cmpresta001",
+                          "nom": "Koné",
+                          "prenom": "Moussa",
+                          "contact": "+225 07 12 34 56 78",
+                          "disponible": true,
+                          // ⚠️ CORRECTION : Champs directs au lieu de vehicule
+                          "type_panneau": "GRAND",
+                          "plaque": "AB-123-CD",
+                          "marque": "Toyota", 
+                          "modele": "Hilux",
+                          "couleur": "Bleu"
+                          // ⚠️ FIN CORRECTION
                         },
-                        date_creation: "2025-01-03T11:00:00.000Z",
-                        status: "ACTIF"
+                        "date_creation": "2025-01-03T11:00:00.000Z",
+                        "status": "ACTIF"
                       }
                     ],
                     fichiers: [
@@ -3281,6 +3302,16 @@ const openApi = {
                     type: "string",
                     example: "Nouveaux objectifs"
                   },
+                  quantite_service: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 150
+                  },
+                  nbr_prestataire: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 4
+                  },
                   type_campagne: {
                     type: "string",
                     enum: ["MASSE", "PROXIMITE"],
@@ -3325,6 +3356,8 @@ const openApi = {
                     nom_campagne: "Nouveau nom de campagne",
                     description: "Nouvelle description",
                     objectif: "Nouveaux objectifs",
+                    quantite_service: 150,
+                    nbr_prestataire: 4,
                     type_campagne: "PROXIMITE",
                     date_debut: "2025-03-05T00:00:00.000Z",
                     date_fin: "2025-03-20T00:00:00.000Z",
@@ -3463,331 +3496,6 @@ const openApi = {
       }
     },
 
-    "/campagnes/{id}/prestataires": {
-      get: {
-        tags: ["Campagnes"],
-        summary: "Lister les prestataires d'une campagne",
-        description: "Récupère la liste complète des prestataires affectés à une campagne spécifique avec leurs détails et informations de paiement",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Liste des prestataires récupérée avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    campagne: {
-                      type: "object",
-                      properties: {
-                        id_campagne: { type: "string" },
-                        nom_campagne: { type: "string" }
-                      }
-                    },
-                    affectations: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
-                          date_creation: { type: "string", format: "date-time" },
-                          date_fin: { type: "string", format: "date-time" },
-                          status: { type: "string" },
-                          image_affiche: { type: "string" },
-                          paiement: {
-                            type: "object",
-                            properties: {
-                              paiement_base: { type: "number" },
-                              paiement_final: { type: "number" },
-                              statut_paiement: { type: "boolean" }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                example: {
-                  campagne: {
-                    id_campagne: "cmcamp001",
-                    nom_campagne: "Campagne Printemps 2025"
-                  },
-                  affectations: [
-                    {
-                      prestataire: {
-                        id_prestataire: "cmpresta001",
-                        nom: "Koné",
-                        prenom: "Moussa",
-                        contact: "+225 07 12 34 56 78",
-                        disponible: true,
-                        service: {
-                          nom: "Publicité sur tricycles"
-                        },
-                        vehicule: {
-                          type_panneau: "GRAND",
-                          marque: "Toyota",
-                          modele: "Hilux",
-                          plaque: "AB-123-CD"
-                        }
-                      },
-                      date_creation: "2025-01-03T11:00:00.000Z",
-                      date_fin: null,
-                      status: "ACTIF",
-                      image_affiche: null,
-                      paiement: {
-                        paiement_base: 150000,
-                        paiement_final: 150000,
-                        statut_paiement: false
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Campagne non trouvée",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      },
-      post: {
-        tags: ["Campagnes"],
-        summary: "Ajouter un prestataire à une campagne",
-        description: "Affecte un prestataire à une campagne existante avec vérification de disponibilité et prévention des doublons",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          }
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                required: ["id_prestataire"],
-                properties: {
-                  id_prestataire: {
-                    type: "string",
-                    description: "ID du prestataire à affecter",
-                    example: "cmpresta001"
-                  }
-                }
-              }
-            }
-          }
-        },
-        responses: {
-          "201": {
-            description: "Prestataire affecté avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string" },
-                    affectation: {
-                      type: "object",
-                      properties: {
-                        prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
-                        date_creation: { type: "string", format: "date-time" },
-                        status: { type: "string" }
-                      }
-                    }
-                  }
-                },
-                example: {
-                  message: "Prestataire affecté à la campagne avec succès",
-                  affectation: {
-                    prestataire: {
-                      id_prestataire: "cmpresta001",
-                      nom: "Koné",
-                      prenom: "Moussa",
-                      contact: "+225 07 12 34 56 78",
-                      service: {
-                        nom: "Publicité sur tricycles"
-                      },
-                      vehicule: {
-                        type_panneau: "GRAND",
-                        plaque: "AB-123-CD"
-                      }
-                    },
-                    date_creation: "2025-01-03T11:00:00.000Z",
-                    status: "ACTIF"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            description: "Données invalides ou prestataire non disponible",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Ce prestataire n'est pas disponible"
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Campagne ou prestataire non trouvé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Prestataire non trouvé"
-                }
-              }
-            }
-          },
-          "409": {
-            description: "Prestataire déjà affecté",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Ce prestataire est déjà affecté à cette campagne"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-
-    "/campagnes/{id}/prestataires/{prestataireId}": {
-      delete: {
-        tags: ["Campagnes"],
-        summary: "Retirer un prestataire d'une campagne",
-        description: "Retire un prestataire spécifique d'une campagne. Impossible si un paiement est déjà associé.",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la campagne",
-            schema: { type: "string" }
-          },
-          {
-            name: "prestataireId",
-            in: "path",
-            required: true,
-            description: "ID du prestataire à retirer",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Prestataire retiré avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string" }
-                  }
-                },
-                example: {
-                  message: "Prestataire retiré de la campagne avec succès"
-                }
-              }
-            }
-          },
-          "400": {
-            description: "Retrait impossible",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Impossible de retirer ce prestataire car un paiement est associé"
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          },
-          "404": {
-            description: "Affectation non trouvée",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Cette affectation n'existe pas"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-
     "/campagnes/{id}/status": {
       put: {
         tags: ["Campagnes"],
@@ -3906,9 +3614,1234 @@ const openApi = {
       }
     },
 
+    // ==================== GESTION DES PRESTATAIRES ====================
+    "/prestataires": {
+      get: {
+        tags: ["Prestataires"],
+        summary: "Lister tous les prestataires",
+        description: "Récupère la liste paginée de tous les prestataires avec leurs véhicules intégrés",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            description: "Numéro de page",
+            schema: { type: "integer", default: 1, minimum: 1 }
+          },
+          {
+            name: "limit",
+            in: "query", 
+            required: false,
+            description: "Nombre de prestataires par page",
+            schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
+          },
+          {
+            name: "disponible",
+            in: "query",
+            required: false,
+            description: "Filtrer par disponibilité",
+            schema: { type: "boolean" }
+          },
+          {
+            name: "serviceId",
+            in: "query",
+            required: false,
+            description: "Filtrer par ID de service",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des prestataires récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    prestataires: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/PrestataireWithStats" }
+                    },
+                    pagination: {
+                      type: "object",
+                      properties: {
+                        page: { type: "integer" },
+                        limit: { type: "integer" },
+                        total: { type: "integer" },
+                        totalPages: { type: "integer" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  prestataires: [
+                    {
+                      id_prestataire: "cmpresta001",
+                      nom: "Koné",
+                      prenom: "Moussa",
+                      contact: "+225 07 12 34 56 78",
+                      disponible: true,
+                      type_panneau: "GRAND",
+                      marque: "Toyota",
+                      modele: "Hilux",
+                      plaque: "AB-123-CD",
+                      couleur: "Bleu",
+                      id_verification: "VERIF-001",
+                      created_at: "2025-01-03T11:00:00.000Z",
+                      _count: {
+                        affectations: 3,
+                        dommages: 0
+                      }
+                    }
+                  ],
+                  pagination: {
+                    page: 1,
+                    limit: 50,
+                    total: 1,
+                    totalPages: 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ["Prestataires"],
+        summary: "Créer un nouveau prestataire",
+        description: "Crée un nouveau prestataire avec ses informations de véhicule intégrées",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["id_service", "nom", "prenom", "contact", "type_panneau"],
+                properties: {
+                  id_service: {
+                    type: "string",
+                    description: "ID du service auquel le prestataire est associé",
+                    example: "cmservice001"
+                  },
+                  nom: {
+                    type: "string",
+                    minLength: 2,
+                    description: "Nom du prestataire",
+                    example: "Koné"
+                  },
+                  prenom: {
+                    type: "string",
+                    minLength: 2,
+                    description: "Prénom du prestataire",
+                    example: "Moussa"
+                  },
+                  contact: {
+                    type: "string",
+                    description: "Numéro de contact",
+                    example: "+225 07 12 34 56 78"
+                  },
+                  disponible: {
+                    type: "boolean",
+                    description: "Statut de disponibilité",
+                    example: true
+                  },
+                  // CHAMPS VÉHICULE INTÉGRÉS
+                  type_panneau: {
+                    type: "string",
+                    enum: ["PETIT", "GRAND"],
+                    description: "Type de panneau publicitaire",
+                    example: "GRAND"
+                  },
+                  couleur: {
+                    type: "string",
+                    description: "Couleur du véhicule",
+                    example: "Bleu"
+                  },
+                  marque: {
+                    type: "string",
+                    description: "Marque du véhicule",
+                    example: "Toyota"
+                  },
+                  modele: {
+                    type: "string",
+                    description: "Modèle du véhicule",
+                    example: "Hilux"
+                  },
+                  plaque: {
+                    type: "string",
+                    description: "Plaque d'immatriculation",
+                    example: "AB-123-CD"
+                  },
+                  id_verification: {
+                    type: "string",
+                    description: "ID de vérification du véhicule",
+                    example: "VERIF-001"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Prestataire créé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    prestataire: { $ref: "#/components/schemas/PrestataireWithStats" }
+                  }
+                },
+                example: {
+                  message: "Prestataire créé avec succès",
+                  prestataire: {
+                    id_prestataire: "cmpresta001",
+                    nom: "Koné",
+                    prenom: "Moussa",
+                    contact: "+225 07 12 34 56 78",
+                    disponible: true,
+                    type_panneau: "GRAND",
+                    marque: "Toyota",
+                    modele: "Hilux",
+                    plaque: "AB-123-CD",
+                    couleur: "Bleu",
+                    id_verification: "VERIF-001",
+                    created_at: "2025-01-03T11:00:00.000Z",
+                    _count: {
+                      affectations: 0,
+                      dommages: 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Le nom doit contenir au moins 2 caractères"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Service non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Service non trouvé"
+                }
+              }
+            }
+          },
+          "409": {
+            description: "Plaque déjà utilisée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un prestataire avec cette plaque existe déjà"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/prestataires/{id}": {
+      get: {
+        tags: ["Prestataires"],
+        summary: "Récupérer un prestataire spécifique",
+        description: "Obtenir tous les détails d'un prestataire incluant son véhicule, affectations et dommages",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Détails du prestataire récupérés avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    prestataire: { $ref: "#/components/schemas/PrestataireWithFullDetails" }
+                  }
+                },
+                example: {
+                  prestataire: {
+                    id_prestataire: "cmpresta001",
+                    nom: "Koné",
+                    prenom: "Moussa",
+                    contact: "+225 07 12 34 56 78",
+                    disponible: true,
+                    type_panneau: "GRAND",
+                    couleur: "Bleu",
+                    marque: "Toyota",
+                    modele: "Hilux",
+                    plaque: "AB-123-CD",
+                    id_verification: "VERIF-001",
+                    created_at: "2025-01-03T11:00:00.000Z",
+                    updated_at: "2025-01-03T11:00:00.000Z",
+                    service: {
+                      id_service: "cmservice001",
+                      nom: "Publicité sur tricycles",
+                      description: "Service de publicité mobile sur tricycles"
+                    },
+                    affectations: [
+                      {
+                        campagne: {
+                          id_campagne: "cmcamp001",
+                          nom_campagne: "Campagne Printemps 2025",
+                          date_debut: "2025-03-01T00:00:00.000Z",
+                          date_fin: "2025-03-15T00:00:00.000Z",
+                          status: "PLANIFIEE"
+                        },
+                        date_creation: "2025-01-03T12:00:00.000Z",
+                        status: "ACTIF"
+                      }
+                    ],
+                    dommages: [
+                      {
+                        id_materiels_case: "cmdommage001",
+                        etat: "MAUVAIS",
+                        description: "Panneau endommagé lors de la campagne",
+                        montant_penalite: 50000,
+                        penalite_appliquer: true,
+                        date_creation: "2025-01-10T10:00:00.000Z",
+                        campagne: {
+                          nom_campagne: "Campagne Hiver 2024"
+                        }
+                      }
+                    ],
+                    _count: {
+                      affectations: 3,
+                      dommages: 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Prestataire non trouvé"
+                }
+              }
+            }
+          }
+        }
+      },
+      put: {
+        tags: ["Prestataires"],
+        summary: "Modifier un prestataire",
+        description: "Met à jour les informations d'un prestataire existant et son véhicule",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire à modifier",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  nom: {
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouveau nom"
+                  },
+                  prenom: {
+                    type: "string",
+                    minLength: 2,
+                    example: "Nouveau prénom"
+                  },
+                  contact: {
+                    type: "string",
+                    example: "+225 08 76 54 32 10"
+                  },
+                  disponible: {
+                    type: "boolean",
+                    example: false
+                  },
+                  id_service: {
+                    type: "string",
+                    example: "cmservice002"
+                  },
+                  // CHAMPS VÉHICULE INTÉGRÉS
+                  type_panneau: {
+                    type: "string",
+                    enum: ["PETIT", "GRAND"],
+                    example: "PETIT"
+                  },
+                  couleur: {
+                    type: "string",
+                    example: "Rouge"
+                  },
+                  marque: {
+                    type: "string",
+                    example: "Nissan"
+                  },
+                  modele: {
+                    type: "string",
+                    example: "Navara"
+                  },
+                  plaque: {
+                    type: "string",
+                    example: "EF-456-GH"
+                  },
+                  id_verification: {
+                    type: "string",
+                    example: "VERIF-002"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Prestataire modifié avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    prestataire: { $ref: "#/components/schemas/PrestataireWithStats" }
+                  }
+                },
+                example: {
+                  message: "Prestataire modifié avec succès",
+                  prestataire: {
+                    id_prestataire: "cmpresta001",
+                    nom: "Nouveau nom",
+                    prenom: "Nouveau prénom",
+                    contact: "+225 08 76 54 32 10",
+                    disponible: false,
+                    type_panneau: "PETIT",
+                    marque: "Nissan",
+                    modele: "Navara",
+                    plaque: "EF-456-GH",
+                    couleur: "Rouge",
+                    id_verification: "VERIF-002",
+                    created_at: "2025-01-03T11:00:00.000Z",
+                    updated_at: "2025-01-03T15:30:00.000Z",
+                    _count: {
+                      affectations: 3,
+                      dommages: 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Au moins un champ doit être fourni pour la modification"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            description: "Plaque déjà utilisée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Un autre prestataire avec cette plaque existe déjà"
+                }
+              }
+            }
+          }
+        }
+      },
+      delete: {
+        tags: ["Prestataires"],
+        summary: "Supprimer un prestataire",
+        description: "Supprime définitivement un prestataire. Impossible s'il a des affectations en cours.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire à supprimer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Prestataire supprimé avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Prestataire supprimé avec succès"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Suppression impossible",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Impossible de supprimer ce prestataire car il a des affectations en cours"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/prestataires/{id}/statut": {
+      put: {
+        tags: ["Prestataires"],
+        summary: "Changer le statut de disponibilité",
+        description: "Active ou désactive un prestataire (pour maintenance, congés, etc.)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["disponible"],
+                properties: {
+                  disponible: {
+                    type: "boolean",
+                    description: "Nouveau statut de disponibilité",
+                    example: false
+                  },
+                  raison: {
+                    type: "string",
+                    description: "Raison du changement de statut",
+                    example: "Véhicule en réparation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Statut modifié avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    prestataire: {
+                      type: "object",
+                      properties: {
+                        id_prestataire: { type: "string" },
+                        nom: { type: "string" },
+                        prenom: { type: "string" },
+                        disponible: { type: "boolean" },
+                        updated_at: { type: "string", format: "date-time" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  message: "Prestataire désactivé avec succès",
+                  prestataire: {
+                    id_prestataire: "cmpresta001",
+                    nom: "Koné",
+                    prenom: "Moussa",
+                    disponible: false,
+                    updated_at: "2025-01-03T15:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Le champ 'disponible' doit être un booléen"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    // ==================== GESTION DES CAMPAGNES - PRESTATAIRES ====================
+    "/campagnes/{id}/prestataires": {
+      get: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Lister les prestataires d'une campagne",
+        description: "Récupère la liste complète des prestataires affectés à une campagne spécifique avec leurs détails et informations de paiement. Inclut le comptage des affectations actives et la limite de prestataires.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des prestataires récupérée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    campagne: {
+                      type: "object",
+                      properties: {
+                        id_campagne: { type: "string" },
+                        nom_campagne: { type: "string" },
+                        nbr_prestataire: { 
+                          type: "integer",
+                          nullable: true,
+                          description: "Nombre maximum de prestataires autorisés (null = pas de limite)"
+                        },
+                        affectations_actuelles: {
+                          type: "integer",
+                          description: "Nombre d'affectations actives (date_fin = null)"
+                        }
+                      }
+                    },
+                    affectations: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
+                          date_creation: { type: "string", format: "date-time" },
+                          date_fin: { 
+                            type: "string", 
+                            format: "date-time",
+                            nullable: true,
+                            description: "Date de fin d'affectation (null = actif)"
+                          },
+                          status: { 
+                            type: "string",
+                            description: "Statut de l'affectation (ACTIF/INACTIF)"
+                          },
+                          image_affiche: { 
+                            type: "string",
+                            nullable: true 
+                          },
+                          paiement: {
+                            type: "object",
+                            properties: {
+                              paiement_base: { type: "number" },
+                              paiement_final: { type: "number" },
+                              statut_paiement: { type: "boolean" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  campagne: {
+                    id_campagne: "cmcamp001",
+                    nom_campagne: "Campagne Printemps 2025",
+                    nbr_prestataire: 3,
+                    affectations_actuelles: 2
+                  },
+                  affectations: [
+                    {
+                      prestataire: {
+                        id_prestataire: "cmpresta001",
+                        nom: "Koné",
+                        prenom: "Moussa",
+                        contact: "+225 07 12 34 56 78",
+                        disponible: true,
+                        type_panneau: "GRAND",
+                        marque: "Toyota",
+                        modele: "Hilux",
+                        plaque: "AB-123-CD",
+                        couleur: "Bleu",
+                        id_verification: "VERIF-001",
+                        service: {
+                          nom: "Publicité sur tricycles"
+                        }
+                      },
+                      date_creation: "2025-01-03T11:00:00.000Z",
+                      date_fin: null,
+                      status: "ACTIF",
+                      image_affiche: null,
+                      paiement: {
+                        paiement_base: 150000,
+                        paiement_final: 150000,
+                        statut_paiement: false
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Campagne non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Ajouter un prestataire à une campagne",
+        description: "Affecte un prestataire à une campagne existante avec vérifications : disponibilité, non-doublon, et limite du nombre de prestataires actifs. Si la campagne a un nbr_prestataire défini, on vérifie qu'on ne dépasse pas la limite.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["id_prestataire"],
+                properties: {
+                  id_prestataire: {
+                    type: "string",
+                    description: "ID du prestataire à affecter",
+                    example: "cmpresta001"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Prestataire affecté avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    affectation: {
+                      type: "object",
+                      properties: {
+                        prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
+                        date_creation: { type: "string", format: "date-time" },
+                        status: { 
+                          type: "string",
+                          description: "Statut de l'affectation (ACTIF)"
+                        }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  message: "Prestataire affecté à la campagne avec succès",
+                  affectation: {
+                    prestataire: {
+                      id_prestataire: "cmpresta001",
+                      nom: "Koné",
+                      prenom: "Moussa",
+                      contact: "+225 07 12 34 56 78",
+                      service: {
+                        nom: "Publicité sur tricycles"
+                      },
+                      type_panneau: "GRAND",
+                      plaque: "AB-123-CD",
+                      marque: "Toyota",
+                      modele: "Hilux",
+                      couleur: "Bleu"
+                    },
+                    date_creation: "2025-01-03T11:00:00.000Z",
+                    status: "ACTIF"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides ou conditions non remplies",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                examples: {
+                  "Prestataire non disponible": {
+                    value: {
+                      error: "Ce prestataire n'est pas disponible"
+                    }
+                  },
+                  "Limite atteinte": {
+                    value: {
+                      error: "Le nombre maximum de prestataires (3) pour cette campagne est déjà atteint. Impossible d'ajouter un nouveau prestataire."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Campagne ou prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Prestataire non trouvé"
+                }
+              }
+            }
+          },
+          "409": {
+            description: "Prestataire déjà affecté",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Ce prestataire est déjà affecté à cette campagne"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/campagnes/{id}/prestataires/{prestataireId}": {
+      delete: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Retirer un prestataire d'une campagne (Soft Delete)",
+        description: "Retire un prestataire spécifique d'une campagne en utilisant un soft delete (mise à jour de date_fin et statut INACTIF). Impossible si un paiement est déjà finalisé ou si des dommages non résolus sont associés.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          },
+          {
+            name: "prestataireId",
+            in: "path",
+            required: true,
+            description: "ID du prestataire à retirer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Prestataire retiré avec succès (soft delete)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Prestataire retiré de la campagne avec succès"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Retrait impossible",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                examples: {
+                  "Paiement finalisé": {
+                    value: {
+                      error: "Impossible de retirer ce prestataire car son paiement a déjà été finalisé"
+                    }
+                  },
+                  "Dommages non résolus": {
+                    value: {
+                      error: "Impossible de retirer ce prestataire car des dommages non résolus sont associés à cette campagne"
+                    }
+                  },
+                  "Déjà retiré": {
+                    value: {
+                      error: "Ce prestataire a déjà été retiré de cette campagne"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Affectation non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Cette affectation n'existe pas"
+                }
+              }
+            }
+          }
+        }
+      },
+      put: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Modifier une affectation de prestataire",
+        description: "Met à jour les informations d'une affectation existante (statut, image_affiche)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          },
+          {
+            name: "prestataireId",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  status: {
+                    type: "string",
+                    description: "Nouveau statut de l'affectation",
+                    example: "ACTIF"
+                  },
+                  image_affiche: {
+                    type: "string",
+                    description: "URL de l'image d'affiche",
+                    example: "https://example.com/image.jpg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Affectation mise à jour avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    affectation: {
+                      type: "object",
+                      properties: {
+                        prestataire: {
+                          type: "object",
+                          properties: {
+                            id_prestataire: { type: "string" },
+                            nom: { type: "string" },
+                            prenom: { type: "string" }
+                          }
+                        },
+                        status: { type: "string" },
+                        image_affiche: { type: "string" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  message: "Affectation mise à jour avec succès",
+                  affectation: {
+                    prestataire: {
+                      id_prestataire: "cmpresta001",
+                      nom: "Koné",
+                      prenom: "Moussa"
+                    },
+                    status: "ACTIF",
+                    image_affiche: "https://example.com/image.jpg"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Statut invalide"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Affectation non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Cette affectation n'existe pas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    // ==================== GESTION DES CAMPAGNES - FICHIERS ====================
     "/campagnes/{id}/fichiers": {
       get: {
-        tags: ["Campagnes"],
+        tags: ["Fichiers Campagnes"],
         summary: "Lister les fichiers d'une campagne",
         description: "Récupère tous les fichiers associés à une campagne avec possibilité de filtrage par type",
         security: [{ bearerAuth: [] }],
@@ -4006,7 +4939,7 @@ const openApi = {
         }
       },
       post: {
-        tags: ["Campagnes"],
+        tags: ["Fichiers Campagnes"],
         summary: "Ajouter un fichier à une campagne",
         description: "Associe un nouveau fichier (lien externe) à une campagne avec validation du type",
         security: [{ bearerAuth: [] }],
@@ -4129,7 +5062,7 @@ const openApi = {
 
     "/campagnes/{id}/fichiers/{fichierId}": {
       get: {
-        tags: ["Campagnes"],
+        tags: ["Fichiers Campagnes"],
         summary: "Récupérer un fichier spécifique",
         description: "Obtenir les détails d'un fichier spécifique associé à une campagne",
         security: [{ bearerAuth: [] }],
@@ -4206,7 +5139,7 @@ const openApi = {
         }
       },
       delete: {
-        tags: ["Campagnes"],
+        tags: ["Fichiers Campagnes"],
         summary: "Supprimer un fichier",
         description: "Supprime un fichier spécifique associé à une campagne",
         security: [{ bearerAuth: [] }],
@@ -4470,28 +5403,44 @@ const openApi = {
           prenom: { type: "string" },
           contact: { type: "string" },
           disponible: { type: "boolean" },
-          created_at: { type: "string", format: "date-time" },
-          vehicule: {
-            type: "object",
-            properties: {
-              type_panneau: { 
-                type: "string",
-                enum: ["PETIT", "GRAND"]
-              },
-              marque: { type: "string" },
-              modele: { type: "string" },
-              plaque: { type: "string" }
-            }
+          // ⚠️ NOUVEAUX CHAMPS DIRECTS (remplacement de vehicule)
+          type_panneau: { 
+            type: "string",
+            enum: ["PETIT", "GRAND"],
+            description: "Type de panneau publicitaire"
           },
+          marque: { 
+            type: "string",
+            description: "Marque du véhicule" 
+          },
+          modele: { 
+            type: "string",
+            description: "Modèle du véhicule" 
+          },
+          plaque: { 
+            type: "string",
+            description: "Plaque d'immatriculation" 
+          },
+          couleur: {
+            type: "string",
+            description: "Couleur du véhicule"
+          },
+          id_verification: {
+            type: "string",
+            description: "ID de vérification du véhicule"
+          },
+          // ⚠️ FIN DES NOUVEAUX CHAMPS
+          created_at: { type: "string", format: "date-time" },
           _count: {
             type: "object",
             properties: {
-              affectations: { type: "integer" }
+              affectations: { type: "integer" },
+              dommages: { type: "integer" }
             }
           }
         }
-      }, 
-
+      },
+  
       Client: {
         type: "object",
         properties: {
@@ -4798,6 +5747,16 @@ const openApi = {
             type: "string",
             description: "Objectifs de la campagne" 
           },
+          quantite_service: { 
+            type: "integer",
+            description: "Quantité de service demandée", 
+            example: 100
+          },
+          nbr_prestataire: { 
+            type: "integer",
+            description: "Nombre de prestataires affectés" , 
+            example: 10
+          },
           type_campagne: { 
             type: "string",
             enum: ["MASSE", "PROXIMITE"],
@@ -4880,6 +5839,14 @@ const openApi = {
           objectif: { 
             type: "string",
             description: "Objectifs de la campagne" 
+          },
+          quantite_service: { 
+            type: "integer",
+            description: "Quantité de service demandée"
+          },
+          nbr_prestataire: { 
+            type: "integer",
+            description: "Nombre de prestataires affectés" 
           },
           type_campagne: { 
             type: "string",
@@ -5047,6 +6014,34 @@ const openApi = {
         }
       },
 
+      PrestataireCampagne: {
+        type: "object",
+        properties: {
+          id_campagne: { type: "string" },
+          id_prestataire: { type: "string" },
+          date_creation: { 
+            type: "string", 
+            format: "date-time",
+            description: "Date de création de l'affectation"
+          },
+          date_fin: { 
+            type: "string", 
+            format: "date-time",
+            nullable: true,
+            description: "Date de fin d'affectation (null = actif)"
+          },
+          status: { 
+            type: "string",
+            description: "Statut de l'affectation (ACTIF/INACTIF)"
+          },
+          image_affiche: { 
+            type: "string",
+            nullable: true,
+            description: "URL de l'image d'affiche"
+          }
+        }
+      },
+
       PrestataireWithDetails: {
         type: "object",
         properties: {
@@ -5055,22 +6050,106 @@ const openApi = {
           prenom: { type: "string" },
           contact: { type: "string" },
           disponible: { type: "boolean" },
+          // ⚠️ CHAMPS VÉHICULE INTÉGRÉS
+          type_panneau: { 
+            type: "string",
+            enum: ["PETIT", "GRAND"]
+          },
+          couleur: { type: "string" },
+          marque: { type: "string" },
+          modele: { type: "string" },
+          plaque: { type: "string" },
+          id_verification: { type: "string" },
+          // ⚠️ FIN CHAMPS VÉHICULE
           service: {
             type: "object",
             properties: {
               nom: { type: "string" }
             }
+          }
+        }
+      },
+
+      PrestataireWithFullDetails: {
+        type: "object",
+        properties: {
+          id_prestataire: { type: "string" },
+          nom: { type: "string" },
+          prenom: { type: "string" },
+          contact: { type: "string" },
+          disponible: { type: "boolean" },
+          // CHAMPS VÉHICULE INTÉGRÉS
+          type_panneau: { 
+            type: "string",
+            enum: ["PETIT", "GRAND"]
           },
-          vehicule: {
+          couleur: { type: "string" },
+          marque: { type: "string" },
+          modele: { type: "string" },
+          plaque: { type: "string" },
+          id_verification: { type: "string" },
+          // FIN CHAMPS VÉHICULE
+          created_at: { type: "string", format: "date-time" },
+          updated_at: { type: "string", format: "date-time" },
+          service: {
             type: "object",
             properties: {
-              type_panneau: { 
-                type: "string",
-                enum: ["PETIT", "GRAND"]
-              },
-              marque: { type: "string" },
-              modele: { type: "string" },
-              plaque: { type: "string" }
+              id_service: { type: "string" },
+              nom: { type: "string" },
+              description: { type: "string" }
+            }
+          },
+          affectations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                campagne: {
+                  type: "object",
+                  properties: {
+                    id_campagne: { type: "string" },
+                    nom_campagne: { type: "string" },
+                    date_debut: { type: "string", format: "date-time" },
+                    date_fin: { type: "string", format: "date-time" },
+                    status: { 
+                      type: "string",
+                      enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+                    }
+                  }
+                },
+                date_creation: { type: "string", format: "date-time" },
+                status: { type: "string" }
+              }
+            }
+          },
+          dommages: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id_materiels_case: { type: "string" },
+                etat: { 
+                  type: "string",
+                  enum: ["BON", "MOYEN", "MAUVAIS"]
+                },
+                description: { type: "string" },
+                montant_penalite: { type: "number" },
+                penalite_appliquer: { type: "boolean" },
+                date_creation: { type: "string", format: "date-time" },
+                campagne: {
+                  type: "object",
+                  properties: {
+                    nom_campagne: { type: "string" }
+                  }
+                }
+              }
+            }
+          },
+          _count: {
+            type: "object",
+            properties: {
+              affectations: { type: "integer" },
+              dommages: { type: "integer" }
             }
           }
         }
