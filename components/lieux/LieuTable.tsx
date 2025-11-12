@@ -21,6 +21,7 @@ export default function LieuTable() {
 
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -78,16 +79,20 @@ export default function LieuTable() {
         </button>
       </div>
 
-      {/* LOADING */}
-      {loading && (
-        <div className="text-center py-6 text-gray-500">
-          Chargement des lieux…
-        </div>
-      )}
+      <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
+       {loading ? (
+  <div className="flex flex-col items-center justify-center py-10">
+    <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
+    <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
+      Chargement des lieux...
+    </p>
+  </div>
+)  : error ? (
 
-      {/* TABLE */}
-      {!loading && (
-        <div className="overflow-x-auto rounded-xl shadow">
+          <div className="text-center text-red-500 py-8">{error}</div>
+        ) : lieux.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">Aucun lieu trouvé</div>
+        ) : (
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800">
@@ -144,8 +149,9 @@ export default function LieuTable() {
               )}
             </tbody>
           </table>
+              )}
         </div>
-      )}
+  
 
       {/* MODALS */}
       <AddLieuModal

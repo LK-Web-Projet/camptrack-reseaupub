@@ -160,7 +160,7 @@ const confirmDeleteClient = async (client: Client) => {
 
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : clients.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">Aucun utilisateur trouvé</div>
+          <div className="text-center py-8 text-gray-500">Aucun client trouvé</div>
         ) : (
           <table className="min-w-full text-sm border-collapse">
             <thead>

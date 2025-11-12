@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     // Vérifier les permissions (Admin ou Superviseur)
     const authCheck = await requireAdmin(request);
+    
     if (!authCheck.ok) return authCheck.response;
 
     // Récupérer les query params

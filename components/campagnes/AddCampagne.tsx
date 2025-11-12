@@ -1,171 +1,405 @@
-"use client"
+// "use client"
 
-import { useFormik } from "formik"
-import * as Yup from "yup"
-import { X } from "lucide-react"
+// import { useCallback, useEffect, useState } from "react"
+// import { useFormik } from "formik"
+// import * as Yup from "yup"
+// import { X } from "lucide-react"
+// import { useAuth } from "@/app/context/AuthContext"
+// import { toast } from "react-toastify"
 
-interface AddCampagneModalProps {
-  isOpen: boolean
-  onClose: () => void
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddCampagne: (campagne: any) => void
-}
+// interface Client {
+//   id_client: string
+//   nom: string
+//   prenom: string
+//   entreprise?: string
+// }
 
-export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: AddCampagneModalProps) {
-  const formik = useFormik({
-    initialValues: {
-      nom_campagne: "",
-      type_campagne: "",
-      status: "PLANIFIEE",
-      date_debut: "",
-      date_fin: "",
-      Id_service: "",
-      quantite_service: "",
-    },
-    validationSchema: Yup.object({
-      nom_campagne: Yup.string().required("Champ obligatoire"),
-      type_campagne: Yup.string().required("Champ obligatoire"),
-      status: Yup.string().required("Champ obligatoire"),
-      date_debut: Yup.string().required("Champ obligatoire"),
-      date_fin: Yup.string().required("Champ obligatoire"),
-      Id_service: Yup.string().required("Champ obligatoire"),
-      quantite_service: Yup.number().typeError("La quantité doit être un nombre").required("Champ obligatoire").positive("La quantité doit être positive"),
-    }),
-    onSubmit: (values) => {
-      const newCampagne = {
-        ...values,
-        id_campagne: `c${Date.now()}`,
-        date_creation: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-      onAddCampagne(newCampagne)
-      onClose()
-    },
-  })
+// interface Lieu {
+//   id_lieu: string
+//   nom: string
+//   ville?: string
+// }
 
-  if (!isOpen) return null
+// interface Service {
+//   id_service: string
+//   nom: string
+//   description?: string
+// }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-xl relative border border-gray-200 dark:border-gray-700">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X className="w-5 h-5" />
-        </button>
-        <h2 className="text-xl font-semibold mb-4 text-[#d61353]">Ajouter une campagne</h2>
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Nom de la campagne</label>
-            <input
-              type="text"
-              name="nom_campagne"
-              onChange={formik.handleChange}
-              value={formik.values.nom_campagne}
-              className="w-full border rounded px-3 py-2"
-            />
-            {formik.touched.nom_campagne && formik.errors.nom_campagne && (
-              <div className="text-red-500 text-xs">{formik.errors.nom_campagne}</div>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Type de campagne</label>
-            <input
-              type="text"
-              name="type_campagne"
-              onChange={formik.handleChange}
-              value={formik.values.type_campagne}
-              className="w-full border rounded px-3 py-2"
-            />
-            {formik.touched.type_campagne && formik.errors.type_campagne && (
-              <div className="text-red-500 text-xs">{formik.errors.type_campagne}</div>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <input
-              type="text"
-              name="status"
-              onChange={formik.handleChange}
-              value={formik.values.status}
-              className="w-full border rounded px-3 py-2"
-            />
-            {formik.touched.status && formik.errors.status && (
-              <div className="text-red-500 text-xs">{formik.errors.status}</div>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Date début</label>
-              <input
-                type="date"
-                name="date_debut"
-                onChange={formik.handleChange}
-                value={formik.values.date_debut}
-                className="w-full border rounded px-3 py-2"
-              />
-              {formik.touched.date_debut && formik.errors.date_debut && (
-                <div className="text-red-500 text-xs">{formik.errors.date_debut}</div>
-              )}
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Date fin</label>
-              <input
-                type="date"
-                name="date_fin"
-                onChange={formik.handleChange}
-                value={formik.values.date_fin}
-                className="w-full border rounded px-3 py-2"
-              />
-              {formik.touched.date_fin && formik.errors.date_fin && (
-                <div className="text-red-500 text-xs">{formik.errors.date_fin}</div>
-              )}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Service</label>
-            <input
-              type="text"
-              name="Id_service"
-              onChange={formik.handleChange}
-              value={formik.values.Id_service}
-              className="w-full border rounded px-3 py-2"
-            />
-            {formik.touched.Id_service && formik.errors.Id_service && (
-              <div className="text-red-500 text-xs">{formik.errors.Id_service}</div>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Quantité de service</label>
-            <input
-              type="number"
-              name="quantite_service"
-              onChange={formik.handleChange}
-              value={formik.values.quantite_service}
-              className="w-full border rounded px-3 py-2"
-            />
-            {formik.touched.quantite_service && formik.errors.quantite_service && (
-              <div className="text-red-500 text-xs">{formik.errors.quantite_service}</div>
-            )}
-          </div>
-           <div className="flex justify-between gap-4 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-md border hover:bg-gray-100 dark:hover:bg-gray-800 transition-smooth"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-md bg-[#d61353] text-white hover:bg-[#b01044] transition-smooth"
-            >
-              Valider
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
+// interface AddCampagneModalProps {
+//   isOpen: boolean
+//   onClose: () => void
+//   onAddCampagne: () => void
+// }
+
+// export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: AddCampagneModalProps) {
+//   const { token } = useAuth()
+//   const [clients, setClients] = useState<Client[]>([])
+//   const [lieux, setLieux] = useState<Lieu[]>([])
+//   const [services, setServices] = useState<Service[]>([])
+//   const [loading, setLoading] = useState(false)
+//   const [submitting, setSubmitting] = useState(false)
+
+//   // Charger les listes au montage
+//   const fetchOptions = useCallback(async () => {
+//     setLoading(true)
+//     try {
+//       const [clientRes, lieuRes, serviceRes] = await Promise.all([
+//         fetch("/api/clients?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
+//         fetch("/api/lieux?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
+//         fetch("/api/services?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
+//       ])
+
+//       if (clientRes.ok) {
+//         const data = await clientRes.json()
+//         setClients(data.clients || [])
+//       }
+//       if (lieuRes.ok) {
+//         const data = await lieuRes.json()
+//         setLieux(data.lieux || [])
+//       }
+//       if (serviceRes.ok) {
+//         const data = await serviceRes.json()
+//         setServices(data.services || [])
+//       }
+//     } catch (err) {
+//       console.error("Erreur chargement options:", err)
+//     } finally {
+//       setLoading(false)
+//     }
+//   }, [token])
+
+//   useEffect(() => {
+//     if (isOpen) {
+//       fetchOptions()
+//     }
+//   }, [isOpen, fetchOptions])
+
+//   const formik = useFormik({
+//     initialValues: {
+//       nom_campagne: "",
+//       type_campagne: "",
+//       status: "PLANIFIEE",
+//       description: "",
+//       objectif: "",
+//       date_debut: "",
+//       date_fin: "",
+//       id_client: "",
+//       id_lieu: "",
+//       id_service: "",
+//       quantite_service: "",
+//       nbr_prestataire: "",
+//     },
+//     validationSchema: Yup.object({
+//       nom_campagne: Yup.string().required("Champ obligatoire"),
+//       type_campagne: Yup.string().required("Champ obligatoire"),
+//       status: Yup.string().required("Status obligatoire"),
+//       date_debut: Yup.string().required("Champ obligatoire"),
+//       date_fin: Yup.string().required("Champ obligatoire"),
+//       id_client: Yup.string().required("Client obligatoire"),
+//       id_lieu: Yup.string().required("Lieu obligatoire"),
+//       id_service: Yup.string().required("Service obligatoire"),
+//       quantite_service: Yup.number()
+//         .typeError("La quantité doit être un nombre")
+//         .positive("La quantité doit être positive"),
+//       nbr_prestataire: Yup.number().typeError("Le nombre doit être un nombre"),
+//     }),
+//     onSubmit: async (values) => {
+//       setSubmitting(true)
+//       try {
+//         const res = await fetch("/api/campagnes", {
+//           method: "POST",
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//           body: JSON.stringify({
+//             nom_campagne: values.nom_campagne,
+//             type_campagne: values.type_campagne || null,
+//             status: values.status || "PLANIFIEE",
+//             description: values.description || null,
+//             objectif: values.objectif || null,
+//             date_debut: values.date_debut,
+//             date_fin: values.date_fin,
+//             id_client: values.id_client,
+//             id_lieu: values.id_lieu,
+//             id_service: values.id_service,
+//             quantite_service: values.quantite_service ? parseInt(values.quantite_service) : null,
+//             nbr_prestataire: values.nbr_prestataire ? parseInt(values.nbr_prestataire) : null,
+//           }),
+//         })
+
+//         if (!res.ok) {
+//           const body = await res.json().catch(() => ({}))
+//           throw new Error(body?.error || `Erreur ${res.status}`)
+//         }
+
+//         toast.success("Campagne créée avec succès")
+//         formik.resetForm()
+//         onAddCampagne()
+//         onClose()
+//       } catch (err: unknown) {
+//         const message = err instanceof Error ? err.message : "Erreur lors de la création"
+//         console.error("Erreur création campagne:", err)
+//         toast.error(message)
+//       } finally {
+//         setSubmitting(false)
+//       }
+//     },
+//   })
+
+//   if (!isOpen) return null
+
+//   return (
+//     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+//       <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-2xl shadow-xl relative border border-gray-200 dark:border-gray-700 max-h-screen overflow-y-auto">
+//         <button
+//           onClick={onClose}
+//           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+//         >
+//           <X className="w-5 h-5" />
+//         </button>
+//         <h2 className="text-xl font-semibold mb-4 text-[#d61353]">Ajouter une campagne</h2>
+
+//         {loading ? (
+//           <p className="text-center text-gray-500">Chargement des options...</p>
+//         ) : (
+//           <form onSubmit={formik.handleSubmit} className="space-y-4">
+//             {/* Nom et Type de campagne côte à côte */}
+//             <div className="grid grid-cols-2 gap-2">
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Nom de la campagne</label>
+//                 <input
+//                   type="text"
+//                   name="nom_campagne"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.nom_campagne}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 />
+//                 {formik.touched.nom_campagne && formik.errors.nom_campagne && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.nom_campagne}</p>
+//                 )}
+//               </div>
+
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Type de campagne</label>
+//                 <select
+//                   name="type_campagne"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.type_campagne}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 >
+//                   <option value="">-- Sélectionner --</option>
+//                   <option value="MASSE">MASSE</option>
+//                   <option value="PROXIMITE">PROXIMITE</option>
+//                 </select>
+//                 {formik.touched.type_campagne && formik.errors.type_campagne && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.type_campagne}</p>
+//                 )}
+//               </div>
+//             </div>
+
+//             {/* Client et Status côte à côte */}
+//             <div className="grid grid-cols-2 gap-2">
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Client</label>
+//                 <select
+//                   name="id_client"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.id_client}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 >
+//                   <option value="">-- Sélectionner un client --</option>
+//                   {clients.map((client) => (
+//                     <option key={client.id_client} value={client.id_client}>
+//                       {client.nom} {client.prenom} {client.entreprise ? `(${client.entreprise})` : ""}
+//                     </option>
+//                   ))}
+//                 </select>
+//                 {formik.touched.id_client && formik.errors.id_client && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.id_client}</p>
+//                 )}
+//               </div>
+
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Status</label>
+//                 <select
+//                   name="status"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.status}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 >
+//                   <option value="PLANIFIEE">PLANIFIEE</option>
+//                   <option value="EN_COURS">EN_COURS</option>
+//                   <option value="TERMINEE">TERMINEE</option>
+//                   <option value="ANNULEE">ANNULEE</option>
+//                 </select>
+//                 {formik.touched.status && formik.errors.status && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.status}</p>
+//                 )}
+//               </div>
+//             </div>
+
+//             {/* Lieu et Service côte à côte */}
+//             <div className="grid grid-cols-2 gap-2">
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Lieu</label>
+//                 <select
+//                   name="id_lieu"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.id_lieu}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 >
+//                   <option value="">-- Sélectionner --</option>
+//                   {lieux.map((lieu) => (
+//                     <option key={lieu.id_lieu} value={lieu.id_lieu}>
+//                       {lieu.nom} {lieu.ville ? `(${lieu.ville})` : ""}
+//                     </option>
+//                   ))}
+//                 </select>
+//                 {formik.touched.id_lieu && formik.errors.id_lieu && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.id_lieu}</p>
+//                 )}
+//               </div>
+
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Service</label>
+//                 <select
+//                   name="id_service"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.id_service}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 >
+//                   <option value="">-- Sélectionner --</option>
+//                   {services.map((service) => (
+//                     <option key={service.id_service} value={service.id_service}>
+//                       {service.nom}
+//                     </option>
+//                   ))}
+//                 </select>
+//                 {formik.touched.id_service && formik.errors.id_service && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.id_service}</p>
+//                 )}
+//               </div>
+//             </div>
+
+//             {/* Description */}
+//             <div>
+//               <label className="block text-sm font-medium mb-1">Description</label>
+//               <textarea
+//                 name="description"
+//                 onChange={formik.handleChange}
+//                 onBlur={formik.handleBlur}
+//                 value={formik.values.description}
+//                 className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 rows={2}
+//               />
+//             </div>
+
+//             {/* Objectif */}
+//             <div>
+//               <label className="block text-sm font-medium mb-1">Objectif</label>
+//               <textarea
+//                 name="objectif"
+//                 onChange={formik.handleChange}
+//                 onBlur={formik.handleBlur}
+//                 value={formik.values.objectif}
+//                 className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 rows={2}
+//               />
+//             </div>
+
+//             {/* Dates */}
+//             <div className="grid grid-cols-2 gap-2">
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Date début</label>
+//                 <input
+//                   type="date"
+//                   name="date_debut"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.date_debut}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 />
+//                 {formik.touched.date_debut && formik.errors.date_debut && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.date_debut}</p>
+//                 )}
+//               </div>
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Date fin</label>
+//                 <input
+//                   type="date"
+//                   name="date_fin"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.date_fin}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 />
+//                 {formik.touched.date_fin && formik.errors.date_fin && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.date_fin}</p>
+//                 )}
+//               </div>
+//             </div>
+
+//             {/* Quantité de service et Nombre de prestataires côte à côte */}
+//             <div className="grid grid-cols-2 gap-2">
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Quantité de service</label>
+//                 <input
+//                   type="number"
+//                   name="quantite_service"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.quantite_service}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 />
+//                 {formik.touched.quantite_service && formik.errors.quantite_service && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.quantite_service}</p>
+//                 )}
+//               </div>
+
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Nombre de prestataires</label>
+//                 <input
+//                   type="number"
+//                   name="nbr_prestataire"
+//                   onChange={formik.handleChange}
+//                   onBlur={formik.handleBlur}
+//                   value={formik.values.nbr_prestataire}
+//                   className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+//                 />
+//                 {formik.touched.nbr_prestataire && formik.errors.nbr_prestataire && (
+//                   <p className="text-red-500 text-xs mt-1">{formik.errors.nbr_prestataire}</p>
+//                 )}
+//               </div>
+//             </div>
+
+//             {/* Boutons */}
+//             <div className="flex justify-between gap-4 mt-6">
+//               <button
+//                 type="button"
+//                 onClick={onClose}
+//                 className="px-4 py-2 rounded-md border hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+//               >
+//                 Annuler
+//               </button>
+//               <button
+//                 type="submit"
+//                 disabled={submitting}
+//                 className="px-4 py-2 rounded-md bg-[#d61353] text-white hover:bg-[#b01044] disabled:opacity-50 transition"
+//               >
+//                 {submitting ? "Création..." : "Créer la campagne"}
+//               </button>
+//             </div>
+//           </form>
+//         )}
+//       </div>
+//     </div>
+//   )
+// }

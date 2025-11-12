@@ -1,100 +1,127 @@
 "use client";
 
 import React from "react";
-import { Formik, Form, Field } from "formik";
+import { useFormik } from "formik";
 import * as Yup from "yup";
 import { X } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "react-toastify";
 
-type Service = {
+export type Service = {
   id_service: string;
   nom: string;
   description: string | null;
   created_at: string;
 };
 
-interface AddServiceModalProps {
+interface AddServiceProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddService: (service: Service) => void;
+  onServiceUpdated: () => void;
 }
 
-const AddSchema = Yup.object().shape({
-  nom: Yup.string().required("Le nom est obligatoire"),
-  description: Yup.string().nullable(),
-  prix_unitaire: Yup.number()
-  .typeError("Le prix doit être un nombre")
-  .required("Le prix est obligatoire")
-  .positive("Le prix doit être positif")
+export default function AddService({ isOpen, onClose, onServiceUpdated }: AddServiceProps) {
+  const { token } = useAuth();
 
-});
+  const formik = useFormik({
+    initialValues: {
+      nom: "",
+      description: "",
+    },
+    validationSchema: Yup.object({
+      nom: Yup.string().required("Le nom est obligatoire"),
+      description: Yup.string().nullable(),
+    }),
+    onSubmit: async (values, { resetForm }) => {
+      if (!token) {
+        toast.error("Vous devez être connecté pour ajouter un service");
+        return;
+      }
 
-export default function AddServiceModal({ isOpen, onClose, onAddService }: AddServiceModalProps) {
+      try {
+        const res = await fetch("/api/services?page=1&limit=50", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(values),
+        });
+
+        if (!res.ok) throw new Error("Erreur lors de l'ajout");
+
+        const data = await res.json();
+        toast.success(data.message || "Service ajouté avec succès");
+        onServiceUpdated();
+        resetForm();
+        onClose();
+      } catch (err) {
+        console.error(err);
+        toast.error("Erreur lors de l'ajout du service");
+      }
+    },
+  });
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <div className="relative z-10 w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Ajouter un service</h3>
-          <button onClick={onClose} aria-label="Fermer">
+          <h2 className="text-xl font-semibold text-[#d61353]">Ajouter un service</h2>
+          <button onClick={onClose} className="text-gray-600 hover:text-[#d61353]">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <Formik
-          initialValues={{ nom: "", description: ""  ,prix_unitaire: ""  
- }}
-          validationSchema={AddSchema}
-          onSubmit={(values, { setSubmitting, resetForm }) => {
-            setSubmitting(true);
-            const newService: Service = {
-              id_service: `s_${Date.now()}`,
-              nom: values.nom.trim(),
-              description: values.description?.trim() || null,
-                // prix_unitaire: parseFloat(values.prix_unitaire), 
-              created_at: new Date().toISOString().slice(0, 10),
-            };
-            onAddService(newService);
-            resetForm();
-            setSubmitting(false);
-            onClose();
-          }}
-        >
-          {({ errors, touched, isSubmitting }) => (
-            <Form className="space-y-4">
-              <div>
-                <label className="block text-sm mb-1">Nom</label>
-                <Field name="nom" className="w-full px-3 py-2 border rounded" />
-                {errors.nom && touched.nom && <div className="text-red-500 text-sm mt-1">{errors.nom}</div>}
-              </div>
+        <form onSubmit={formik.handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm mb-1">Nom</label>
+            <input
+              type="text"
+              name="nom"
+              value={formik.values.nom}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+            />
+            {formik.touched.nom && formik.errors.nom && (
+              <div className="text-red-500 text-sm mt-1">{formik.errors.nom}</div>
+            )}
+          </div>
 
-              <div>
-                <label className="block text-sm mb-1">Description</label>
-                <Field as="textarea" name="description" rows={3} className="w-full px-3 py-2 border rounded" />
-                {errors.description && touched.description && <div className="text-red-500 text-sm mt-1">{errors.description}</div>}
-              </div>
-              <div>
-  <label className="block text-sm mb-1">Prix unitaire</label>
-  <Field 
-    name="prix_unitaire" 
-    type="number"
-    className="w-full px-3 py-2 border rounded" 
-  />
-  {errors.prix_unitaire && touched.prix_unitaire && (
-    <div className="text-red-500 text-sm mt-1">{errors.prix_unitaire}</div>
-  )}
-</div>
+          <div>
+            <label className="block text-sm mb-1">Description</label>
+            <textarea
+              name="description"
+              value={formik.values.description}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              rows={3}
+              className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+            />
+            {formik.touched.description && formik.errors.description && (
+              <div className="text-red-500 text-sm mt-1">{formik.errors.description}</div>
+            )}
+          </div>
 
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700">Annuler</button>
-                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded bg-[#d61353] text-white">
-                  {isSubmitting ? "Ajout..." : "Ajouter"}
-                </button>
-              </div>
-            </Form>
-          )}
-        </Formik>
+          <div className="flex justify-end gap-2 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded bg-[#d61353] text-white hover:bg-[#b80d45] transition"
+            >
+              Ajouter
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
