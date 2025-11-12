@@ -23,6 +23,8 @@ export async function GET(
         nom_campagne: true,
         description: true,
         objectif: true,
+        quantite_service: true,
+        nbr_prestataire: true,
         type_campagne: true,
         date_debut: true,
         date_fin: true,
@@ -71,12 +73,12 @@ export async function GET(
                 prenom: true,
                 contact: true,
                 disponible: true,
-                vehicule: {
-                  select: {
-                    type_panneau: true,
-                    plaque: true
-                  }
-                }
+                type_panneau: true,
+                plaque: true,
+                couleur: true,
+                marque: true,
+                modele: true,
+                id_verification: true
               }
             },
             date_creation: true,
@@ -176,6 +178,8 @@ export async function PUT(
         nom_campagne: true,
         description: true,
         objectif: true,
+        quantite_service: true,
+        nbr_prestataire: true,
         type_campagne: true,
         date_debut: true,
         date_fin: true,

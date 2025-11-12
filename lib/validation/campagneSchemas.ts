@@ -8,7 +8,7 @@ export const campagneCreateSchema = Joi.object({
   id_lieu: Joi.string().required().messages({
     'any.required': 'Lieu requis'
   }),
-  Id_service: Joi.string().required().messages({
+  id_service: Joi.string().required().messages({
     'any.required': 'Service requis'
   }),
   nom_campagne: Joi.string().min(2).trim().required().messages({
@@ -17,6 +17,14 @@ export const campagneCreateSchema = Joi.object({
   }),
   description: Joi.string().trim().optional().allow(''),
   objectif: Joi.string().trim().optional().allow(''),
+  quantite_service: Joi.number().integer().min(0).optional().messages({
+    'number.base': 'La quantité de service ne peut pas être négative',
+    'number.integer': 'La quantité doit être un nombre entier'
+  }),
+  nbr_prestataire: Joi.number().integer().min(0).optional().messages({
+    'number.min': 'Le nombre de prestataires ne peut pas être négatif',
+    'number.integer': 'Le nombre doit être un entier'
+  }),
   type_campagne: Joi.string().valid('MASSE', 'PROXIMITE').optional(),
   date_debut: Joi.date().iso().required().messages({
     'date.base': 'Date de début invalide',
@@ -35,6 +43,14 @@ export const campagneUpdateSchema = Joi.object({
   }),
   description: Joi.string().trim().optional().allow(''),
   objectif: Joi.string().trim().optional().allow(''),
+  quantite_service: Joi.number().integer().min(0).optional().messages({
+    'number.min': 'La quantité de service ne peut pas être négative',
+    'number.integer': 'La quantité doit être un nombre entier'
+  }),
+  nbr_prestataire: Joi.number().integer().min(0).optional().messages({
+    'number.min': 'Le nombre de prestataires ne peut pas être négatif',
+    'number.integer': 'Le nombre doit être un entier'
+  }),
   type_campagne: Joi.string().valid('MASSE', 'PROXIMITE').optional(),
   date_debut: Joi.date().iso().optional(),
   date_fin: Joi.date().iso().optional(),
