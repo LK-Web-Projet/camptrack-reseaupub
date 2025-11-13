@@ -73,7 +73,7 @@ export default function EditService({ isOpen, onClose, service, onServiceUpdated
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-[#d61353]">Modifier le service</h2>
+          <h2 className="text-xl font-semibold text-[#d61353]">Modifier les informations du service service</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-[#d61353] transition">
             <X className="w-5 h-5" />
           </button>

@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Pencil, Trash2, Plus, Megaphone, Eye } from "lucide-react"
-// import AddCampagneModal from "@/components/campagnes/AddCampagne"
-// import EditCampagneModal from "@/components/campagnes/EditCampagne"
-// import DeleteCampagneModal from "@/components/campagnes/DeleteCampagne"
+import AddCampagneModal from "@/components/campagnes/AddCampagne"
+import EditCampagneModal from "@/components/campagnes/EditCampagne"
+import DeleteCampagneModal from "@/components/campagnes/DeleteCampagne"
 import Link from "next/link"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
@@ -25,6 +25,7 @@ export default function CampagneTable() {
   const { token } = useAuth()
   const [campagnes, setCampagnes] = useState<Campagne[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -79,8 +80,21 @@ export default function CampagneTable() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-xl shadow">
+     
+       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
+       {loading ? (
+  <div className="flex flex-col items-center justify-center py-10">
+    <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
+    <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
+      Chargement des campagnes...
+    </p>
+  </div>
+)  : error ? (
+
+          <div className="text-center text-red-500 py-8">{error}</div>
+        ) : campagnes.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">Aucun service trouvé</div>
+        ) : (
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-800">
@@ -152,9 +166,10 @@ export default function CampagneTable() {
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
-      {/* <AddCampagneModal
+      <AddCampagneModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddCampagne={handleAddCampagne}
@@ -174,7 +189,7 @@ export default function CampagneTable() {
         campagne={campagneToDelete}
         onClose={() => { setIsDeleteOpen(false); setCampagneToDelete(null) }}
         onCampagneUpdated={() => { fetchCampagnes(); setIsDeleteOpen(false); setCampagneToDelete(null) }}
-      /> */}
+      />
     </div>
   )
 }
