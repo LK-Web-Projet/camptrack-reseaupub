@@ -1390,7 +1390,7 @@ const openApi = {
       get: {
         tags: ["Services"],
         summary: "Lister les prestataires d'un service",
-        description: "Récupère la liste paginée des prestataires associés à un service spécifique",
+        description: "Récupère la liste paginée des prestataires associés à un service spécifique. **Tri appliqué :** Les prestataires disponibles apparaissent en premier, puis tri par ancienneté (les plus anciens d'abord).",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -1424,7 +1424,7 @@ const openApi = {
         ],
         responses: {
           "200": {
-            description: "Liste des prestataires récupérée avec succès",
+            description: "Liste des prestataires récupérée avec succès. Tri : disponibles d'abord, puis par ancienneté.",
             content: {
               "application/json": {
                 schema: {
@@ -3203,19 +3203,17 @@ const openApi = {
                     "affectations": [
                       {
                         "prestataire": {
-                          "id_prestataire": "cmpresta001",
-                          "nom": "Koné",
-                          "prenom": "Moussa",
-                          "contact": "+225 07 12 34 56 78",
-                          "disponible": true,
-                          // ⚠️ CORRECTION : Champs directs au lieu de vehicule
-                          "type_panneau": "GRAND",
-                          "plaque": "AB-123-CD",
-                          "marque": "Toyota", 
-                          "modele": "Hilux",
-                          "couleur": "Bleu"
-                          // ⚠️ FIN CORRECTION
-                        },
+                        "id_prestataire": "cmpresta001",
+                        "nom": "Koné",
+                        "prenom": "Moussa",
+                        "contact": "+225 07 12 34 56 78",
+                        "disponible": true,
+                        "type_panneau": "GRAND",
+                        "plaque": "AB-123-CD",
+                        "marque": "Toyota", 
+                        "modele": "Hilux",
+                        "couleur": "Bleu"
+                      },
                         "date_creation": "2025-01-03T11:00:00.000Z",
                         "status": "ACTIF"
                       }
@@ -4482,7 +4480,7 @@ const openApi = {
       post: {
         tags: ["Prestataires Campagnes"],
         summary: "Ajouter un prestataire à une campagne",
-        description: "Affecte un prestataire à une campagne existante avec vérifications : disponibilité, non-doublon, et limite du nombre de prestataires actifs. Si la campagne a un nbr_prestataire défini, on vérifie qu'on ne dépasse pas la limite.",
+        description: "Affecte un prestataire à une campagne existante avec vérifications : **même service**, disponibilité, non-doublon, et limite du nombre de prestataires actifs.",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -4562,15 +4560,20 @@ const openApi = {
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                examples: {
+                "examples": {
+                  "Service différent": {
+                    "value": {
+                      "error": "Ce prestataire n'appartient pas au même service que la campagne"
+                    }
+                  },
                   "Prestataire non disponible": {
-                    value: {
-                      error: "Ce prestataire n'est pas disponible"
+                    "value": {
+                      "error": "Ce prestataire n'est pas disponible"
                     }
                   },
                   "Limite atteinte": {
-                    value: {
-                      error: "Le nombre maximum de prestataires (3) pour cette campagne est déjà atteint. Impossible d'ajouter un nouveau prestataire."
+                    "value": {
+                      "error": "Le nombre maximum de prestataires (3) pour cette campagne est déjà atteint. Impossible d'ajouter un nouveau prestataire."
                     }
                   }
                 }
@@ -5395,47 +5398,45 @@ const openApi = {
         }
       },
 
-      PrestataireWithStats: {
-        type: "object",
-        properties: {
-          id_prestataire: { type: "string" },
-          nom: { type: "string" },
-          prenom: { type: "string" },
-          contact: { type: "string" },
-          disponible: { type: "boolean" },
-          // ⚠️ NOUVEAUX CHAMPS DIRECTS (remplacement de vehicule)
-          type_panneau: { 
-            type: "string",
-            enum: ["PETIT", "GRAND"],
-            description: "Type de panneau publicitaire"
+      "PrestataireWithStats": {
+        "type": "object",
+        "properties": {
+          "id_prestataire": { "type": "string" },
+          "nom": { "type": "string" },
+          "prenom": { "type": "string" },
+          "contact": { "type": "string" },
+          "disponible": { "type": "boolean" },
+          "type_panneau": { 
+            "type": "string",
+            "enum": ["PETIT", "GRAND"],
+            "description": "Type de panneau publicitaire"
           },
-          marque: { 
-            type: "string",
-            description: "Marque du véhicule" 
+          "marque": { 
+            "type": "string",
+            "description": "Marque du véhicule" 
           },
-          modele: { 
-            type: "string",
-            description: "Modèle du véhicule" 
+          "modele": { 
+            "type": "string",
+            "description": "Modèle du véhicule" 
           },
-          plaque: { 
-            type: "string",
-            description: "Plaque d'immatriculation" 
+          "plaque": { 
+            "type": "string",
+            "description": "Plaque d'immatriculation" 
           },
-          couleur: {
-            type: "string",
-            description: "Couleur du véhicule"
+          "couleur": {
+            "type": "string",
+            "description": "Couleur du véhicule"
           },
-          id_verification: {
-            type: "string",
-            description: "ID de vérification du véhicule"
+          "id_verification": {
+            "type": "string",
+            "description": "ID de vérification du véhicule"
           },
-          // ⚠️ FIN DES NOUVEAUX CHAMPS
-          created_at: { type: "string", format: "date-time" },
-          _count: {
-            type: "object",
-            properties: {
-              affectations: { type: "integer" },
-              dommages: { type: "integer" }
+          "created_at": { "type": "string", "format": "date-time" },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "affectations": { "type": "integer" },
+              "dommages": { "type": "integer" }
             }
           }
         }
@@ -6042,118 +6043,114 @@ const openApi = {
         }
       },
 
-      PrestataireWithDetails: {
-        type: "object",
-        properties: {
-          id_prestataire: { type: "string" },
-          nom: { type: "string" },
-          prenom: { type: "string" },
-          contact: { type: "string" },
-          disponible: { type: "boolean" },
-          // ⚠️ CHAMPS VÉHICULE INTÉGRÉS
-          type_panneau: { 
-            type: "string",
-            enum: ["PETIT", "GRAND"]
+      "PrestataireWithDetails": {
+        "type": "object",
+        "properties": {
+          "id_prestataire": { "type": "string" },
+          "nom": { "type": "string" },
+          "prenom": { "type": "string" },
+          "contact": { "type": "string" },
+          "disponible": { "type": "boolean" },
+          "type_panneau": { 
+            "type": "string",
+            "enum": ["PETIT", "GRAND"]
           },
-          couleur: { type: "string" },
-          marque: { type: "string" },
-          modele: { type: "string" },
-          plaque: { type: "string" },
-          id_verification: { type: "string" },
-          // ⚠️ FIN CHAMPS VÉHICULE
-          service: {
-            type: "object",
-            properties: {
-              nom: { type: "string" }
+          "couleur": { "type": "string" },
+          "marque": { "type": "string" },
+          "modele": { "type": "string" },
+          "plaque": { "type": "string" },
+          "id_verification": { "type": "string" },
+          "service": {
+            "type": "object",
+            "properties": {
+              "nom": { "type": "string" }
             }
           }
         }
       },
 
-      PrestataireWithFullDetails: {
-        type: "object",
-        properties: {
-          id_prestataire: { type: "string" },
-          nom: { type: "string" },
-          prenom: { type: "string" },
-          contact: { type: "string" },
-          disponible: { type: "boolean" },
-          // CHAMPS VÉHICULE INTÉGRÉS
-          type_panneau: { 
-            type: "string",
-            enum: ["PETIT", "GRAND"]
+      "PrestataireWithFullDetails": {
+        "type": "object",
+        "properties": {
+          "id_prestataire": { "type": "string" },
+          "nom": { "type": "string" },
+          "prenom": { "type": "string" },
+          "contact": { "type": "string" },
+          "disponible": { "type": "boolean" },
+          "type_panneau": { 
+            "type": "string",
+            "enum": ["PETIT", "GRAND"]
           },
-          couleur: { type: "string" },
-          marque: { type: "string" },
-          modele: { type: "string" },
-          plaque: { type: "string" },
-          id_verification: { type: "string" },
-          // FIN CHAMPS VÉHICULE
-          created_at: { type: "string", format: "date-time" },
-          updated_at: { type: "string", format: "date-time" },
-          service: {
-            type: "object",
-            properties: {
-              id_service: { type: "string" },
-              nom: { type: "string" },
-              description: { type: "string" }
+          "couleur": { "type": "string" },
+          "marque": { "type": "string" },
+          "modele": { "type": "string" },
+          "plaque": { "type": "string" },
+          "id_verification": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "service": {
+            "type": "object",
+            "properties": {
+              "id_service": { "type": "string" },
+              "nom": { "type": "string" },
+              "description": { "type": "string" }
             }
           },
-          affectations: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                campagne: {
-                  type: "object",
-                  properties: {
-                    id_campagne: { type: "string" },
-                    nom_campagne: { type: "string" },
-                    date_debut: { type: "string", format: "date-time" },
-                    date_fin: { type: "string", format: "date-time" },
-                    status: { 
-                      type: "string",
-                      enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+          "affectations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "campagne": {
+                  "type": "object",
+                  "properties": {
+                    "id_campagne": { "type": "string" },
+                    "nom_campagne": { "type": "string" },
+                    "date_debut": { "type": "string", "format": "date-time" },
+                    "date_fin": { "type": "string", "format": "date-time" },
+                    "status": { 
+                      "type": "string",
+                      "enum": ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
                     }
                   }
                 },
-                date_creation: { type: "string", format: "date-time" },
-                status: { type: "string" }
+                "date_creation": { "type": "string", "format": "date-time" },
+                "status": { "type": "string" }
               }
             }
           },
-          dommages: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                id_materiels_case: { type: "string" },
-                etat: { 
-                  type: "string",
-                  enum: ["BON", "MOYEN", "MAUVAIS"]
+          "dommages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id_materiels_case": { "type": "string" },
+                "etat": { 
+                  "type": "string",
+                  "enum": ["BON", "MOYEN", "MAUVAIS"]
                 },
-                description: { type: "string" },
-                montant_penalite: { type: "number" },
-                penalite_appliquer: { type: "boolean" },
-                date_creation: { type: "string", format: "date-time" },
-                campagne: {
-                  type: "object",
-                  properties: {
-                    nom_campagne: { type: "string" }
+                "description": { "type": "string" },
+                "montant_penalite": { "type": "number" },
+                "penalite_appliquer": { "type": "boolean" },
+                "date_creation": { "type": "string", "format": "date-time" },
+                "campagne": {
+                  "type": "object",
+                  "properties": {
+                    "nom_campagne": { "type": "string" }
                   }
                 }
               }
             }
           },
-          _count: {
-            type: "object",
-            properties: {
-              affectations: { type: "integer" },
-              dommages: { type: "integer" }
+          "_count": {
+            "type": "object",
+            "properties": {
+              "affectations": { "type": "integer" },
+              "dommages": { "type": "integer" }
             }
           }
         }
-      },
+      }
       
     },
     responses: {
