@@ -93,7 +93,7 @@ export default function CampagneTable() {
 
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : campagnes.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">Aucun service trouvé</div>
+          <div className="text-center py-8 text-gray-500">Aucune campagne trouvé</div>
         ) : (
         <table className="min-w-full border-collapse">
           <thead>

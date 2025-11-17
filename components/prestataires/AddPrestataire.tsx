@@ -1,11 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useFormik } from "formik"
 import * as Yup from "yup"
 import { X } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
+
+interface Service {
+  id_service: string
+  nom: string
+}
 
 interface Prestataire {
   id_prestataire: string
@@ -13,6 +18,11 @@ interface Prestataire {
   prenom: string
   contact?: string
   modele?: string
+  type_panneau?: string
+  couleur?: string
+  marque?: string
+  plaque?: string
+  id_verification?: string
   service?: { nom?: string }
   disponible: boolean
 }
@@ -29,13 +39,43 @@ const validationSchema = Yup.object().shape({
   prenom: Yup.string().required("Le prénom est requis"),
   contact: Yup.string().required("Le contact est requis"),
   id_service: Yup.string().required("Le service est requis"),
-  modele: Yup.string(),
   disponible: Yup.boolean(),
+  type_panneau: Yup.string(),
+  couleur: Yup.string(),
+  marque: Yup.string(),
+  modele: Yup.string(),
+  plaque: Yup.string(),
+  id_verification: Yup.string(),
 })
 
 export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }: AddPrestaireModalProps) {
   const { token } = useAuth()
   const [submitting, setSubmitting] = useState(false)
+  const [services, setServices] = useState<Service[]>([])
+
+  // Charger les services au montage ou quand le modal s'ouvre
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!token || services.length > 0) return
+      try {
+        const res = await fetch("/api/services?page=1&limit=100", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        if (!res.ok) throw new Error("Erreur lors du chargement des services")
+        const data = await res.json()
+        setServices(data.services || [])
+      } catch (err) {
+        console.error("Erreur services:", err)
+        toast.error("Impossible de charger les services")
+      }
+    }
+
+    if (isOpen) {
+      fetchServices()
+    }
+  }, [isOpen, token, services.length])
 
   const formik = useFormik({
     initialValues: {
@@ -43,8 +83,13 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
       prenom: "",
       contact: "",
       id_service: "",
-      modele: "",
       disponible: true,
+      type_panneau: "",
+      couleur: "",
+      marque: "",
+      modele: "",
+      plaque: "",
+      id_verification: "",
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -58,10 +103,15 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
           prenom: values.prenom,
           contact: values.contact,
           disponible: values.disponible,
+          type_panneau: values.type_panneau || null,
+          couleur: values.couleur || null,
+          marque: values.marque || null,
           modele: values.modele || null,
+          plaque: values.plaque || null,
+          id_verification: values.id_verification || null,
         }
 
-        const res = await fetch("/api/prestataires", {
+        const res = await fetch("/api/prestataires?page=1&limit=50", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -105,7 +155,9 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
         </div>
 
         <form onSubmit={formik.handleSubmit}>
-          {/* Row 1: Nom | Prénom */}
+          {/* === INFORMATIONS PERSONNELLES === */}
+          <h4 className="text-sm font-semibold text-[#d61353] mb-3 border-b pb-2">Informations personnelles</h4>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1">Nom *</label>
@@ -147,23 +199,27 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
             </div>
           </div>
 
-          {/* Row 2: Service | Contact */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium mb-1">Service *</label>
-              <input
-                type="text"
+              <select
                 name="id_service"
                 value={formik.values.id_service}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                placeholder="ID service (ex: 1)"
                 className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${
                   formik.touched.id_service && formik.errors.id_service
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
-              />
+              >
+                <option value="">-- Sélectionner un service --</option>
+                {services.map((service) => (
+                  <option key={service.id_service} value={service.id_service}>
+                    {service.nom}
+                  </option>
+                ))}
+              </select>
               {formik.touched.id_service && formik.errors.id_service && (
                 <p className="text-red-500 text-xs mt-1">{formik.errors.id_service}</p>
               )}
@@ -189,7 +245,38 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
             </div>
           </div>
 
-          {/* Row 3: Modèle | Disponibilité */}
+          {/* === VÉHICULE === */}
+          <h4 className="text-sm font-semibold text-[#d61353] mb-3 border-b pb-2">Informations véhicule</h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Type de panneau</label>
+              <select
+                name="type_panneau"
+                value={formik.values.type_panneau}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 border-gray-300 dark:border-gray-600"
+              >
+                <option value="">--Sélectionner--</option>
+                <option value="PETIT">PETIT</option>
+                <option value="GRAND">GRAND</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Marque</label>
+              <input
+                type="text"
+                name="marque"
+                value={formik.values.marque}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 border-gray-300 dark:border-gray-600"
+                placeholder="Ex: Toyota"
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1">Modèle</label>
@@ -199,22 +286,65 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
                 value={formik.values.modele}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700`}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 border-gray-300 dark:border-gray-600"
                 placeholder="Ex: Hiace"
               />
             </div>
-            <div className="flex items-center">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="disponible"
-                  checked={formik.values.disponible}
-                  onChange={formik.handleChange}
-                  className="w-4 h-4 rounded"
-                />
-                <span className="text-sm font-medium">Disponible</span>
-              </label>
+            <div>
+              <label className="block text-sm font-medium mb-1">Couleur</label>
+              <input
+                type="text"
+                name="couleur"
+                value={formik.values.couleur}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 border-gray-300 dark:border-gray-600"
+                placeholder="Ex: Blanc"
+              />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium mb-1">Plaque (immatriculation)</label>
+              <input
+                type="text"
+                name="plaque"
+                value={formik.values.plaque}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 border-gray-300 dark:border-gray-600"
+                placeholder="Ex: AB-123-CD"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">ID Vérification</label>
+              <input
+                type="text"
+                name="id_verification"
+                value={formik.values.id_verification}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 border-gray-300 dark:border-gray-600"
+                placeholder="Réf. vérification"
+              />
+            </div>
+          </div>
+
+          {/* === DISPONIBILITÉ === */}
+          <h4 className="text-sm font-semibold text-[#d61353] mb-3 border-b pb-2">Statut</h4>
+
+          <div className="mb-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="disponible"
+                checked={formik.values.disponible}
+                onChange={formik.handleChange}
+                className="w-4 h-4 rounded"
+              />
+              <span className="text-sm font-medium">Disponible</span>
+            </label>
           </div>
 
           {/* Buttons */}

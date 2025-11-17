@@ -7,6 +7,9 @@ import { Pencil, Trash2, Plus, User } from "lucide-react"
 import AddUserModal from "@/components/user/AddUser"
 import EditUserModal from "@/components/user/EditUser"
 import DeleteUserModal from "@/components/user/DeleteUser"
+import { Paginate } from "../Paginate"
+
+import {useSearchParams } from "next/navigation";
 
 interface User {
   id_user: string
@@ -29,18 +32,23 @@ export default function TableUser() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [userToEdit, setUserToEdit] = useState<User | null>(null)
+  const [totalPages, setTotalPages] = useState(1);
 
+  
+    const searchParam = useSearchParams();
+    const page = parseInt(searchParam?.get("page") || "1");
 
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true)
       try {
-        const res = await fetch("/api/users", {
+    const res = await fetch("/api/users?page="+page+"&limit=1", {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
         if (!res.ok) throw new Error("Erreur lors du chargement des utilisateurs")
         const data = await res.json()
         setUsers(Array.isArray(data) ? data : data?.users || [])
+        setTotalPages(data?.pagination.totalPages || 1);
       } catch (e) {
         setError("Impossible de charger les utilisateurs")
         toast.error("Impossible de charger les utilisateurs")
@@ -142,7 +150,8 @@ export default function TableUser() {
         ) : users.length === 0 ? (
           <div className="text-center py-8 text-gray-500">Aucun utilisateur trouvé</div>
         ) : (
-          <table className="min-w-full text-sm border-collapse">
+          <div>
+            <table className="min-w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800 text-left text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">
                 <th className="px-6 py-3">Nom & Prénom</th>
@@ -215,7 +224,12 @@ export default function TableUser() {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+            { totalPages === 1 ? ''
+            :<Paginate pages ={totalPages} currentPage={page} path="/dashboard/admin" />
+            }
+          </div>
+
         )}
       </div>
 

@@ -19,9 +19,7 @@ export const prestataireCreateSchema = Joi.object({
   disponible: Joi.boolean().default(true),
   
   // CHAMPS VÉHICULE INTÉGRÉS
-  type_panneau: Joi.string().valid('PETIT', 'GRAND').required().messages({
-    'any.required': 'Type de panneau requis'
-  }),
+  type_panneau: Joi.string().valid('PETIT', 'GRAND').optional().allow(''),
   couleur: Joi.string().trim().optional().allow(''),
   marque: Joi.string().trim().optional().allow(''),
   modele: Joi.string().trim().optional().allow(''),

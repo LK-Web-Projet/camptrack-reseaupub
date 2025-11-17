@@ -65,3 +65,51 @@ export async function requireAdmin(req: Request) {
     } as const;
   }
 }
+
+export async function requireAuth(req: Request) {
+  try {
+    const auth = req.headers.get("authorization") || "";
+    if (!auth.startsWith("Bearer ")) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Token d'autorisation manquant" }, { status: 401 }),
+      } as const;
+    }
+
+    const token = auth.replace(/^Bearer\s+/i, "");
+
+    let payload: any;
+    try {
+      payload = verifyAccessToken(token);
+    } catch (err) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Token invalide ou expiré" }, { status: 401 }),
+      } as const;
+    }
+
+    const userId = payload?.userId || payload?.sub;
+    if (!userId) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Payload du token invalide" }, { status: 401 }),
+      } as const;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id_user: String(userId) } });
+    if (!user) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 401 }),
+      } as const;
+    }
+
+    return { ok: true, user } as const;
+  } catch (err) {
+    console.error("❌ Erreur middleware requireAuth:", err);
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 }),
+    } as const;
+  }
+}

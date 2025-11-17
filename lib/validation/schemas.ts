@@ -37,6 +37,9 @@ export const updatePasswordSchema = Joi.object({
   newPassword: Joi.string().min(6).required().messages({
     'string.min': 'Le mot de passe doit contenir au moins 6 caractères',
     'any.required': 'Nouveau mot de passe requis'
+  }),
+  oldPassword: Joi.string().min(6).optional().messages({
+    'string.min': "L'ancien mot de passe doit contenir au moins 6 caractères"
   })
 })
 

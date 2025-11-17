@@ -9,6 +9,15 @@ interface Prestataire {
   id_prestataire: string
   nom: string
   prenom: string
+  contact?: string
+  modele?: string
+  type_panneau?: string
+  couleur?: string
+  marque?: string
+  plaque?: string
+  id_verification?: string
+  service?: { nom?: string }
+  disponible: boolean
 }
 
 interface DeleteProps {
@@ -36,14 +45,14 @@ export default function DeletePrestataire({ isOpen, onClose, prestataire, onConf
         },
       })
 
-      const data = await res.json().catch(() => ({})) as any
+      const data = await res.json().catch(() => ({})) as Record<string, unknown>
 
       if (!res.ok) {
-        const msg = data?.error || data?.message || "Erreur lors de la suppression"
+        const msg = (data?.error as string) || (data?.message as string) || "Erreur lors de la suppression"
         throw new Error(msg)
       }
 
-      toast.success(data.message || "Prestataire supprimé")
+      toast.success((data.message as string) || "Prestataire supprimé")
       onConfirm()
       onClose()
     } catch (err: unknown) {

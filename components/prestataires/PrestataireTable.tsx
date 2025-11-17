@@ -15,6 +15,11 @@ interface Prestataire {
   prenom: string
   contact?: string
   modele?: string
+  type_panneau?: string
+  couleur?: string
+  marque?: string
+  plaque?: string
+  id_verification?: string
   service?: { nom?: string }
   disponible: boolean
 }
@@ -111,7 +116,7 @@ export default function PrestataireTable() {
 
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : prestataires.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">Aucun client trouvé</div>
+          <div className="text-center py-8 text-gray-500">Aucun prestataire  trouvé</div>
         ) : (
         <table className="min-w-full border-collapse">
           <thead>

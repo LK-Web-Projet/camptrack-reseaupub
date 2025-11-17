@@ -72,16 +72,7 @@ const data = {
             icon: Users,
       items: [{ title: "Gestion des prestataires", url: "/prestataires" }],
     },
-    {
-      title: "Incidents",
-            icon: AlertTriangle,
-      items: [{ title: "Liste des clients", url: "/clients" }],
-    },
-    {
-      title: "Suivi",
-            icon: LineChart,
-      items: [{ title: "Suivi des performances", url: "/performences" }],
-    },
+   
    
   ],
 
@@ -113,7 +104,7 @@ export function AppSidebar({ isOpen }: { isOpen: boolean }) {
         </div>
 
         {/* Menu */}
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 mb-4">
           {data.navMain.map((group, index) => (
             <Collapsible key={group.title} defaultOpen={isOpen && index === 0}>
               <SidebarMenuItem>
