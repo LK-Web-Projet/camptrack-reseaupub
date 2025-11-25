@@ -63,6 +63,7 @@ model User {
 
   campagnes       Campagne[]
   refreshTokens   RefreshToken[]
+  revokedTokens   RevokedToken[]  // RELATION AJOUTÉE
 
   @@map("users")
 }
@@ -77,6 +78,18 @@ model RefreshToken {
   created_at DateTime @default(now())
 
   @@map("refresh_tokens")
+}
+
+model RevokedToken {
+  id         String   @id @default(cuid())
+  jti        String   @unique  // JWT ID (unique identifier)
+  user_id    String
+  expires_at DateTime
+  revoked_at DateTime @default(now())
+  
+  user       User     @relation(fields: [user_id], references: [id_user])
+  
+  @@map("revoked_tokens")
 }
 
 model Client {

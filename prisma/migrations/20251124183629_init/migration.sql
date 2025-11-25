@@ -46,6 +46,17 @@ CREATE TABLE "refresh_tokens" (
 );
 
 -- CreateTable
+CREATE TABLE "revoked_tokens" (
+    "id" TEXT NOT NULL,
+    "token_hash" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "revoked_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "revoked_tokens_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "clients" (
     "id_client" TEXT NOT NULL,
     "nom" TEXT NOT NULL,
@@ -200,6 +211,9 @@ CREATE UNIQUE INDEX "users_nom_utilisateur_key" ON "users"("nom_utilisateur");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "revoked_tokens_token_hash_key" ON "revoked_tokens"("token_hash");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "clients_mail_key" ON "clients"("mail");
 
 -- CreateIndex
@@ -210,6 +224,9 @@ CREATE UNIQUE INDEX "paiements_prestataire_id_campagne_id_prestataire_key" ON "p
 
 -- AddForeignKey
 ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id_user") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "revoked_tokens" ADD CONSTRAINT "revoked_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id_user") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "prestataires" ADD CONSTRAINT "prestataires_id_service_fkey" FOREIGN KEY ("id_service") REFERENCES "services"("id_service") ON DELETE RESTRICT ON UPDATE CASCADE;

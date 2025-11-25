@@ -1,53 +1,153 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { comparePassword } from "@/lib/auth/hash";
+import { verifyAccessToken, verifyRefreshToken } from "@/lib/auth/jwt";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 
-function parseCookie(header: string | null) {
-  if (!header) return {} as Record<string,string>;
-  return Object.fromEntries(header.split(";").map(p => p.split("=").map(s => s.trim())).map(([k,v]) => [k, decodeURIComponent(v)]));
+function parseCookies(cookieHeader: string | null): Record<string, string> {
+  const cookies: Record<string, string> = {};
+  
+  if (!cookieHeader) return cookies;
+
+  cookieHeader.split(";").forEach(cookie => {
+    const [key, value] = cookie.trim().split("=");
+    if (key) {
+      try {
+        cookies[key] = value ? decodeURIComponent(value) : "";
+      } catch {
+        cookies[key] = value || "";
+      }
+    }
+  });
+
+  return cookies;
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    let refreshToken: string | undefined = body?.refreshToken;
-
-    if (!refreshToken) {
-      const cookieHeader = req.headers.get("cookie");
-      const cookies = parseCookie(cookieHeader);
-      refreshToken = cookies["refreshToken"];
-    }
-
-    if (!refreshToken) {
-      return NextResponse.json({ ok: true, message: "Aucun token à révoquer" });
-    }
-
-    // Trouver et révoquer le token
-    const tokens = await prisma.refreshToken.findMany({ where: { revoked: false } });
-    let tokenRow = null as null | (typeof tokens)[0];
+    const cookies = parseCookies(req.headers.get("cookie"));
     
-    for (const t of tokens) {
-      const ok = await comparePassword(refreshToken, t.token_hash);
-      if (ok) { 
-        tokenRow = t; 
-        break; 
+    let refreshToken = body?.refreshToken || cookies["refreshToken"];
+    const accessToken = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || cookies["accessToken"];
+
+    let userId: string | undefined;
+    let revokedTokens = 0;
+
+    // 1. RÉVOQUER LE ACCESS TOKEN via son jti
+    if (accessToken) {
+      try {
+        const payload = verifyAccessToken(accessToken);
+        userId = payload.userId;
+        
+        // Ajouter le jti à la blacklist
+        if (payload.jti) {
+          await prisma.revokedToken.create({
+            data: {
+              jti: payload.jti,
+              user_id: userId,
+              expires_at: new Date(payload.exp * 1000) // Date d'expiration du JWT
+            }
+          });
+          revokedTokens++;
+        }
+        
+      } catch (error: any) {
+        // Si le token est expiré, on ne peut pas le révoquer (c'est déjà fait)
+        if (error.message !== "ACCESS_TOKEN_EXPIRED") {
+          console.log("Erreur lors de la révocation du access token:", error);
+        }
       }
     }
 
-    if (tokenRow) {
-      await prisma.refreshToken.update({ 
-        where: { id: tokenRow.id }, 
-        data: { revoked: true } 
+    // 2. RÉVOQUER LE REFRESH TOKEN
+    if (refreshToken) {
+      try {
+        const payload = verifyRefreshToken(refreshToken);
+        
+        // Ajouter le jti du refresh token à la blacklist
+        if (payload.jti) {
+          await prisma.revokedToken.create({
+            data: {
+              jti: payload.jti,
+              user_id: payload.userId,
+              expires_at: new Date(payload.exp * 1000)
+            }
+          });
+          revokedTokens++;
+        }
+
+        // S'assurer d'avoir l'userId pour l'audit
+        if (!userId) {
+          userId = payload.userId;
+        }
+
+        // Révoquer aussi le refresh token dans la table refreshTokens
+        const tokenRecords = await prisma.refreshToken.findMany({
+          where: {
+            userId: payload.userId,
+            revoked: false,
+            expires_at: { gt: new Date() }
+          }
+        });
+
+        for (const record of tokenRecords) {
+          const isMatch = await comparePassword(refreshToken, record.token_hash);
+          if (isMatch) {
+            await prisma.refreshToken.update({
+              where: { id: record.id },
+              data: { revoked: true }
+            });
+            revokedTokens++;
+            break;
+          }
+        }
+        
+      } catch (error: any) {
+        if (error.message !== "REFRESH_TOKEN_EXPIRED") {
+          console.log("Erreur lors de la révocation du refresh token:", error);
+        }
+      }
+    }
+
+    // 3. JOURNALISATION
+    if (userId) {
+      await prisma.auditLog.create({
+        data: {
+          user_id: userId,
+          action: "LOGOUT",
+          ressource: "AUTH",
+          details: {
+            tokens_revoked: revokedTokens,
+            timestamp: new Date().toISOString()
+          },
+          ip_address: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown"
+        }
       });
     }
 
-    return NextResponse.json({ 
-      ok: true, 
-      message: "Déconnexion réussie" 
+    const response = NextResponse.json({
+      success: true,
+      message: "Déconnexion réussie",
+      tokens_revoked: revokedTokens
     });
 
+    // 4. SUPPRIMER LES COOKIES
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict" as const,
+      maxAge: 0,
+      path: "/"
+    };
+
+    response.cookies.set("refreshToken", "", cookieOptions);
+    response.cookies.set("accessToken", "", cookieOptions);
+
+    return response;
+
   } catch (error) {
+    console.error("Erreur lors de la déconnexion:", error);
     return handleApiError(error);
   }
 }

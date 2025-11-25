@@ -49,7 +49,13 @@ const openApi = {
         },
         responses: {
           "200": {
-            description: "Connexion réussie",
+            description: "Connexion réussie (cookies `accessToken` et `refreshToken` également envoyés)",
+            headers: {
+              "Set-Cookie": {
+                description: "Cookies `accessToken` et `refreshToken` sont définis (httpOnly, secure en production)",
+                schema: { type: "string" }
+              }
+            },
             content: {
               "application/json": {
                 schema: {
@@ -235,14 +241,13 @@ const openApi = {
       post: {
         tags: ["Authentication"],
         summary: "Rafraîchir le token d'accès",
-        description: "Permet de générer un nouveau token d'accès à partir d'un refresh token valide.",
+        description: "Génère un nouveau token d'accès. Le `refreshToken` peut être fourni dans le body ou envoyé automatiquement via le cookie `refreshToken`.",
         requestBody: {
-          required: true,
+          required: false,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["refreshToken"],
                 properties: {
                   refreshToken: {
                     type: "string",
@@ -255,7 +260,13 @@ const openApi = {
         },
         responses: {
           "200": {
-            description: "Token rafraîchi avec succès",
+            description: "Token rafraîchi avec succès (cookies mis à jour)",
+            headers: {
+              "Set-Cookie": {
+                description: "Nouveaux cookies `accessToken` et `refreshToken` définis",
+                schema: { type: "string" }
+              }
+            },
             content: {
               "application/json": {
                 schema: {
@@ -299,59 +310,118 @@ const openApi = {
     },
 
     "/auth/logout": {
-      post: {
-        tags: ["Authentication"],
-        summary: "Déconnexion",
-        description: "Révoque le refresh token et déconnecte l'utilisateur du système.",
-        security: [{ bearerAuth: [] }],
-        requestBody: {
-          required: false,
-          content: {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Déconnexion de l'utilisateur",
+        "description": "Révoque le refresh token, supprime les cookies d'authentification et déconnecte l'utilisateur. Le token peut être envoyé dans le body ou via un cookie. Après déconnexion, l'utilisateur ne pourra plus accéder aux routes protégées même si son access token n'est pas expiré.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": false,
+          "content": {
             "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  refreshToken: {
-                    type: "string",
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                  },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "200": {
-            description: "Déconnexion réussie",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    ok: { type: "boolean" },
-                    message: { type: "string" }
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "description": "Refresh token à révoquer (optionnel si présent dans les cookies)",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                   }
-                },
-                example: {
-                  ok: true,
-                  message: "Déconnexion réussie"
                 }
-              },
-            },
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Déconnexion réussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { 
+                      "type": "boolean",
+                      "description": "Statut de l'opération",
+                      "example": true
+                    },
+                    "message": { 
+                      "type": "string",
+                      "description": "Message de confirmation",
+                      "example": "Déconnexion réussie"
+                    },
+                    "tokens_revoked": {
+                      "type": "integer",
+                      "description": "Nombre de tokens révoqués",
+                      "example": 1
+                    }
+                  },
+                  "required": ["ok", "message"]
+                },
+                "examples": {
+                  "successWithToken": {
+                    "summary": "Déconnexion avec token révoqué",
+                    "value": {
+                      "ok": true,
+                      "message": "Déconnexion réussie",
+                      "tokens_revoked": 1
+                    }
+                  },
+                  "successNoToken": {
+                    "summary": "Déconnexion sans token à révoquer",
+                    "value": {
+                      "ok": true,
+                      "message": "Aucun token à révoquer - Déconnexion effectuée",
+                      "tokens_revoked": 0
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
-            description: "Non authentifié",
-            content: {
+            "description": "Non autorisé - Token d'accès invalide ou expiré",
+            "content": {
               "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Token manquant ou invalide"
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "invalidToken": {
+                    "summary": "Token invalide",
+                    "value": {
+                      "error": "Token invalide",
+                      "message": "Le token d'accès est invalide ou expiré"
+                    }
+                  },
+                  "userNotFound": {
+                    "summary": "Utilisateur non trouvé",
+                    "value": {
+                      "error": "Utilisateur non trouvé",
+                      "message": "L'utilisateur associé au token n'existe pas ou a été désactivé"
+                    }
+                  }
                 }
-              },
-            },
+              }
+            }
           },
-        },
-      },
+          "500": {
+            "description": "Erreur interne du serveur",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "serverError": {
+                    "summary": "Erreur serveur",
+                    "value": {
+                      "error": "Erreur serveur",
+                      "message": "Une erreur est survenue lors de la déconnexion"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
 
     // ==================== GESTION DES UTILISATEURS ====================
