@@ -5,7 +5,6 @@ import { useFormik } from "formik"
 import * as Yup from "yup"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/app/context/AuthContext"
-import Image from "next/image"
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton"
 import { Logo } from "@/components/ui/logo"
 import { Eye, EyeOff } from "lucide-react"
@@ -36,8 +35,7 @@ export default function LoginPage() {
                 const success = await login(values.email, values.password)
                 if (success) {
                     toast.success("Connexion réussie !")
-                    // Si la redirection n'est pas gérée dans le contexte :
-                    // router.push("/dashboard/admin")
+                   
                 } else {
                     toast.error("Identifiants incorrects")
                 }

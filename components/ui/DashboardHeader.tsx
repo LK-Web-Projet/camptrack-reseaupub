@@ -34,7 +34,7 @@ export default function DashboardHeader({
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
 
   const user = {
-    name: "Elcy Codjia",
+    name: "",
     avatar: "/images/avatar.png",
   };
 
@@ -84,7 +84,7 @@ export default function DashboardHeader({
         <div className="relative">
           <button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center gap-2 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
           >
             <img
               src={user.avatar}

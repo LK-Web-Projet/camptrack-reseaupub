@@ -93,6 +93,20 @@ export default function DetailCampagne({ id }: { id: string }) {
 	const [fetchingPrestataires, setFetchingPrestataires] = useState(false);
 	const [selectedPrestataire, setSelectedPrestataire] = useState<string | null>(null);
 	const [assignLoading, setAssignLoading] = useState(false);
+	// Upload fichier states
+const [showFileForm, setShowFileForm] = useState(false);
+const [fileType, setFileType] = useState("");
+const [fileUpload, setFileUpload] = useState<File | null>(null);
+const [uploadLoading, setUploadLoading] = useState(false);
+
+// Les types du fichier depuis Prisma
+const fileTypes = [
+
+   "RAPPORT_JOURNALIER",
+  "RAPPORT_FINAL",
+  "PIGE",
+];
+
 
 	useEffect(() => {
 		const fetchCampagne = async () => {
@@ -138,6 +152,50 @@ export default function DetailCampagne({ id }: { id: string }) {
 				setFetchingPrestataires(false);
 			}
 		};
+		const handleFileUpload = async () => {
+  if (!fileUpload || !fileType || !token) {
+    toast.error("Veuillez sélectionner un fichier et un type");
+    return;
+  }
+
+  setUploadLoading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("file", fileUpload);
+    formData.append("type_fichier", fileType);
+
+    const res = await fetch(`/api/campagnes/${id}/fichiers`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || "Erreur upload fichier");
+
+    toast.success("Fichier téléchargé avec succès");
+
+    // mise à jour locale
+    setCampagne((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        fichiers: [body.fichier, ...(prev.fichiers || [])],
+      };
+    });
+
+    // reset form
+    setFileUpload(null);
+    setFileType("");
+    setShowFileForm(false);
+
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "Erreur upload");
+  } finally {
+    setUploadLoading(false);
+  }
+};
 
 		const handleAssign = async () => {
 			if (!selectedPrestataire || !token) {
@@ -236,6 +294,55 @@ export default function DetailCampagne({ id }: { id: string }) {
 						<p><strong>Date début:</strong> {campagne.date_debut ? new Date(campagne.date_debut).toLocaleDateString('fr-FR') : '-'}</p>
 						<p><strong>Date fin:</strong> {campagne.date_fin ? new Date(campagne.date_fin).toLocaleDateString('fr-FR') : '-'}</p>
 						<p><strong>Status:</strong> {campagne.status ?? '-'}</p>
+<div className="mt-4">
+  <button
+    onClick={() => setShowFileForm(!showFileForm)}
+    className="px-3 py-1 text-sm rounded bg-[#d61353] cursor-pointer text-white hover:bg-[#b01044]"
+  >
+    {showFileForm ? "Fermer l'upload fichier" : "Ajouter un fichier"}
+  </button>
+
+  {showFileForm && (
+    <div className="mt-3 border p-4 rounded space-y-3 bg-gray-50 dark:bg-gray-800">
+      <div>
+        <label className="block text-sm font-medium mb-1">Type de fichier</label>
+        <select
+          value={fileType}
+          onChange={(e) => setFileType(e.target.value)}
+          className="border p-2 rounded w-full"
+        >
+          <option value="">-- Sélectionner --</option>
+          {fileTypes.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Fichier à uploader</label>
+        <input
+          type="file"
+          className="p-2 border rounded w-full"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            setFileUpload(file);
+          }}
+        />
+      </div>
+
+      <button
+        onClick={handleFileUpload}
+        disabled={uploadLoading}
+        className="px-3 py-2 bg-green-600 text-white rounded disabled:opacity-60"
+      >
+        {uploadLoading ? "Upload..." : "Uploader"}
+      </button>
+    </div>
+  )}
+</div>
+
 					</div>
 				</div>
 
@@ -251,7 +358,7 @@ export default function DetailCampagne({ id }: { id: string }) {
 				</div>
 
 				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 lg:col-span-2">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Client</h2>
+					<h2 className="text-lg font-bold text-[#d61353] mb-4">Client associé à la campagne  {campagne.nom_campagne ?? '-'}</h2>
 					<p><strong>Nom:</strong> {campagne.client?.nom ?? '-'} {campagne.client?.prenom ?? ''}</p>
 					<p><strong>Entreprise:</strong> {campagne.client?.entreprise ?? '-'}</p>
 					<p><strong>Contact:</strong> {campagne.client?.contact ?? '-'}</p>
@@ -259,19 +366,19 @@ export default function DetailCampagne({ id }: { id: string }) {
 				</div>
 
 				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Lieu</h2>
+					<h2 className="text-lg font-bold text-[#d61353] mb-4">Lieu de la campagne </h2>
 					<p><strong>Nom:</strong> {campagne.lieu?.nom ?? '-'}</p>
 					<p><strong>Ville:</strong> {campagne.lieu?.ville ?? '-'}</p>
 				</div>
 
 				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Gestionnaire</h2>
+					<h2 className="text-lg font-bold text-[#d61353] mb-4">Gestionnaire de la campagne</h2>
 					<p><strong>Nom:</strong> {campagne.gestionnaire ? `${campagne.gestionnaire.nom ?? ''} ${campagne.gestionnaire.prenom ?? ''}` : '-'}</p>
 					<p><strong>Email:</strong> {campagne.gestionnaire?.email ?? '-'}</p>
 				</div>
 
 				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 lg:col-span-2">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Service</h2>
+					<h2 className="text-lg font-bold text-[#d61353] mb-4">Service lié à la campagne</h2>
 					<p><strong>Nom:</strong> {campagne.service?.nom ?? '-'}</p>
 					<p><strong>Description:</strong> {campagne.service?.description ?? '-'}</p>
 				</div>
@@ -358,7 +465,7 @@ export default function DetailCampagne({ id }: { id: string }) {
 							</div>
 
 				{/* Fichiers */}
-				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 lg:col-span-2">
+				<div className="bg-white dark: bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 lg:col-span-2">
 					<h2 className="text-lg font-bold text-[#d61353] mb-4">Fichiers</h2>
 					{campagne.fichiers && campagne.fichiers.length > 0 ? (
 						<div className="space-y-3">
