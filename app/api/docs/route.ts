@@ -49,7 +49,13 @@ const openApi = {
         },
         responses: {
           "200": {
-            description: "Connexion réussie",
+            description: "Connexion réussie (cookies `accessToken` et `refreshToken` également envoyés)",
+            headers: {
+              "Set-Cookie": {
+                description: "Cookies `accessToken` et `refreshToken` sont définis (httpOnly, secure en production)",
+                schema: { type: "string" }
+              }
+            },
             content: {
               "application/json": {
                 schema: {
@@ -235,14 +241,13 @@ const openApi = {
       post: {
         tags: ["Authentication"],
         summary: "Rafraîchir le token d'accès",
-        description: "Permet de générer un nouveau token d'accès à partir d'un refresh token valide.",
+        description: "Génère un nouveau token d'accès. Le `refreshToken` peut être fourni dans le body ou envoyé automatiquement via le cookie `refreshToken`.",
         requestBody: {
-          required: true,
+          required: false,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["refreshToken"],
                 properties: {
                   refreshToken: {
                     type: "string",
@@ -255,7 +260,13 @@ const openApi = {
         },
         responses: {
           "200": {
-            description: "Token rafraîchi avec succès",
+            description: "Token rafraîchi avec succès (cookies mis à jour)",
+            headers: {
+              "Set-Cookie": {
+                description: "Nouveaux cookies `accessToken` et `refreshToken` définis",
+                schema: { type: "string" }
+              }
+            },
             content: {
               "application/json": {
                 schema: {
@@ -299,59 +310,118 @@ const openApi = {
     },
 
     "/auth/logout": {
-      post: {
-        tags: ["Authentication"],
-        summary: "Déconnexion",
-        description: "Révoque le refresh token et déconnecte l'utilisateur du système.",
-        security: [{ bearerAuth: [] }],
-        requestBody: {
-          required: false,
-          content: {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Déconnexion de l'utilisateur",
+        "description": "Révoque le refresh token, supprime les cookies d'authentification et déconnecte l'utilisateur. Le token peut être envoyé dans le body ou via un cookie. Après déconnexion, l'utilisateur ne pourra plus accéder aux routes protégées même si son access token n'est pas expiré.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": false,
+          "content": {
             "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  refreshToken: {
-                    type: "string",
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                  },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "200": {
-            description: "Déconnexion réussie",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    ok: { type: "boolean" },
-                    message: { type: "string" }
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "description": "Refresh token à révoquer (optionnel si présent dans les cookies)",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                   }
-                },
-                example: {
-                  ok: true,
-                  message: "Déconnexion réussie"
                 }
-              },
-            },
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Déconnexion réussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { 
+                      "type": "boolean",
+                      "description": "Statut de l'opération",
+                      "example": true
+                    },
+                    "message": { 
+                      "type": "string",
+                      "description": "Message de confirmation",
+                      "example": "Déconnexion réussie"
+                    },
+                    "tokens_revoked": {
+                      "type": "integer",
+                      "description": "Nombre de tokens révoqués",
+                      "example": 1
+                    }
+                  },
+                  "required": ["ok", "message"]
+                },
+                "examples": {
+                  "successWithToken": {
+                    "summary": "Déconnexion avec token révoqué",
+                    "value": {
+                      "ok": true,
+                      "message": "Déconnexion réussie",
+                      "tokens_revoked": 1
+                    }
+                  },
+                  "successNoToken": {
+                    "summary": "Déconnexion sans token à révoquer",
+                    "value": {
+                      "ok": true,
+                      "message": "Aucun token à révoquer - Déconnexion effectuée",
+                      "tokens_revoked": 0
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
-            description: "Non authentifié",
-            content: {
+            "description": "Non autorisé - Token d'accès invalide ou expiré",
+            "content": {
               "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Token manquant ou invalide"
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "invalidToken": {
+                    "summary": "Token invalide",
+                    "value": {
+                      "error": "Token invalide",
+                      "message": "Le token d'accès est invalide ou expiré"
+                    }
+                  },
+                  "userNotFound": {
+                    "summary": "Utilisateur non trouvé",
+                    "value": {
+                      "error": "Utilisateur non trouvé",
+                      "message": "L'utilisateur associé au token n'existe pas ou a été désactivé"
+                    }
+                  }
                 }
-              },
-            },
+              }
+            }
           },
-        },
-      },
+          "500": {
+            "description": "Erreur interne du serveur",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "serverError": {
+                    "summary": "Erreur serveur",
+                    "value": {
+                      "error": "Erreur serveur",
+                      "message": "Une erreur est survenue lors de la déconnexion"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
 
     // ==================== GESTION DES UTILISATEURS ====================
@@ -1390,7 +1460,7 @@ const openApi = {
       get: {
         tags: ["Services"],
         summary: "Lister les prestataires d'un service",
-        description: "Récupère la liste paginée des prestataires associés à un service spécifique",
+        description: "Récupère la liste paginée des prestataires associés à un service spécifique. **Tri appliqué :** Les prestataires disponibles apparaissent en premier, puis tri par ancienneté (les plus anciens d'abord).",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -1424,7 +1494,7 @@ const openApi = {
         ],
         responses: {
           "200": {
-            description: "Liste des prestataires récupérée avec succès",
+            description: "Liste des prestataires récupérée avec succès. Tri : disponibles d'abord, puis par ancienneté.",
             content: {
               "application/json": {
                 schema: {
@@ -3203,19 +3273,17 @@ const openApi = {
                     "affectations": [
                       {
                         "prestataire": {
-                          "id_prestataire": "cmpresta001",
-                          "nom": "Koné",
-                          "prenom": "Moussa",
-                          "contact": "+225 07 12 34 56 78",
-                          "disponible": true,
-                          // ⚠️ CORRECTION : Champs directs au lieu de vehicule
-                          "type_panneau": "GRAND",
-                          "plaque": "AB-123-CD",
-                          "marque": "Toyota", 
-                          "modele": "Hilux",
-                          "couleur": "Bleu"
-                          // ⚠️ FIN CORRECTION
-                        },
+                        "id_prestataire": "cmpresta001",
+                        "nom": "Koné",
+                        "prenom": "Moussa",
+                        "contact": "+225 07 12 34 56 78",
+                        "disponible": true,
+                        "type_panneau": "GRAND",
+                        "plaque": "AB-123-CD",
+                        "marque": "Toyota", 
+                        "modele": "Hilux",
+                        "couleur": "Bleu"
+                      },
                         "date_creation": "2025-01-03T11:00:00.000Z",
                         "status": "ACTIF"
                       }
@@ -4482,7 +4550,7 @@ const openApi = {
       post: {
         tags: ["Prestataires Campagnes"],
         summary: "Ajouter un prestataire à une campagne",
-        description: "Affecte un prestataire à une campagne existante avec vérifications : disponibilité, non-doublon, et limite du nombre de prestataires actifs. Si la campagne a un nbr_prestataire défini, on vérifie qu'on ne dépasse pas la limite.",
+        description: "Affecte un prestataire à une campagne existante avec vérifications : **même service**, disponibilité, non-doublon, et limite du nombre de prestataires actifs.",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -4562,15 +4630,20 @@ const openApi = {
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                examples: {
+                "examples": {
+                  "Service différent": {
+                    "value": {
+                      "error": "Ce prestataire n'appartient pas au même service que la campagne"
+                    }
+                  },
                   "Prestataire non disponible": {
-                    value: {
-                      error: "Ce prestataire n'est pas disponible"
+                    "value": {
+                      "error": "Ce prestataire n'est pas disponible"
                     }
                   },
                   "Limite atteinte": {
-                    value: {
-                      error: "Le nombre maximum de prestataires (3) pour cette campagne est déjà atteint. Impossible d'ajouter un nouveau prestataire."
+                    "value": {
+                      "error": "Le nombre maximum de prestataires (3) pour cette campagne est déjà atteint. Impossible d'ajouter un nouveau prestataire."
                     }
                   }
                 }
@@ -5204,6 +5277,924 @@ const openApi = {
       }
     },
 
+    // ==================== GESTION DES ÉTATS DE MATÉRIEL ====================
+    "/materiels-cases": {
+      "get": {
+        "tags": ["Materiels Cases"],
+        "summary": "Lister tous les états de matériel",
+        "description": "Récupère la liste paginée de tous les enregistrements d'état de matériel avec filtres par campagne, prestataire, état et statut de pénalité. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Numéro de page pour la pagination",
+            "schema": { 
+              "type": "integer", 
+              "default": 1, 
+              "minimum": 1 
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query", 
+            "required": false,
+            "description": "Nombre d'enregistrements par page",
+            "schema": { 
+              "type": "integer", 
+              "default": 50, 
+              "minimum": 1, 
+              "maximum": 100 
+            }
+          },
+          {
+            "name": "id_campagne",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par ID de campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par ID de prestataire",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "etat",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par état du matériel",
+            "schema": { 
+              "type": "string",
+              "enum": ["BON", "MOYEN", "MAUVAIS"]
+            }
+          },
+          {
+            "name": "penalite_appliquer",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par statut d'application de pénalité",
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des états de matériel récupérée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "materiels_cases": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MaterielsCaseWithRelations" }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": { "type": "integer" },
+                        "limit": { "type": "integer" },
+                        "total": { "type": "integer" },
+                        "totalPages": { "type": "integer" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "materiels_cases": [
+                    {
+                      "id_materiels_case": "cmmat001",
+                      "etat": "MAUVAIS",
+                      "description": "Panneau fissuré sur le côté droit, support déformé",
+                      "montant_penalite": 50000,
+                      "penalite_appliquer": true,
+                      "photo_url": "https://storage.com/photo1.jpg",
+                      "preuve_media": "https://storage.com/video1.mp4",
+                      "date_creation": "2025-01-10T10:00:00.000Z",
+                      "campagne": {
+                        "id_campagne": "cmcamp001",
+                        "nom_campagne": "Campagne Printemps 2025",
+                        "date_debut": "2025-03-01T00:00:00.000Z",
+                        "date_fin": "2025-03-15T00:00:00.000Z",
+                        "status": "TERMINEE"
+                      },
+                      "prestataire": {
+                        "id_prestataire": "cmpresta001",
+                        "nom": "Koné",
+                        "prenom": "Moussa",
+                        "contact": "+225 07 12 34 56 78",
+                        "type_panneau": "GRAND",
+                        "plaque": "AB-123-CD",
+                        "marque": "Toyota",
+                        "modele": "Hilux"
+                      }
+                    }
+                  ],
+                  "pagination": {
+                    "page": 1,
+                    "limit": 50,
+                    "total": 1,
+                    "totalPages": 1
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Paramètres de requête invalides",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": {
+                  "error": "Le paramètre 'page' doit être un nombre entier positif"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé - Admin requis",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Materiels Cases"],
+        "summary": "Créer un nouvel enregistrement d'état de matériel",
+        "description": "Enregistre l'état du matériel avant ou après une campagne. Permet de documenter les dommages et d'appliquer des pénalités si nécessaire. **Validation :** Au moins une relation (campagne ou prestataire) est requise. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["etat", "description", "montant_penalite"],
+                "properties": {
+                  "id_campagne": {
+                    "type": "string",
+                    "description": "ID de la campagne concernée (optionnel si prestataire fourni)",
+                    "example": "cmcamp001"
+                  },
+                  "id_prestataire": {
+                    "type": "string",
+                    "description": "ID du prestataire concerné (optionnel si campagne fournie)",
+                    "example": "cmpresta001"
+                  },
+                  "etat": {
+                    "type": "string",
+                    "enum": ["BON", "MOYEN", "MAUVAIS"],
+                    "description": "État du matériel constaté",
+                    "example": "MAUVAIS"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 5,
+                    "description": "Description détaillée des dommages ou de l'état (minimum 5 caractères)",
+                    "example": "Panneau fissuré sur le côté droit, support déformé"
+                  },
+                  "montant_penalite": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Montant de la pénalité à appliquer",
+                    "example": 50000
+                  },
+                  "penalite_appliquer": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Indique si la pénalité doit être appliquée",
+                    "example": true
+                  },
+                  "photo_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL valide de la photo du dommage",
+                    "example": "https://storage.com/photo1.jpg"
+                  },
+                  "preuve_media": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL valide d'une preuve média supplémentaire (vidéo, autre photo)",
+                    "example": "https://storage.com/video1.mp4"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "État de matériel enregistré avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "materiels_case": { "$ref": "#/components/schemas/MaterielsCaseWithRelations" }
+                  }
+                },
+                "example": {
+                  "message": "État de matériel enregistré avec succès",
+                  "materiels_case": {
+                    "id_materiels_case": "cmmat001",
+                    "etat": "MAUVAIS",
+                    "description": "Panneau fissuré sur le côté droit, support déformé",
+                    "montant_penalite": 50000,
+                    "penalite_appliquer": true,
+                    "photo_url": "https://storage.com/photo1.jpg",
+                    "preuve_media": "https://storage.com/video1.mp4",
+                    "date_creation": "2025-01-10T10:00:00.000Z",
+                    "campagne": {
+                      "id_campagne": "cmcamp001",
+                      "nom_campagne": "Campagne Printemps 2025"
+                    },
+                    "prestataire": {
+                      "id_prestataire": "cmpresta001",
+                      "nom": "Koné",
+                      "prenom": "Moussa",
+                      "contact": "+225 07 12 34 56 78"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "Champs requis manquants": {
+                    "value": {
+                      "error": "L'état, la description et le montant de pénalité sont requis"
+                    }
+                  },
+                  "Description trop courte": {
+                    "value": {
+                      "error": "La description doit contenir au moins 5 caractères"
+                    }
+                  },
+                  "Aucune relation": {
+                    "value": {
+                      "error": "Au moins une relation (campagne ou prestataire) doit être fournie"
+                    }
+                  },
+                  "URL invalide": {
+                    "value": {
+                      "error": "L'URL de la photo doit être une URL valide"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé - Admin requis",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "Ressource non trouvée",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "Campagne non trouvée": {
+                    "value": {
+                      "error": "Campagne non trouvée"
+                    }
+                  },
+                  "Prestataire non trouvé": {
+                    "value": {
+                      "error": "Prestataire non trouvé"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/materiels-cases/{id}": {
+      "get": {
+        "tags": ["Materiels Cases"],
+        "summary": "Récupérer un état de matériel spécifique",
+        "description": "Obtenir tous les détails d'un enregistrement d'état de matériel par son ID. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID de l'enregistrement d'état de matériel",
+            "schema": { 
+              "type": "string",
+              "example": "cmmat001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Détails de l'état de matériel récupérés avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "materiels_case": { "$ref": "#/components/schemas/MaterielsCaseWithRelations" }
+                  }
+                },
+                "example": {
+                  "materiels_case": {
+                    "id_materiels_case": "cmmat001",
+                    "etat": "MAUVAIS",
+                    "description": "Panneau fissuré sur le côté droit, support déformé",
+                    "montant_penalite": 50000,
+                    "penalite_appliquer": true,
+                    "photo_url": "https://storage.com/photo1.jpg",
+                    "preuve_media": "https://storage.com/video1.mp4",
+                    "date_creation": "2025-01-10T10:00:00.000Z",
+                    "campagne": {
+                      "id_campagne": "cmcamp001",
+                      "nom_campagne": "Campagne Printemps 2025",
+                      "date_debut": "2025-03-01T00:00:00.000Z",
+                      "date_fin": "2025-03-15T00:00:00.000Z",
+                      "status": "TERMINEE"
+                    },
+                    "prestataire": {
+                      "id_prestataire": "cmpresta001",
+                      "nom": "Koné",
+                      "prenom": "Moussa",
+                      "contact": "+225 07 12 34 56 78",
+                      "type_panneau": "GRAND",
+                      "plaque": "AB-123-CD",
+                      "marque": "Toyota",
+                      "modele": "Hilux"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé - Admin requis",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "État de matériel non trouvé",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": {
+                  "error": "État de matériel non trouvé"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Materiels Cases"],
+        "summary": "Modifier un état de matériel",
+        "description": "Met à jour les informations d'un enregistrement d'état de matériel existant. **Validation :** Au moins un champ doit être fourni. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID de l'enregistrement à modifier",
+            "schema": { 
+              "type": "string",
+              "example": "cmmat001"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id_campagne": {
+                    "type": "string",
+                    "description": "Nouvel ID de campagne (optionnel)",
+                    "example": "cmcamp002"
+                  },
+                  "id_prestataire": {
+                    "type": "string",
+                    "description": "Nouvel ID de prestataire (optionnel)",
+                    "example": "cmpresta002"
+                  },
+                  "etat": {
+                    "type": "string",
+                    "enum": ["BON", "MOYEN", "MAUVAIS"],
+                    "description": "Nouvel état du matériel",
+                    "example": "MOYEN"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 5,
+                    "description": "Nouvelle description",
+                    "example": "Réparation effectuée, état amélioré mais traces visibles"
+                  },
+                  "montant_penalite": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Nouveau montant de pénalité",
+                    "example": 25000
+                  },
+                  "penalite_appliquer": {
+                    "type": "boolean",
+                    "description": "Nouveau statut d'application",
+                    "example": false
+                  },
+                  "photo_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Nouvelle URL de photo",
+                    "example": "https://storage.com/photo2.jpg"
+                  },
+                  "preuve_media": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Nouvelle URL de preuve média",
+                    "example": "https://storage.com/video2.mp4"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "État de matériel modifié avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "materiels_case": { "$ref": "#/components/schemas/MaterielsCaseWithRelations" }
+                  }
+                },
+                "example": {
+                  "message": "État de matériel modifié avec succès",
+                  "materiels_case": {
+                    "id_materiels_case": "cmmat001",
+                    "etat": "MOYEN",
+                    "description": "Réparation effectuée, état amélioré mais traces visibles",
+                    "montant_penalite": 25000,
+                    "penalite_appliquer": false,
+                    "photo_url": "https://storage.com/photo2.jpg",
+                    "preuve_media": "https://storage.com/video2.mp4",
+                    "date_creation": "2025-01-10T10:00:00.000Z",
+                    "campagne": {
+                      "id_campagne": "cmcamp001",
+                      "nom_campagne": "Campagne Printemps 2025"
+                    },
+                    "prestataire": {
+                      "id_prestataire": "cmpresta001",
+                      "nom": "Koné",
+                      "prenom": "Moussa",
+                      "contact": "+225 07 12 34 56 78"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "Aucun champ fourni": {
+                    "value": {
+                      "error": "Au moins un champ doit être fourni pour la modification"
+                    }
+                  },
+                  "Description trop courte": {
+                    "value": {
+                      "error": "La description doit contenir au moins 5 caractères"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé - Admin requis",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "État de matériel non trouvé",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "Enregistrement non trouvé": {
+                    "value": {
+                      "error": "État de matériel non trouvé"
+                    }
+                  },
+                  "Nouvelle ressource non trouvée": {
+                    "value": {
+                      "error": "Campagne non trouvée"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Materiels Cases"],
+        "summary": "Supprimer un état de matériel",
+        "description": "Supprime définitivement un enregistrement d'état de matériel. **Attention :** Cette action est irréversible. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID de l'enregistrement à supprimer",
+            "schema": { 
+              "type": "string",
+              "example": "cmmat001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "État de matériel supprimé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "État de matériel supprimé avec succès"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé - Admin requis",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "État de matériel non trouvé",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": {
+                  "error": "État de matériel non trouvé"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/campagnes/{id}/materiels-cases": {
+      "get": {
+        "tags": ["Materiels Cases"],
+        "summary": "Lister les états de matériel d'une campagne",
+        "description": "Récupère tous les enregistrements d'état de matériel associés à une campagne spécifique avec statistiques détaillées. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID de la campagne",
+            "schema": { 
+              "type": "string",
+              "example": "cmcamp001"
+            }
+          },
+          {
+            "name": "etat",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par état du matériel",
+            "schema": { 
+              "type": "string",
+              "enum": ["BON", "MOYEN", "MAUVAIS"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des états de matériel de la campagne récupérée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "campagne": {
+                      "type": "object",
+                      "properties": {
+                        "id_campagne": { "type": "string" },
+                        "nom_campagne": { "type": "string" }
+                      }
+                    },
+                    "materiels_cases": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MaterielsCaseWithRelations" }
+                    },
+                    "statistiques": {
+                      "type": "object",
+                      "properties": {
+                        "total": { 
+                          "type": "integer",
+                          "description": "Nombre total d'enregistrements"
+                        },
+                        "etat_bon": { 
+                          "type": "integer",
+                          "description": "Nombre d'états BON"
+                        },
+                        "etat_moyen": { 
+                          "type": "integer",
+                          "description": "Nombre d'états MOYEN"
+                        },
+                        "etat_mauvais": { 
+                          "type": "integer",
+                          "description": "Nombre d'états MAUVAIS"
+                        },
+                        "penalites_total": { 
+                          "type": "number",
+                          "description": "Somme totale des pénalités"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "campagne": {
+                    "id_campagne": "cmcamp001",
+                    "nom_campagne": "Campagne Printemps 2025"
+                  },
+                  "materiels_cases": [
+                    {
+                      "id_materiels_case": "cmmat001",
+                      "etat": "MAUVAIS",
+                      "description": "Panneau fissuré sur le côté droit",
+                      "montant_penalite": 50000,
+                      "penalite_appliquer": true,
+                      "date_creation": "2025-01-10T10:00:00.000Z",
+                      "prestataire": {
+                        "id_prestataire": "cmpresta001",
+                        "nom": "Koné",
+                        "prenom": "Moussa",
+                        "contact": "+225 07 12 34 56 78",
+                        "type_panneau": "GRAND",
+                        "plaque": "AB-123-CD"
+                      }
+                    }
+                  ],
+                  "statistiques": {
+                    "total": 1,
+                    "etat_bon": 0,
+                    "etat_moyen": 0,
+                    "etat_mauvais": 1,
+                    "penalites_total": 50000
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé - Admin requis",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "Campagne non trouvée",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": {
+                  "error": "Campagne non trouvée"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/prestataires/{id}/materiels-cases": {
+      "get": {
+        "tags": ["Materiels Cases"],
+        "summary": "Lister les états de matériel d'un prestataire",
+        "description": "Récupère tous les enregistrements d'état de matériel associés à un prestataire spécifique avec statistiques financières. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID du prestataire",
+            "schema": { 
+              "type": "string",
+              "example": "cmpresta001"
+            }
+          },
+          {
+            "name": "penalite_appliquer",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par statut d'application de pénalité",
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des états de matériel du prestataire récupérée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "prestataire": {
+                      "type": "object",
+                      "properties": {
+                        "id_prestataire": { "type": "string" },
+                        "nom": { "type": "string" },
+                        "prenom": { "type": "string" }
+                      }
+                    },
+                    "materiels_cases": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MaterielsCaseWithRelations" }
+                    },
+                    "statistiques": {
+                      "type": "object",
+                      "properties": {
+                        "total": { 
+                          "type": "integer",
+                          "description": "Nombre total d'enregistrements"
+                        },
+                        "penalites_total": { 
+                          "type": "number",
+                          "description": "Somme totale des pénalités"
+                        },
+                        "penalites_appliquees": { 
+                          "type": "number",
+                          "description": "Somme des pénalités appliquées"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "prestataire": {
+                    "id_prestataire": "cmpresta001",
+                    "nom": "Koné",
+                    "prenom": "Moussa"
+                  },
+                  "materiels_cases": [
+                    {
+                      "id_materiels_case": "cmmat001",
+                      "etat": "MAUVAIS",
+                      "description": "Panneau fissuré sur le côté droit",
+                      "montant_penalite": 50000,
+                      "penalite_appliquer": true,
+                      "date_creation": "2025-01-10T10:00:00.000Z",
+                      "campagne": {
+                        "id_campagne": "cmcamp001",
+                        "nom_campagne": "Campagne Printemps 2025",
+                        "date_debut": "2025-03-01T00:00:00.000Z",
+                        "date_fin": "2025-03-15T00:00:00.000Z",
+                        "status": "TERMINEE"
+                      }
+                    }
+                  ],
+                  "statistiques": {
+                    "total": 1,
+                    "penalites_total": 50000,
+                    "penalites_appliquees": 50000
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé - Admin requis",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "Prestataire non trouvé",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": {
+                  "error": "Prestataire non trouvé"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
   },
 
   components: {
@@ -5395,47 +6386,45 @@ const openApi = {
         }
       },
 
-      PrestataireWithStats: {
-        type: "object",
-        properties: {
-          id_prestataire: { type: "string" },
-          nom: { type: "string" },
-          prenom: { type: "string" },
-          contact: { type: "string" },
-          disponible: { type: "boolean" },
-          // ⚠️ NOUVEAUX CHAMPS DIRECTS (remplacement de vehicule)
-          type_panneau: { 
-            type: "string",
-            enum: ["PETIT", "GRAND"],
-            description: "Type de panneau publicitaire"
+      "PrestataireWithStats": {
+        "type": "object",
+        "properties": {
+          "id_prestataire": { "type": "string" },
+          "nom": { "type": "string" },
+          "prenom": { "type": "string" },
+          "contact": { "type": "string" },
+          "disponible": { "type": "boolean" },
+          "type_panneau": { 
+            "type": "string",
+            "enum": ["PETIT", "GRAND"],
+            "description": "Type de panneau publicitaire"
           },
-          marque: { 
-            type: "string",
-            description: "Marque du véhicule" 
+          "marque": { 
+            "type": "string",
+            "description": "Marque du véhicule" 
           },
-          modele: { 
-            type: "string",
-            description: "Modèle du véhicule" 
+          "modele": { 
+            "type": "string",
+            "description": "Modèle du véhicule" 
           },
-          plaque: { 
-            type: "string",
-            description: "Plaque d'immatriculation" 
+          "plaque": { 
+            "type": "string",
+            "description": "Plaque d'immatriculation" 
           },
-          couleur: {
-            type: "string",
-            description: "Couleur du véhicule"
+          "couleur": {
+            "type": "string",
+            "description": "Couleur du véhicule"
           },
-          id_verification: {
-            type: "string",
-            description: "ID de vérification du véhicule"
+          "id_verification": {
+            "type": "string",
+            "description": "ID de vérification du véhicule"
           },
-          // ⚠️ FIN DES NOUVEAUX CHAMPS
-          created_at: { type: "string", format: "date-time" },
-          _count: {
-            type: "object",
-            properties: {
-              affectations: { type: "integer" },
-              dommages: { type: "integer" }
+          "created_at": { "type": "string", "format": "date-time" },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "affectations": { "type": "integer" },
+              "dommages": { "type": "integer" }
             }
           }
         }
@@ -6042,118 +7031,223 @@ const openApi = {
         }
       },
 
-      PrestataireWithDetails: {
-        type: "object",
-        properties: {
-          id_prestataire: { type: "string" },
-          nom: { type: "string" },
-          prenom: { type: "string" },
-          contact: { type: "string" },
-          disponible: { type: "boolean" },
-          // ⚠️ CHAMPS VÉHICULE INTÉGRÉS
-          type_panneau: { 
-            type: "string",
-            enum: ["PETIT", "GRAND"]
+      "PrestataireWithDetails": {
+        "type": "object",
+        "properties": {
+          "id_prestataire": { "type": "string" },
+          "nom": { "type": "string" },
+          "prenom": { "type": "string" },
+          "contact": { "type": "string" },
+          "disponible": { "type": "boolean" },
+          "type_panneau": { 
+            "type": "string",
+            "enum": ["PETIT", "GRAND"]
           },
-          couleur: { type: "string" },
-          marque: { type: "string" },
-          modele: { type: "string" },
-          plaque: { type: "string" },
-          id_verification: { type: "string" },
-          // ⚠️ FIN CHAMPS VÉHICULE
-          service: {
-            type: "object",
-            properties: {
-              nom: { type: "string" }
+          "couleur": { "type": "string" },
+          "marque": { "type": "string" },
+          "modele": { "type": "string" },
+          "plaque": { "type": "string" },
+          "id_verification": { "type": "string" },
+          "service": {
+            "type": "object",
+            "properties": {
+              "nom": { "type": "string" }
             }
           }
         }
       },
 
-      PrestataireWithFullDetails: {
-        type: "object",
-        properties: {
-          id_prestataire: { type: "string" },
-          nom: { type: "string" },
-          prenom: { type: "string" },
-          contact: { type: "string" },
-          disponible: { type: "boolean" },
-          // CHAMPS VÉHICULE INTÉGRÉS
-          type_panneau: { 
-            type: "string",
-            enum: ["PETIT", "GRAND"]
+      "PrestataireWithFullDetails": {
+        "type": "object",
+        "properties": {
+          "id_prestataire": { "type": "string" },
+          "nom": { "type": "string" },
+          "prenom": { "type": "string" },
+          "contact": { "type": "string" },
+          "disponible": { "type": "boolean" },
+          "type_panneau": { 
+            "type": "string",
+            "enum": ["PETIT", "GRAND"]
           },
-          couleur: { type: "string" },
-          marque: { type: "string" },
-          modele: { type: "string" },
-          plaque: { type: "string" },
-          id_verification: { type: "string" },
-          // FIN CHAMPS VÉHICULE
-          created_at: { type: "string", format: "date-time" },
-          updated_at: { type: "string", format: "date-time" },
-          service: {
-            type: "object",
-            properties: {
-              id_service: { type: "string" },
-              nom: { type: "string" },
-              description: { type: "string" }
+          "couleur": { "type": "string" },
+          "marque": { "type": "string" },
+          "modele": { "type": "string" },
+          "plaque": { "type": "string" },
+          "id_verification": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "service": {
+            "type": "object",
+            "properties": {
+              "id_service": { "type": "string" },
+              "nom": { "type": "string" },
+              "description": { "type": "string" }
             }
           },
-          affectations: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                campagne: {
-                  type: "object",
-                  properties: {
-                    id_campagne: { type: "string" },
-                    nom_campagne: { type: "string" },
-                    date_debut: { type: "string", format: "date-time" },
-                    date_fin: { type: "string", format: "date-time" },
-                    status: { 
-                      type: "string",
-                      enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+          "affectations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "campagne": {
+                  "type": "object",
+                  "properties": {
+                    "id_campagne": { "type": "string" },
+                    "nom_campagne": { "type": "string" },
+                    "date_debut": { "type": "string", "format": "date-time" },
+                    "date_fin": { "type": "string", "format": "date-time" },
+                    "status": { 
+                      "type": "string",
+                      "enum": ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
                     }
                   }
                 },
-                date_creation: { type: "string", format: "date-time" },
-                status: { type: "string" }
+                "date_creation": { "type": "string", "format": "date-time" },
+                "status": { "type": "string" }
               }
             }
           },
-          dommages: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                id_materiels_case: { type: "string" },
-                etat: { 
-                  type: "string",
-                  enum: ["BON", "MOYEN", "MAUVAIS"]
+          "dommages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id_materiels_case": { "type": "string" },
+                "etat": { 
+                  "type": "string",
+                  "enum": ["BON", "MOYEN", "MAUVAIS"]
                 },
-                description: { type: "string" },
-                montant_penalite: { type: "number" },
-                penalite_appliquer: { type: "boolean" },
-                date_creation: { type: "string", format: "date-time" },
-                campagne: {
-                  type: "object",
-                  properties: {
-                    nom_campagne: { type: "string" }
+                "description": { "type": "string" },
+                "montant_penalite": { "type": "number" },
+                "penalite_appliquer": { "type": "boolean" },
+                "date_creation": { "type": "string", "format": "date-time" },
+                "campagne": {
+                  "type": "object",
+                  "properties": {
+                    "nom_campagne": { "type": "string" }
                   }
                 }
               }
             }
           },
-          _count: {
-            type: "object",
-            properties: {
-              affectations: { type: "integer" },
-              dommages: { type: "integer" }
+          "_count": {
+            "type": "object",
+            "properties": {
+              "affectations": { "type": "integer" },
+              "dommages": { "type": "integer" }
             }
           }
         }
       },
+
+      "MaterielsCase": {
+        "type": "object",
+        "properties": {
+          "id_materiels_case": { 
+            "type": "string",
+            "description": "Identifiant unique de l'enregistrement" 
+          },
+          "etat": { 
+            "type": "string",
+            "enum": ["BON", "MOYEN", "MAUVAIS"],
+            "description": "État du matériel constaté" 
+          },
+          "description": { 
+            "type": "string",
+            "description": "Description détaillée des dommages" 
+          },
+          "montant_penalite": { 
+            "type": "number",
+            "description": "Montant de la pénalité appliquée" 
+          },
+          "penalite_appliquer": { 
+            "type": "boolean",
+            "description": "Indique si la pénalité a été appliquée" 
+          },
+          "photo_url": { 
+            "type": "string",
+            "description": "URL de la photo du dommage" 
+          },
+          "preuve_media": { 
+            "type": "string",
+            "description": "URL d'une preuve média supplémentaire" 
+          },
+          "date_creation": { 
+            "type": "string", 
+            "format": "date-time",
+            "description": "Date de création de l'enregistrement" 
+          }
+        }
+      },
+
+      "MaterielsCaseWithRelations": {
+        "type": "object",
+        "properties": {
+          "id_materiels_case": { 
+            "type": "string",
+            "description": "Identifiant unique de l'enregistrement" 
+          },
+          "etat": { 
+            "type": "string",
+            "enum": ["BON", "MOYEN", "MAUVAIS"],
+            "description": "État du matériel constaté" 
+          },
+          "description": { 
+            "type": "string",
+            "description": "Description détaillée des dommages" 
+          },
+          "montant_penalite": { 
+            "type": "number",
+            "description": "Montant de la pénalité appliquée" 
+          },
+          "penalite_appliquer": { 
+            "type": "boolean",
+            "description": "Indique si la pénalité a été appliquée" 
+          },
+          "photo_url": { 
+            "type": "string",
+            "description": "URL de la photo du dommage" 
+          },
+          "preuve_media": { 
+            "type": "string",
+            "description": "URL d'une preuve média supplémentaire" 
+          },
+          "date_creation": { 
+            "type": "string", 
+            "format": "date-time",
+            "description": "Date de création de l'enregistrement" 
+          },
+          "campagne": {
+            "type": "object",
+            "properties": {
+              "id_campagne": { "type": "string" },
+              "nom_campagne": { "type": "string" },
+              "date_debut": { "type": "string", "format": "date-time" },
+              "date_fin": { "type": "string", "format": "date-time" },
+              "status": { 
+                "type": "string",
+                "enum": ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+              }
+            }
+          },
+          "prestataire": {
+            "type": "object",
+            "properties": {
+              "id_prestataire": { "type": "string" },
+              "nom": { "type": "string" },
+              "prenom": { "type": "string" },
+              "contact": { "type": "string" },
+              "type_panneau": { 
+                "type": "string",
+                "enum": ["PETIT", "GRAND"]
+              },
+              "plaque": { "type": "string" },
+              "marque": { "type": "string" },
+              "modele": { "type": "string" }
+            }
+          }
+        }
+      }
       
     },
     responses: {

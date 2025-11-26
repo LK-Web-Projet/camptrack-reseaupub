@@ -29,7 +29,7 @@ export async function DELETE(
             dommages: {
               where: {
                 id_campagne: id,
-                penalite_appliquer: false // Seulement les dommages non résolus
+                penalite_appliquer: false 
               }
             }
           }
@@ -117,6 +117,33 @@ export async function PUT(
       throw new AppError("Cette affectation n'existe pas", 404);
     }
 
+    // Vérifier les champs à mettre à jour
+    const updateData: any = {};
+    
+    if (body.status !== undefined) {
+      // Valider les statuts possibles
+      const statutsValides = ["ACTIF", "INACTIF", "TERMINE", "ANNULE"];
+      if (!statutsValides.includes(body.status)) {
+        throw new AppError(`Statut invalide. Statuts valides: ${statutsValides.join(", ")}`, 400);
+      }
+      updateData.status = body.status;
+      
+      // Si on termine l'affectation, mettre la date de fin
+      if (body.status === "TERMINE" || body.status === "ANNULE") {
+        updateData.date_fin = new Date();
+      }
+    }
+    
+    //if (body.image_affiche !== undefined) {
+      // Valider le format de l'URL si nécessaire
+     // updateData.image_affiche = body.image_affiche;
+    //}
+
+    //  S'assurer qu'au moins un champ est fourni
+    if (Object.keys(updateData).length === 0) {
+      throw new AppError("Aucune donnée à mettre à jour fournie", 400);
+    }
+
     // Mettre à jour l'affectation
     const updatedAffectation = await prisma.prestataireCampagne.update({
       where: {
@@ -125,10 +152,7 @@ export async function PUT(
           id_prestataire: prestataireId
         }
       },
-      data: {
-        status: body.status,
-        image_affiche: body.image_affiche
-      },
+      data: updateData, 
       include: {
         prestataire: {
           select: {

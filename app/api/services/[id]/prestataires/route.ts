@@ -41,7 +41,7 @@ export async function GET(
     // Compter le total
     const total = await prisma.prestataire.count({ where });
 
-    // Récupérer les prestataires
+    // Récupérer les prestataires AVEC un TRI
     const prestataires = await prisma.prestataire.findMany({
       where,
       select: {
@@ -51,21 +51,26 @@ export async function GET(
         contact: true,
         disponible: true,
         created_at: true,
-        vehicule: {
-          select: {
-            type_panneau: true,
-            marque: true,
-            modele: true,
-            plaque: true
-          }
-        },
+        type_panneau: true,
+        marque: true,
+        modele: true,
+        couleur: true,
+        plaque: true,
         _count: {
           select: {
-            affectations: true
+            affectations: {
+              where: {
+                date_fin: null 
+              }
+            }
           }
         }
       },
-      orderBy: { created_at: 'desc' },
+      // ORDRE : Disponibles d'abord, puis par ancienneté (plus anciens en premier)
+      orderBy: [
+        { disponible: 'desc' }, // Les disponibles (true) viennent en premier
+        { created_at: 'asc' }   // Ensuite tri par date de création (anciens d'abord)
+      ],
       skip,
       take: limit
     });

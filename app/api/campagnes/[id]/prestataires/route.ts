@@ -103,12 +103,13 @@ export async function POST(
 
     const { id_prestataire } = body;
 
-    // Vérifier que la campagne existe AVEC nbr_prestataire
+    // Vérifier que la campagne existe AVEC nbr_prestataire et id_service
     const campagne = await prisma.campagne.findUnique({
       where: { id_campagne: campagneId },
       select: { 
         nbr_prestataire: true,
-        id_campagne: true
+        id_campagne: true,
+        id_service: true 
       }
     });
 
@@ -126,6 +127,11 @@ export async function POST(
 
     if (!prestataire) {
       throw new AppError("Prestataire non trouvé", 404);
+    }
+
+    // Vérifier que le prestataire est du même service que la campagne
+    if (prestataire.id_service !== campagne.id_service) {
+      throw new AppError("Ce prestataire n'appartient pas au même service que la campagne", 400);
     }
 
     // Vérifier que le prestataire n'est pas déjà affecté (même terminé)
