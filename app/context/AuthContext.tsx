@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.user.type_user === "ADMIN") {
         router.push("/dashboard/admin")
       } else {
-        router.push("/dashboard")
+        router.push("/")
       }
       return true
     } catch (e) {
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("user")
     localStorage.removeItem("accessToken")
     localStorage.removeItem("refreshToken")
-    router.push("/login")
+    router.push("/")
   }
 
   return (

@@ -6,6 +6,7 @@ import AddCampagneModal from "@/components/campagnes/AddCampagne"
 import EditCampagneModal from "@/components/campagnes/EditCampagne"
 import DeleteCampagneModal from "@/components/campagnes/DeleteCampagne"
 import Link from "next/link"
+
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
 

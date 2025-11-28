@@ -3,38 +3,33 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    if (user === null) {
+    if (loading) return; // on attend la fin du chargement
+
+    if (!user) {
       toast.info("Veuillez vous connecter avant d'accéder à cette page.");
-
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         router.replace("/");
-      }, 900);
+      }, 800);
 
-      return;
+      return () => clearTimeout(timeout);
     }
 
+    // On valide après sécurisation du rendu
     setVerified(true);
-  }, [user, router]);
+  }, [loading, user, router]);
 
-  if (!verified) return (
-    <>
-      {/* On affiche juste le container + rien d'autre */}
-      <ToastContainer />
-    </>
-  );
+  // En attente = on n'affiche rien (évite un rendu inutile)
+  if (loading || !verified) {
+    return null;
+  }
 
-  return (
-    <>
-      <ToastContainer />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

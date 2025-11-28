@@ -6,6 +6,7 @@ import { hashPassword } from "@/lib/auth/hash";
 interface AuthResult {
   ok: boolean;
   user?: any;
+  loading: boolean;
   response?: NextResponse;
 }
 

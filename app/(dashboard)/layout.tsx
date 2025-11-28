@@ -1,10 +1,9 @@
 "use client";
-
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
