@@ -13,7 +13,7 @@ export const clientCreateSchema = Joi.object({
   entreprise: Joi.string().trim().optional().allow(''),
   domaine_entreprise: Joi.string().trim().optional().allow(''),
   adresse: Joi.string().trim().optional().allow(''),
-  contact: Joi.string().trim().optional().allow(''),
+  contact: Joi.string().pattern(/^[0-9+\s()-]{6,}$/).optional(),
   mail: Joi.string().email().trim().optional().allow('').messages({
     'string.email': 'Email invalide'
   }),
@@ -32,7 +32,7 @@ export const clientUpdateSchema = Joi.object({
   entreprise: Joi.string().trim().optional().allow(''),
   domaine_entreprise: Joi.string().trim().optional().allow(''),
   adresse: Joi.string().trim().optional().allow(''),
-  contact: Joi.string().trim().optional().allow(''),
+  contact: Joi.string().pattern(/^[0-9+\s()-]{6,}$/).optional(),
   mail: Joi.string().email().trim().optional().allow('').messages({
     'string.email': 'Email invalide'
   }),

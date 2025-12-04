@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const cookies = parseCookies(req.headers.get("cookie"));
     
-    let refreshToken = body?.refreshToken || cookies["refreshToken"];
+    const refreshToken = body?.refreshToken || cookies["refreshToken"];
     const accessToken = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || cookies["accessToken"];
 
     let userId: string | undefined;

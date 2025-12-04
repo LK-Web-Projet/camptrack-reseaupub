@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { verifyAccessToken } from "@/lib/auth/jwt";
 import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/auth/hash";
+
+type TokenPayloadShape = { jti?: string; userId?: string; sub?: string };
 
 interface AuthResult {
   ok: boolean;
-  user?: any;
+  user?: unknown;
   response?: NextResponse;
 }
 
@@ -35,9 +36,9 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
 
     const token = auth.replace(/^Bearer\s+/i, "");
     
-    let payload: any;
+    let payload: TokenPayloadShape;
     try {
-      payload = verifyAccessToken(token);
+      payload = verifyAccessToken(token) as TokenPayloadShape;
     } catch (err) {
       console.error("❌ Token invalide:", err);
       return {
@@ -47,7 +48,7 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
     }
 
     // VÉRIFICATION CRITIQUE : Token révoqué via jti ?
-    if (payload.jti) {
+    if (payload && payload.jti) {
       const isRevoked = await isTokenRevoked(payload.jti);
       if (isRevoked) {
         return {
@@ -57,7 +58,7 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
       }
     }
 
-    const userId = payload?.userId || payload?.sub;
+    const userId = payload && (payload.userId || payload.sub);
     if (!userId) {
       return {
         ok: false,

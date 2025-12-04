@@ -17,6 +17,11 @@ enum UserType {
   EQUIPE
 }
 
+enum ClientType {
+  EXTERNE
+  INTERNE
+}
+
 enum TypeCampagne {
   MASSE
   PROXIMITE
@@ -101,7 +106,7 @@ model Client {
   adresse          String?
   contact          String?
   mail             String?    @unique
-  type_client      String
+  type_client      ClientType
   created_at       DateTime   @default(now())
   updated_at       DateTime   @updatedAt
 
@@ -224,6 +229,7 @@ model MaterielsCase {
   id_materiels_case String      @id @default(cuid())
   id_campagne       String?
   id_prestataire    String?     
+  nom_materiel      String
   etat              EtatMateriel
   description       String
   montant_penalite  Float

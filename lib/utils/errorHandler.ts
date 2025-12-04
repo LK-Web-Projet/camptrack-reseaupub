@@ -1,12 +1,12 @@
 // lib/utils/errorHandler.ts - AVEC SUPPORT JOI
 import { NextResponse } from 'next/server'
-import { Prisma } from '../../app/generated/prisma'
+import { Prisma } from '@/app/generated/prisma'
 
 export class AppError extends Error {
   constructor(
     public message: string,
     public statusCode: number = 500,
-    public details?: any
+    public details?: unknown
   ) {
     super(message)
     this.name = 'AppError'
@@ -17,11 +17,15 @@ export function handleApiError(error: unknown): NextResponse {
   console.error('🔴 API Error:', error)
 
   // Erreur de validation Joi
-  if (error instanceof Error && error.name === 'ValidationError') {
+  function isJoiError(err: unknown): err is { isJoi: boolean; details?: unknown } {
+    return typeof err === 'object' && err !== null && 'isJoi' in err
+  }
+
+  if (isJoiError(error)) {
     return NextResponse.json(
-      { 
+      {
         error: "Données invalides",
-        details: (error as any).details 
+        details: error.details
       },
       { status: 400 }
     )

@@ -27,7 +27,7 @@ export async function GET(
     }
 
     // Construire le filtre
-    const where: any = { id_prestataire: id };
+    const where: Record<string, unknown> = { id_prestataire: id };
     if (penalite_appliquer !== null) {
       where.penalite_appliquer = penalite_appliquer === 'true';
     }

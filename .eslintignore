@@ -1,0 +1,10 @@
+# Ignore generated Prisma client and Next build files
+app/generated/
+.next/
+
+# Ignore Prisma wasm runtime helpers
+app/generated/prisma/**
+
+# Node modules and env
+node_modules/
+.env
