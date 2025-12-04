@@ -1,6 +1,28 @@
 import Joi from 'joi'
 import { validateData } from './schemas'
 
+// Types pour MaterielsCase
+export interface MaterielsCase {
+  id_campagne?: string | null
+  id_prestataire?: string | null
+  nom_materiel: string
+  etat: 'BON' | 'MOYEN' | 'MAUVAIS'
+  description: string
+  montant_penalite: number
+  penalite_appliquer?: boolean
+  photo_url?: string | null
+  preuve_media?: string | null
+}
+
+export interface MaterielsQueryParams {
+  page: number
+  limit: number
+  id_campagne?: string
+  id_prestataire?: string
+  etat?: string
+  penalite_appliquer?: boolean
+}
+
 // Schéma pour la création d'un enregistrement MaterielsCase
 export const materielsCaseCreateSchema = Joi.object({
   id_campagne: Joi.string().optional().allow(null, '').messages({
@@ -8,6 +30,10 @@ export const materielsCaseCreateSchema = Joi.object({
   }),
   id_prestataire: Joi.string().optional().allow(null, '').messages({
     'string.empty': 'ID prestataire ne peut pas être vide'
+  }),
+  nom_materiel: Joi.string().min(3).trim().required().messages({
+    'string.min': 'Le nom du matériel doit contenir au moins 3 caractères',
+    'any.required': 'Nom du matériel requis'
   }),
   etat: Joi.string().valid('BON', 'MOYEN', 'MAUVAIS').required().messages({
     'any.only': 'L\'état doit être BON, MOYEN ou MAUVAIS',
@@ -32,9 +58,7 @@ export const materielsCaseCreateSchema = Joi.object({
 }).custom((value, helpers) => {
   // Validation personnalisée : au moins id_campagne ou id_prestataire doit être fourni
   if (!value.id_campagne && !value.id_prestataire) {
-    return helpers.error('any.custom', {
-      message: 'Au moins une relation (campagne ou prestataire) doit être fournie'
-    })
+    return helpers.message('Au moins une relation (campagne ou prestataire) doit être fournie');
   }
   return value
 })
@@ -46,6 +70,9 @@ export const materielsCaseUpdateSchema = Joi.object({
   }),
   id_prestataire: Joi.string().optional().allow(null, '').messages({
     'string.empty': 'ID prestataire ne peut pas être vide'
+  }),
+  nom_materiel: Joi.string().min(3).trim().optional().messages({
+    'string.min': 'Le nom du matériel doit contenir au moins 3 caractères'
   }),
   etat: Joi.string().valid('BON', 'MOYEN', 'MAUVAIS').optional().messages({
     'any.only': 'L\'état doit être BON, MOYEN ou MAUVAIS'

@@ -24,7 +24,14 @@ export async function GET(
             nom_campagne: true,
             date_debut: true,
             date_fin: true,
-            status: true
+            status: true,
+            client: {
+              select: {
+                id_client: true,
+                nom: true,
+                type_client: true
+              }
+            }
           }
         },
         prestataire: {

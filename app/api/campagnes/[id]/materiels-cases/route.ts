@@ -27,7 +27,7 @@ export async function GET(
     }
 
     // Construire le filtre
-    const where: any = { id_campagne: id };
+    const where: Record<string, unknown> = { id_campagne: id };
     if (etat) where.etat = etat;
 
     // Récupérer les enregistrements

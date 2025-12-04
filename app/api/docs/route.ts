@@ -1006,6 +1006,7 @@ const openApi = {
         }
       }
     }, 
+    
     // ==================== GESTION DES SERVICES ====================
     "/services": {
       get: {
@@ -5367,9 +5368,10 @@ const openApi = {
                   "materiels_cases": [
                     {
                       "id_materiels_case": "cmmat001",
+                      "nom_materiel": "Panneau publicitaire",
                       "etat": "MAUVAIS",
                       "description": "Panneau fissuré sur le côté droit, support déformé",
-                      "montant_penalite": 50000,
+                      "montant_penalite": 2000,
                       "penalite_appliquer": true,
                       "photo_url": "https://storage.com/photo1.jpg",
                       "preuve_media": "https://storage.com/video1.mp4",
@@ -5379,7 +5381,12 @@ const openApi = {
                         "nom_campagne": "Campagne Printemps 2025",
                         "date_debut": "2025-03-01T00:00:00.000Z",
                         "date_fin": "2025-03-15T00:00:00.000Z",
-                        "status": "TERMINEE"
+                        "status": "TERMINEE",
+                        "client": {
+                          "id_client": "cmclient001",
+                          "nom": "Agence Pub Plus",
+                          "type_client": "EXTERNE"
+                        }
                       },
                       "prestataire": {
                         "id_prestataire": "cmpresta001",
@@ -5435,7 +5442,7 @@ const openApi = {
       "post": {
         "tags": ["Materiels Cases"],
         "summary": "Créer un nouvel enregistrement d'état de matériel",
-        "description": "Enregistre l'état du matériel avant ou après une campagne. Permet de documenter les dommages et d'appliquer des pénalités si nécessaire. **Validation :** Au moins une relation (campagne ou prestataire) est requise. **Accès : Admin uniquement**",
+        "description": "Enregistre l'état du matériel avant ou après une campagne. Permet de documenter les dommages et d'appliquer des pénalités si nécessaire. **Pénalité automatique:** Si l'état est MAUVAIS et une campagne est associée, la pénalité est calculée automatiquement: Client EXTERNE = 2000 F CFA, Client INTERNE = 1000 F CFA. **Validation :** Au moins une relation (campagne ou prestataire) est requise. **Accès : Admin uniquement**",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
@@ -5443,7 +5450,7 @@ const openApi = {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["etat", "description", "montant_penalite"],
+                "required": ["nom_materiel", "etat", "description", "montant_penalite"],
                 "properties": {
                   "id_campagne": {
                     "type": "string",
@@ -5455,10 +5462,16 @@ const openApi = {
                     "description": "ID du prestataire concerné (optionnel si campagne fournie)",
                     "example": "cmpresta001"
                   },
+                  "nom_materiel": {
+                    "type": "string",
+                    "minLength": 3,
+                    "description": "Nom du matériel endommagé ou signalé (minimum 3 caractères)",
+                    "example": "Panneau publicitaire"
+                  },
                   "etat": {
                     "type": "string",
                     "enum": ["BON", "MOYEN", "MAUVAIS"],
-                    "description": "État du matériel constaté",
+                    "description": "État du matériel constaté. **Important:** Si etat=MAUVAIS, la pénalité est calculée automatiquement selon le type de client: EXTERNE=2000, INTERNE=1000",
                     "example": "MAUVAIS"
                   },
                   "description": {
@@ -5470,7 +5483,7 @@ const openApi = {
                   "montant_penalite": {
                     "type": "number",
                     "minimum": 0,
-                    "description": "Montant de la pénalité à appliquer",
+                    "description": "Montant de la pénalité à appliquer. **Note:** Ignoré si etat=MAUVAIS (valeur calculée automatiquement)",
                     "example": 50000
                   },
                   "penalite_appliquer": {
@@ -5512,9 +5525,10 @@ const openApi = {
                   "message": "État de matériel enregistré avec succès",
                   "materiels_case": {
                     "id_materiels_case": "cmmat001",
+                    "nom_materiel": "Panneau publicitaire",
                     "etat": "MAUVAIS",
                     "description": "Panneau fissuré sur le côté droit, support déformé",
-                    "montant_penalite": 50000,
+                    "montant_penalite": 2000,
                     "penalite_appliquer": true,
                     "photo_url": "https://storage.com/photo1.jpg",
                     "preuve_media": "https://storage.com/video1.mp4",
@@ -7147,6 +7161,11 @@ const openApi = {
             "type": "string",
             "description": "Identifiant unique de l'enregistrement" 
           },
+          "nom_materiel": {
+            "type": "string",
+            "description": "Nom du matériel endommagé ou signalé",
+            "example": "Panneau publicitaire"
+          },
           "etat": { 
             "type": "string",
             "enum": ["BON", "MOYEN", "MAUVAIS"],
@@ -7187,6 +7206,11 @@ const openApi = {
             "type": "string",
             "description": "Identifiant unique de l'enregistrement" 
           },
+          "nom_materiel": {
+            "type": "string",
+            "description": "Nom du matériel endommagé ou signalé",
+            "example": "Panneau publicitaire"
+          },
           "etat": { 
             "type": "string",
             "enum": ["BON", "MOYEN", "MAUVAIS"],
@@ -7198,7 +7222,7 @@ const openApi = {
           },
           "montant_penalite": { 
             "type": "number",
-            "description": "Montant de la pénalité appliquée" 
+            "description": "Montant de la pénalité appliquée (calculé automatiquement si état=MAUVAIS)" 
           },
           "penalite_appliquer": { 
             "type": "boolean",
@@ -7227,6 +7251,18 @@ const openApi = {
               "status": { 
                 "type": "string",
                 "enum": ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
+              },
+              "client": {
+                "type": "object",
+                "properties": {
+                  "id_client": { "type": "string" },
+                  "nom": { "type": "string" },
+                  "type_client": { 
+                    "type": "string",
+                    "enum": ["EXTERNE", "INTERNE"],
+                    "description": "Type de client (détermine la pénalité automatique)"
+                  }
+                }
               }
             }
           },

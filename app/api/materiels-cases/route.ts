@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { 
   materielsCaseCreateSchema, 
-  materielsCaseQuerySchema, 
-  validateData 
+  materielsCaseQuerySchema,
+  validateData,
+  type MaterielsCase,
+  type MaterielsQueryParams
 } from "@/lib/validation/materielsCaseSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 
@@ -30,11 +32,11 @@ export async function GET(request: NextRequest) {
       throw new AppError(validation.error, 400);
     }
 
-    const { page, limit, id_campagne, id_prestataire, etat, penalite_appliquer } = validation.data;
+    const { page, limit, id_campagne, id_prestataire, etat, penalite_appliquer } = validation.data as MaterielsQueryParams;
     const skip = (page - 1) * limit;
 
     // Construire le filtre WHERE
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     
     if (id_campagne) where.id_campagne = id_campagne;
     if (id_prestataire) where.id_prestataire = id_prestataire;
@@ -56,7 +58,14 @@ export async function GET(request: NextRequest) {
             nom_campagne: true,
             date_debut: true,
             date_fin: true,
-            status: true
+            status: true,
+            client: {
+              select: {
+                id_client: true,
+                nom: true,
+                type_client: true
+              }
+            }
           }
         },
         prestataire: {
@@ -108,19 +117,27 @@ export async function POST(request: NextRequest) {
 
     const { 
       id_campagne, 
-      id_prestataire, 
+      id_prestataire,
+      nom_materiel,
       etat, 
       description, 
       montant_penalite, 
       penalite_appliquer,
       photo_url,
       preuve_media
-    } = validation.data;
+    } = validation.data as MaterielsCase;
 
     // Vérifier que la campagne existe si fournie
     if (id_campagne) {
       const campagne = await prisma.campagne.findUnique({
-        where: { id_campagne }
+        where: { id_campagne },
+        include: {
+          client: {
+            select: {
+              type_client: true
+            }
+          }
+        }
       });
       if (!campagne) {
         throw new AppError("Campagne non trouvée", 404);
@@ -137,14 +154,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Calculer la pénalité automatique si l'état est MAUVAIS
+    let penaliteCalculee = montant_penalite;
+    if (etat === 'MAUVAIS' && id_campagne) {
+      const campagne = await prisma.campagne.findUnique({
+        where: { id_campagne },
+        include: {
+          client: {
+            select: {
+              type_client: true
+            }
+          }
+        }
+      });
+
+      if (campagne && campagne.client) {
+        // Définir la pénalité selon le type de client
+        penaliteCalculee = campagne.client.type_client === 'EXTERNE' ? 2000 : 1000;
+      }
+    }
+
     // Créer l'enregistrement
     const materiels_case = await prisma.materielsCase.create({
       data: {
         id_campagne: id_campagne || null,
         id_prestataire: id_prestataire || null,
+        nom_materiel,
         etat,
         description,
-        montant_penalite,
+        montant_penalite: penaliteCalculee,
         penalite_appliquer: penalite_appliquer || false,
         photo_url: photo_url || null,
         preuve_media: preuve_media || null
