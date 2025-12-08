@@ -6209,8 +6209,316 @@ const openApi = {
       }
     },
 
-  },
+    // ==================== GESTION DES PAIEMENTS ====================
+    "/paiements": {
+      "get": {
+        "tags": ["Paiements"],
+        "summary": "Lister tous les paiements",
+        "description": "Récupère la liste paginée de tous les paiements avec filtres. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Numéro de page pour la pagination",
+            "schema": { 
+              "type": "integer", 
+              "default": 1, 
+              "minimum": 1 
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query", 
+            "required": false,
+            "description": "Nombre d'enregistrements par page",
+            "schema": { 
+              "type": "integer", 
+              "default": 50, 
+              "minimum": 1, 
+              "maximum": 100 
+            }
+          },
+          {
+            "name": "id_campagne",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par ID de campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par ID de prestataire",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "statut_paiement",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par statut de paiement (true=payé, false=non payé)",
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des paiements récupérée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paiements": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/PaiementPrestataire" }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": { "type": "integer" },
+                        "limit": { "type": "integer" },
+                        "total": { "type": "integer" },
+                        "totalPages": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Paiements"],
+        "summary": "Créer un nouveau paiement",
+        "description": "Crée un paiement pour un prestataire sur une campagne. Le paiement de base est calculé automatiquement selon le type de client (EXTERNE=5000, INTERNE=3000). Les pénalités sont agrégées depuis MaterielsCase. **Pénalité automatique :** Si état=MAUVAIS, les pénalités sont déduites du paiement. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id_campagne", "id_prestataire", "paiement_base"],
+                "properties": {
+                  "id_campagne": {
+                    "type": "string",
+                    "description": "ID de la campagne (requis)"
+                  },
+                  "id_prestataire": {
+                    "type": "string",
+                    "description": "ID du prestataire (requis)"
+                  },
+                  "paiement_base": {
+                    "type": "number",
+                    "description": "Montant de base du paiement (requis)",
+                    "example": 5000
+                  },
+                  "date_paiement": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date du paiement effectué (optionnel)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Paiement créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "paiement": { "$ref": "#/components/schemas/PaiementPrestataire" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
 
+    "/paiements/calculer/{id_campagne}/{id_prestataire}": {
+      "get": {
+        "tags": ["Paiements"],
+        "summary": "Calculer un paiement automatiquement",
+        "description": "Calcule le paiement selon les règles métier : paiement_base selon type de client + déduction des pénalités de MaterielsCase. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id_campagne",
+            "in": "path",
+            "required": true,
+            "description": "ID de la campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "path",
+            "required": true,
+            "description": "ID du prestataire",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calcul du paiement réussi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "calcul": {
+                      "type": "object",
+                      "properties": {
+                        "paiement_base": { "type": "number" },
+                        "sanction_montant": { "type": "number" },
+                        "paiement_final": { "type": "number" },
+                        "details": {
+                          "type": "object",
+                          "properties": {
+                            "type_client": { "type": "string", "enum": ["EXTERNE", "INTERNE"] },
+                            "paiement_base_description": { "type": "string" },
+                            "penalites_appliquees": { "type": "number" },
+                            "montant_net_a_payer": { "type": "number" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/paiements/{id_campagne}/{id_prestataire}": {
+      "get": {
+        "tags": ["Paiements"],
+        "summary": "Récupérer un paiement spécifique",
+        "description": "Récupère les détails d'un paiement pour une affectation (campagne + prestataire). **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id_campagne",
+            "in": "path",
+            "required": true,
+            "description": "ID de la campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "path",
+            "required": true,
+            "description": "ID du prestataire",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paiement récupéré avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paiement": { "$ref": "#/components/schemas/PaiementPrestataire" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Paiements"],
+        "summary": "Mettre à jour le statut du paiement",
+        "description": "Met à jour le statut de paiement (payé/non payé) et la date de paiement. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id_campagne",
+            "in": "path",
+            "required": true,
+            "description": "ID de la campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "path",
+            "required": true,
+            "description": "ID du prestataire",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["statut_paiement", "date_paiement"],
+                "properties": {
+                  "statut_paiement": {
+                    "type": "boolean",
+                    "description": "Statut du paiement (true=payé, false=non payé)"
+                  },
+                  "date_paiement": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date du paiement effectué"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Paiement mis à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "paiement": { "$ref": "#/components/schemas/PaiementPrestataire" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+  },
   components: {
     securitySchemes: {
       bearerAuth: {
@@ -7283,8 +7591,93 @@ const openApi = {
             }
           }
         }
+      },
+
+      PaiementPrestataire: {
+        type: "object",
+        description: "Paiement pour un prestataire sur une campagne",
+        properties: {
+          id_campagne_id_prestataire: {
+            type: "string",
+            description: "Identifiant unique composite (id_campagne-id_prestataire)"
+          },
+          id_campagne: {
+            type: "string",
+            description: "ID de la campagne"
+          },
+          id_prestataire: {
+            type: "string",
+            description: "ID du prestataire"
+          },
+          paiement_base: {
+            type: "number",
+            description: "Montant de base du paiement (5000 pour EXTERNE, 3000 pour INTERNE)"
+          },
+          sanction_montant: {
+            type: "number",
+            description: "Montant total des pénalités (agrégées depuis MaterielsCase avec état=MAUVAIS)"
+          },
+          paiement_final: {
+            type: "number",
+            description: "Montant final = paiement_base - sanction_montant"
+          },
+          statut_paiement: {
+            type: "boolean",
+            description: "Statut du paiement (true=payé, false=non payé)"
+          },
+          date_paiement: {
+            type: "string",
+            format: "date-time",
+            nullable: true,
+            description: "Date du paiement effectué"
+          },
+          date_creation: {
+            type: "string",
+            format: "date-time",
+            description: "Date de création du paiement"
+          },
+          date_modification: {
+            type: "string",
+            format: "date-time",
+            description: "Date de dernière modification"
+          },
+          affectation: {
+            type: "object",
+            description: "Détails de l'affectation (relation)",
+            properties: {
+              id_campagne: { type: "string" },
+              id_prestataire: { type: "string" },
+              status: { type: "string" },
+              prestataire: {
+                type: "object",
+                properties: {
+                  nom: { type: "string" },
+                  contact: { type: "string" },
+                  email: { type: "string" }
+                }
+              }
+            }
+          },
+          campagne: {
+            type: "object",
+            description: "Détails de la campagne (relation)",
+            properties: {
+              id_campagne: { type: "string" },
+              nom_campagne: { type: "string" },
+              client: {
+                type: "object",
+                properties: {
+                  type_client: {
+                    type: "string",
+                    enum: ["EXTERNE", "INTERNE"],
+                    description: "Type de client (détermine paiement_base)"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-      
     },
     responses: {
       Unauthorized: {
@@ -7327,9 +7720,9 @@ const openApi = {
           }
         }
       }
-    }
-  },
-};
+    },
+  }
+}
 
 export async function GET() {
   return NextResponse.json(openApi);
