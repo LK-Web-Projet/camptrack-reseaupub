@@ -2,6 +2,9 @@
 CREATE TYPE "UserType" AS ENUM ('ADMIN', 'SUPERVISEUR_CAMPAGNE', 'CONTROLEUR', 'OPERATIONNEL', 'EQUIPE');
 
 -- CreateEnum
+CREATE TYPE "ClientType" AS ENUM ('EXTERNE', 'INTERNE');
+
+-- CreateEnum
 CREATE TYPE "TypeCampagne" AS ENUM ('MASSE', 'PROXIMITE');
 
 -- CreateEnum
@@ -48,7 +51,7 @@ CREATE TABLE "refresh_tokens" (
 -- CreateTable
 CREATE TABLE "revoked_tokens" (
     "id" TEXT NOT NULL,
-    "token_hash" TEXT NOT NULL,
+    "jti" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "expires_at" TIMESTAMP(3) NOT NULL,
     "revoked_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -66,7 +69,7 @@ CREATE TABLE "clients" (
     "adresse" TEXT,
     "contact" TEXT,
     "mail" TEXT,
-    "type_client" TEXT NOT NULL,
+    "type_client" "ClientType" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -167,6 +170,7 @@ CREATE TABLE "materiels_case" (
     "id_materiels_case" TEXT NOT NULL,
     "id_campagne" TEXT,
     "id_prestataire" TEXT,
+    "nom_materiel" TEXT NOT NULL,
     "etat" "EtatMateriel" NOT NULL,
     "description" TEXT NOT NULL,
     "montant_penalite" DOUBLE PRECISION NOT NULL,
@@ -211,7 +215,7 @@ CREATE UNIQUE INDEX "users_nom_utilisateur_key" ON "users"("nom_utilisateur");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "revoked_tokens_token_hash_key" ON "revoked_tokens"("token_hash");
+CREATE UNIQUE INDEX "revoked_tokens_jti_key" ON "revoked_tokens"("jti");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "clients_mail_key" ON "clients"("mail");

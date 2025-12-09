@@ -128,6 +128,65 @@ export async function PUT(
       }
     });
 
+    // Après mise à jour, recalculer les pénalités et mettre à jour/créer le paiement lié
+    const id_campagne = updatedRecord.id_campagne;
+    const id_prestataire = updatedRecord.id_prestataire;
+
+    if (id_campagne && id_prestataire) {
+      try {
+        const penalitesAgg = await prisma.materielsCase.aggregate({
+          where: {
+            id_campagne: id_campagne,
+            id_prestataire: id_prestataire,
+            penalite_appliquer: true
+          },
+          _sum: { montant_penalite: true }
+        });
+
+        const totalPenalites = penalitesAgg._sum.montant_penalite ?? 0;
+
+        const existingPaiement = await prisma.paiementPrestataire.findUnique({
+          where: {
+            id_campagne_id_prestataire: {
+              id_campagne,
+              id_prestataire
+            }
+          }
+        });
+
+        if (existingPaiement) {
+          const nouveauFinal = Math.max(0, existingPaiement.paiement_base - totalPenalites);
+          await prisma.paiementPrestataire.update({
+            where: { id_paiement: existingPaiement.id_paiement },
+            data: { sanction_montant: totalPenalites, paiement_final: nouveauFinal }
+          });
+        } else {
+          const campagne = await prisma.campagne.findUnique({
+            where: { id_campagne },
+            select: { client: { select: { type_client: true } } }
+          });
+          const typeClient = campagne?.client?.type_client ?? 'EXTERNE';
+          const paiementBase = typeClient === 'EXTERNE' ? 5000 : 3000;
+          const paiementFinal = Math.max(0, paiementBase - totalPenalites);
+
+          await prisma.paiementPrestataire.create({
+            data: {
+              id_campagne,
+              id_prestataire,
+              paiement_base: paiementBase,
+              paiement_final: paiementFinal,
+              sanction_montant: totalPenalites,
+              statut_paiement: false
+            }
+          });
+        }
+      } catch (err) {
+        // Log and continue
+        // eslint-disable-next-line no-console
+        console.error('Erreur lors de la mise à jour du paiement après modification MaterielsCase:', err);
+      }
+    }
+
     return NextResponse.json({
       message: "État de matériel modifié avec succès",
       materiels_case: updatedRecord

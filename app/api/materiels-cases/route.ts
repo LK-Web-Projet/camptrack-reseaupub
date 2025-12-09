@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
-import { 
-  materielsCaseCreateSchema, 
+import {
+  materielsCaseCreateSchema,
   materielsCaseQuerySchema,
   validateData,
   type MaterielsCase,
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Construire le filtre WHERE
     const where: Record<string, unknown> = {};
-    
+
     if (id_campagne) where.id_campagne = id_campagne;
     if (id_prestataire) where.id_prestataire = id_prestataire;
     if (etat) where.etat = etat;
@@ -115,13 +115,13 @@ export async function POST(request: NextRequest) {
       throw new AppError(validation.error, 400);
     }
 
-    const { 
-      id_campagne, 
+    const {
+      id_campagne,
       id_prestataire,
       nom_materiel,
-      etat, 
-      description, 
-      montant_penalite, 
+      etat,
+      description,
+      montant_penalite,
       penalite_appliquer,
       photo_url,
       preuve_media
@@ -204,6 +204,94 @@ export async function POST(request: NextRequest) {
         }
       }
     });
+
+    // ========================================================================
+    // GESTION AUTOMATIQUE DU PAIEMENT
+    // ========================================================================
+    // Le paiement est créé automatiquement lors de l'enregistrement du matériel casé,
+    // peu importe l'état (BON, MOYEN, MAUVAIS).
+    // Les pénalités sont calculées uniquement pour l'état MAUVAIS avec penalite_appliquer = true.
+    // ========================================================================
+    if (id_campagne && id_prestataire) {
+      try {
+        // 1. Vérifier que l'affectation existe
+        const affectation = await prisma.prestataireCampagne.findUnique({
+          where: {
+            id_campagne_id_prestataire: {
+              id_campagne,
+              id_prestataire
+            }
+          }
+        });
+
+        if (!affectation) {
+          // Si pas d'affectation, on log mais on ne bloque pas (très improbable ici)
+          console.warn(`Affectation non trouvée pour paiement: cmp=${id_campagne}, prest=${id_prestataire}`);
+        } else {
+          // 2. Récupérer le type de client pour déterminer le paiement de base
+          const campagne = await prisma.campagne.findUnique({
+            where: { id_campagne },
+            select: { client: { select: { type_client: true } } }
+          });
+
+          const typeClient = campagne?.client?.type_client ?? 'EXTERNE';
+          const paiementBase = typeClient === 'EXTERNE' ? 5000 : 3000;
+
+          // 3. Calculer la somme totale des pénalités appliquées
+          const penalitesAgg = await prisma.materielsCase.aggregate({
+            where: {
+              id_campagne: id_campagne,
+              id_prestataire: id_prestataire,
+              etat: 'MAUVAIS',
+              penalite_appliquer: true
+            },
+            _sum: { montant_penalite: true }
+          });
+
+          const totalPenalites = penalitesAgg._sum.montant_penalite ?? 0;
+          const paiementFinal = Math.max(0, paiementBase - totalPenalites);
+
+          // 4. Créer ou mettre à jour le paiement
+          const existingPaiement = await prisma.paiementPrestataire.findUnique({
+            where: {
+              id_campagne_id_prestataire: {
+                id_campagne,
+                id_prestataire
+              }
+            }
+          });
+
+          if (existingPaiement) {
+            // Mettre à jour le paiement existant
+            await prisma.paiementPrestataire.update({
+              where: {
+                id_paiement: existingPaiement.id_paiement
+              },
+              data: {
+                sanction_montant: totalPenalites,
+                paiement_final: paiementFinal
+              }
+            });
+          } else {
+            // Créer un nouveau paiement
+            await prisma.paiementPrestataire.create({
+              data: {
+                id_campagne,
+                id_prestataire,
+                paiement_base: paiementBase,
+                paiement_final: paiementFinal,
+                sanction_montant: totalPenalites,
+                statut_paiement: false
+              }
+            });
+          }
+        }
+      } catch (err) {
+        // Log l'erreur mais ne pas empêcher la réponse de succès pour la création du matériel
+        // eslint-disable-next-line no-console
+        console.error('Erreur lors de la gestion du paiement après création MaterielsCase:', err);
+      }
+    }
 
     return NextResponse.json({
       message: "État de matériel enregistré avec succès",

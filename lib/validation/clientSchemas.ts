@@ -17,8 +17,9 @@ export const clientCreateSchema = Joi.object({
   mail: Joi.string().email().trim().optional().allow('').messages({
     'string.email': 'Email invalide'
   }),
-  type_client: Joi.string().trim().required().messages({
-    'any.required': 'Type de client requis'
+  type_client: Joi.string().valid('EXTERNE', 'INTERNE').required().messages({
+    'any.required': 'Type de client requis',
+    'any.only': 'Le type de client doit être EXTERNE ou INTERNE'
   })
 })
 
@@ -36,9 +37,11 @@ export const clientUpdateSchema = Joi.object({
   mail: Joi.string().email().trim().optional().allow('').messages({
     'string.email': 'Email invalide'
   }),
-  type_client: Joi.string().trim().optional()
+  type_client: Joi.string().valid('EXTERNE', 'INTERNE').optional().messages({
+    'any.only': 'Le type de client doit être EXTERNE ou INTERNE'
+  })
 }).min(1).messages({
   'object.min': 'Au moins un champ doit être fourni pour la modification'
 })
 
-export {validateData}
+export { validateData }

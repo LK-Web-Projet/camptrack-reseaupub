@@ -133,13 +133,13 @@ const openApi = {
                     format: "password",
                     example: "password123",
                   },
-                  nom: { 
+                  nom: {
                     type: "string",
-                    example: "Dupont" 
+                    example: "Dupont"
                   },
-                  prenom: { 
+                  prenom: {
                     type: "string",
-                    example: "Jean" 
+                    example: "Jean"
                   },
                   type_user: {
                     type: "string",
@@ -152,9 +152,9 @@ const openApi = {
                     ],
                     example: "EQUIPE",
                   },
-                  contact: { 
-                    type: "string", 
-                    example: "+225 07 12 34 56 78" 
+                  contact: {
+                    type: "string",
+                    example: "+225 07 12 34 56 78"
                   },
                 },
               },
@@ -340,12 +340,12 @@ const openApi = {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "ok": { 
+                    "ok": {
                       "type": "boolean",
                       "description": "Statut de l'opération",
                       "example": true
                     },
-                    "message": { 
+                    "message": {
                       "type": "string",
                       "description": "Message de confirmation",
                       "example": "Déconnexion réussie"
@@ -441,7 +441,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre d'utilisateurs par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -528,28 +528,28 @@ const openApi = {
                 type: "object",
                 required: ["email", "password", "nom", "prenom", "type_user"],
                 properties: {
-                  email: { 
-                    type: "string", 
+                  email: {
+                    type: "string",
                     format: "email",
                     example: "nouveau@camptrack.com"
                   },
-                  password: { 
-                    type: "string", 
+                  password: {
+                    type: "string",
                     format: "password",
                     minLength: 6,
                     example: "password123"
                   },
-                  nom: { 
+                  nom: {
                     type: "string",
                     minLength: 2,
                     example: "Dupont"
                   },
-                  prenom: { 
+                  prenom: {
                     type: "string",
                     minLength: 2,
                     example: "Jean"
                   },
-                  type_user: { 
+                  type_user: {
                     type: "string",
                     enum: ["ADMIN", "SUPERVISEUR_CAMPAGNE", "CONTROLEUR", "OPERATIONNEL", "EQUIPE"],
                     example: "EQUIPE"
@@ -729,22 +729,22 @@ const openApi = {
               schema: {
                 type: "object",
                 properties: {
-                  email: { 
-                    type: "string", 
+                  email: {
+                    type: "string",
                     format: "email",
                     example: "nouveau-email@camptrack.com"
                   },
-                  nom: { 
+                  nom: {
                     type: "string",
                     minLength: 2,
                     example: "NouveauNom"
                   },
-                  prenom: { 
+                  prenom: {
                     type: "string",
                     minLength: 2,
                     example: "NouveauPrenom"
                   },
-                  type_user: { 
+                  type_user: {
                     type: "string",
                     enum: ["ADMIN", "SUPERVISEUR_CAMPAGNE", "CONTROLEUR", "OPERATIONNEL", "EQUIPE"],
                     example: "SUPERVISEUR_CAMPAGNE"
@@ -1005,8 +1005,8 @@ const openApi = {
           }
         }
       }
-    }, 
-    
+    },
+
     // ==================== GESTION DES SERVICES ====================
     "/services": {
       get: {
@@ -1024,7 +1024,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre de services par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -1110,7 +1110,7 @@ const openApi = {
                 type: "object",
                 required: ["nom"],
                 properties: {
-                  nom: { 
+                  nom: {
                     type: "string",
                     minLength: 2,
                     example: "Publicité digitale"
@@ -1301,7 +1301,7 @@ const openApi = {
               schema: {
                 type: "object",
                 properties: {
-                  nom: { 
+                  nom: {
                     type: "string",
                     minLength: 2,
                     example: "Nouveau nom du service"
@@ -1480,7 +1480,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre de prestataires par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -1583,7 +1583,7 @@ const openApi = {
           }
         }
       }
-    }, 
+    },
 
     // ==================== GESTION DES CLIENTS ====================
     "/clients": {
@@ -1602,7 +1602,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre de clients par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -1694,12 +1694,12 @@ const openApi = {
                 type: "object",
                 required: ["nom", "prenom", "type_client"],
                 properties: {
-                  nom: { 
+                  nom: {
                     type: "string",
                     minLength: 2,
                     example: "Dupont"
                   },
-                  prenom: { 
+                  prenom: {
                     type: "string",
                     minLength: 2,
                     example: "Jean"
@@ -1913,12 +1913,12 @@ const openApi = {
               schema: {
                 type: "object",
                 properties: {
-                  nom: { 
+                  nom: {
                     type: "string",
                     minLength: 2,
                     example: "Nouveau nom"
                   },
-                  prenom: { 
+                  prenom: {
                     type: "string",
                     minLength: 2,
                     example: "Nouveau prénom"
@@ -2125,7 +2125,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre de campagnes par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -2135,7 +2135,7 @@ const openApi = {
             in: "query",
             required: false,
             description: "Filtrer par statut",
-            schema: { 
+            schema: {
               type: "string",
               enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
             }
@@ -2169,7 +2169,7 @@ const openApi = {
                           type_campagne: { type: "string" },
                           date_debut: { type: "string", format: "date-time" },
                           date_fin: { type: "string", format: "date-time" },
-                          status: { 
+                          status: {
                             type: "string",
                             enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
                           },
@@ -2293,7 +2293,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre de lieux par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -2378,12 +2378,12 @@ const openApi = {
                 type: "object",
                 required: ["nom", "ville"],
                 properties: {
-                  nom: { 
+                  nom: {
                     type: "string",
                     minLength: 2,
                     example: "Abidjan Plateau"
                   },
-                  ville: { 
+                  ville: {
                     type: "string",
                     minLength: 2,
                     example: "Abidjan"
@@ -2560,12 +2560,12 @@ const openApi = {
               schema: {
                 type: "object",
                 properties: {
-                  nom: { 
+                  nom: {
                     type: "string",
                     minLength: 2,
                     example: "Nouveau nom"
                   },
-                  ville: { 
+                  ville: {
                     type: "string",
                     minLength: 2,
                     example: "Nouvelle ville"
@@ -2740,7 +2740,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre de campagnes par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -2750,7 +2750,7 @@ const openApi = {
             in: "query",
             required: false,
             description: "Filtrer par statut",
-            schema: { 
+            schema: {
               type: "string",
               enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
             }
@@ -2784,7 +2784,7 @@ const openApi = {
                           type_campagne: { type: "string" },
                           date_debut: { type: "string", format: "date-time" },
                           date_fin: { type: "string", format: "date-time" },
-                          status: { 
+                          status: {
                             type: "string",
                             enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
                           },
@@ -2891,7 +2891,7 @@ const openApi = {
           }
         }
       }
-    }, 
+    },
 
     // ==================== GESTION DES CAMPAGNES ====================
     "/campagnes": {
@@ -2910,7 +2910,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre de campagnes par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -2920,7 +2920,7 @@ const openApi = {
             in: "query",
             required: false,
             description: "Filtrer par statut de campagne",
-            schema: { 
+            schema: {
               type: "string",
               enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
             }
@@ -3044,22 +3044,22 @@ const openApi = {
                 type: "object",
                 required: ["id_client", "id_lieu", "id_service", "nom_campagne", "date_debut", "date_fin"],
                 properties: {
-                  id_client: { 
+                  id_client: {
                     type: "string",
                     description: "ID du client pour la campagne",
                     example: "cmclient001"
                   },
-                  id_lieu: { 
+                  id_lieu: {
                     type: "string",
                     description: "ID du lieu où se déroule la campagne",
                     example: "cmlieu001"
                   },
-                  id_service: { 
+                  id_service: {
                     type: "string",
                     description: "ID du service publicitaire utilisé",
                     example: "cmservice001"
                   },
-                  nom_campagne: { 
+                  nom_campagne: {
                     type: "string",
                     minLength: 2,
                     description: "Nom de la campagne",
@@ -3274,17 +3274,17 @@ const openApi = {
                     "affectations": [
                       {
                         "prestataire": {
-                        "id_prestataire": "cmpresta001",
-                        "nom": "Koné",
-                        "prenom": "Moussa",
-                        "contact": "+225 07 12 34 56 78",
-                        "disponible": true,
-                        "type_panneau": "GRAND",
-                        "plaque": "AB-123-CD",
-                        "marque": "Toyota", 
-                        "modele": "Hilux",
-                        "couleur": "Bleu"
-                      },
+                          "id_prestataire": "cmpresta001",
+                          "nom": "Koné",
+                          "prenom": "Moussa",
+                          "contact": "+225 07 12 34 56 78",
+                          "disponible": true,
+                          "type_panneau": "GRAND",
+                          "plaque": "AB-123-CD",
+                          "marque": "Toyota",
+                          "modele": "Hilux",
+                          "couleur": "Bleu"
+                        },
                         "date_creation": "2025-01-03T11:00:00.000Z",
                         "status": "ACTIF"
                       }
@@ -3358,7 +3358,7 @@ const openApi = {
               schema: {
                 type: "object",
                 properties: {
-                  nom_campagne: { 
+                  nom_campagne: {
                     type: "string",
                     minLength: 2,
                     example: "Nouveau nom de campagne"
@@ -3700,7 +3700,7 @@ const openApi = {
           },
           {
             name: "limit",
-            in: "query", 
+            in: "query",
             required: false,
             description: "Nombre de prestataires par page",
             schema: { type: "integer", default: 50, minimum: 1, maximum: 100 }
@@ -4437,7 +4437,7 @@ const openApi = {
                       properties: {
                         id_campagne: { type: "string" },
                         nom_campagne: { type: "string" },
-                        nbr_prestataire: { 
+                        nbr_prestataire: {
                           type: "integer",
                           nullable: true,
                           description: "Nombre maximum de prestataires autorisés (null = pas de limite)"
@@ -4455,19 +4455,19 @@ const openApi = {
                         properties: {
                           prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
                           date_creation: { type: "string", format: "date-time" },
-                          date_fin: { 
-                            type: "string", 
+                          date_fin: {
+                            type: "string",
                             format: "date-time",
                             nullable: true,
                             description: "Date de fin d'affectation (null = actif)"
                           },
-                          status: { 
+                          status: {
                             type: "string",
                             description: "Statut de l'affectation (ACTIF/INACTIF)"
                           },
-                          image_affiche: { 
+                          image_affiche: {
                             type: "string",
-                            nullable: true 
+                            nullable: true
                           },
                           paiement: {
                             type: "object",
@@ -4594,7 +4594,7 @@ const openApi = {
                       properties: {
                         prestataire: { $ref: "#/components/schemas/PrestataireWithDetails" },
                         date_creation: { type: "string", format: "date-time" },
-                        status: { 
+                        status: {
                           type: "string",
                           description: "Statut de l'affectation (ACTIF)"
                         }
@@ -5291,22 +5291,22 @@ const openApi = {
             "in": "query",
             "required": false,
             "description": "Numéro de page pour la pagination",
-            "schema": { 
-              "type": "integer", 
-              "default": 1, 
-              "minimum": 1 
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
             }
           },
           {
             "name": "limit",
-            "in": "query", 
+            "in": "query",
             "required": false,
             "description": "Nombre d'enregistrements par page",
-            "schema": { 
-              "type": "integer", 
-              "default": 50, 
-              "minimum": 1, 
-              "maximum": 100 
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 100
             }
           },
           {
@@ -5328,7 +5328,7 @@ const openApi = {
             "in": "query",
             "required": false,
             "description": "Filtrer par état du matériel",
-            "schema": { 
+            "schema": {
               "type": "string",
               "enum": ["BON", "MOYEN", "MAUVAIS"]
             }
@@ -5630,7 +5630,7 @@ const openApi = {
             "in": "path",
             "required": true,
             "description": "ID de l'enregistrement d'état de matériel",
-            "schema": { 
+            "schema": {
               "type": "string",
               "example": "cmmat001"
             }
@@ -5719,7 +5719,7 @@ const openApi = {
             "in": "path",
             "required": true,
             "description": "ID de l'enregistrement à modifier",
-            "schema": { 
+            "schema": {
               "type": "string",
               "example": "cmmat001"
             }
@@ -5889,7 +5889,7 @@ const openApi = {
             "in": "path",
             "required": true,
             "description": "ID de l'enregistrement à supprimer",
-            "schema": { 
+            "schema": {
               "type": "string",
               "example": "cmmat001"
             }
@@ -5955,7 +5955,7 @@ const openApi = {
             "in": "path",
             "required": true,
             "description": "ID de la campagne",
-            "schema": { 
+            "schema": {
               "type": "string",
               "example": "cmcamp001"
             }
@@ -5965,7 +5965,7 @@ const openApi = {
             "in": "query",
             "required": false,
             "description": "Filtrer par état du matériel",
-            "schema": { 
+            "schema": {
               "type": "string",
               "enum": ["BON", "MOYEN", "MAUVAIS"]
             }
@@ -5993,23 +5993,23 @@ const openApi = {
                     "statistiques": {
                       "type": "object",
                       "properties": {
-                        "total": { 
+                        "total": {
                           "type": "integer",
                           "description": "Nombre total d'enregistrements"
                         },
-                        "etat_bon": { 
+                        "etat_bon": {
                           "type": "integer",
                           "description": "Nombre d'états BON"
                         },
-                        "etat_moyen": { 
+                        "etat_moyen": {
                           "type": "integer",
                           "description": "Nombre d'états MOYEN"
                         },
-                        "etat_mauvais": { 
+                        "etat_mauvais": {
                           "type": "integer",
                           "description": "Nombre d'états MAUVAIS"
                         },
-                        "penalites_total": { 
+                        "penalites_total": {
                           "type": "number",
                           "description": "Somme totale des pénalités"
                         }
@@ -6094,7 +6094,7 @@ const openApi = {
             "in": "path",
             "required": true,
             "description": "ID du prestataire",
-            "schema": { 
+            "schema": {
               "type": "string",
               "example": "cmpresta001"
             }
@@ -6130,15 +6130,15 @@ const openApi = {
                     "statistiques": {
                       "type": "object",
                       "properties": {
-                        "total": { 
+                        "total": {
                           "type": "integer",
                           "description": "Nombre total d'enregistrements"
                         },
-                        "penalites_total": { 
+                        "penalites_total": {
                           "type": "number",
                           "description": "Somme totale des pénalités"
                         },
-                        "penalites_appliquees": { 
+                        "penalites_appliquees": {
                           "type": "number",
                           "description": "Somme des pénalités appliquées"
                         }
@@ -6209,8 +6209,316 @@ const openApi = {
       }
     },
 
-  },
+    // ==================== GESTION DES PAIEMENTS ====================
+    "/paiements": {
+      "get": {
+        "tags": ["Paiements"],
+        "summary": "Lister tous les paiements",
+        "description": "Récupère la liste paginée de tous les paiements avec filtres. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Numéro de page pour la pagination",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Nombre d'enregistrements par page",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "id_campagne",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par ID de campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par ID de prestataire",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "statut_paiement",
+            "in": "query",
+            "required": false,
+            "description": "Filtrer par statut de paiement (true=payé, false=non payé)",
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des paiements récupérée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paiements": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/PaiementPrestataire" }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": { "type": "integer" },
+                        "limit": { "type": "integer" },
+                        "total": { "type": "integer" },
+                        "totalPages": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Paiements"],
+        "summary": "Créer un nouveau paiement",
+        "description": "Crée un paiement pour un prestataire sur une campagne. Le paiement de base est calculé automatiquement selon le type de client (EXTERNE=5000, INTERNE=3000). Les pénalités sont agrégées depuis MaterielsCase. **Pénalité automatique :** Si état=MAUVAIS, les pénalités sont déduites du paiement. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id_campagne", "id_prestataire", "paiement_base"],
+                "properties": {
+                  "id_campagne": {
+                    "type": "string",
+                    "description": "ID de la campagne (requis)"
+                  },
+                  "id_prestataire": {
+                    "type": "string",
+                    "description": "ID du prestataire (requis)"
+                  },
+                  "paiement_base": {
+                    "type": "number",
+                    "description": "Montant de base du paiement (requis)",
+                    "example": 5000
+                  },
+                  "date_paiement": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date du paiement effectué (optionnel)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Paiement créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "paiement": { "$ref": "#/components/schemas/PaiementPrestataire" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
 
+    "/paiements/calculer/{id_campagne}/{id_prestataire}": {
+      "get": {
+        "tags": ["Paiements"],
+        "summary": "Calculer un paiement automatiquement",
+        "description": "Calcule le paiement selon les règles métier : paiement_base selon type de client + déduction des pénalités de MaterielsCase. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id_campagne",
+            "in": "path",
+            "required": true,
+            "description": "ID de la campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "path",
+            "required": true,
+            "description": "ID du prestataire",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calcul du paiement réussi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "calcul": {
+                      "type": "object",
+                      "properties": {
+                        "paiement_base": { "type": "number" },
+                        "sanction_montant": { "type": "number" },
+                        "paiement_final": { "type": "number" },
+                        "details": {
+                          "type": "object",
+                          "properties": {
+                            "type_client": { "type": "string", "enum": ["EXTERNE", "INTERNE"] },
+                            "paiement_base_description": { "type": "string" },
+                            "penalites_appliquees": { "type": "number" },
+                            "montant_net_a_payer": { "type": "number" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/paiements/{id_campagne}/{id_prestataire}": {
+      "get": {
+        "tags": ["Paiements"],
+        "summary": "Récupérer un paiement spécifique",
+        "description": "Récupère les détails d'un paiement pour une affectation (campagne + prestataire). **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id_campagne",
+            "in": "path",
+            "required": true,
+            "description": "ID de la campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "path",
+            "required": true,
+            "description": "ID du prestataire",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paiement récupéré avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paiement": { "$ref": "#/components/schemas/PaiementPrestataire" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Paiements"],
+        "summary": "Mettre à jour le statut du paiement",
+        "description": "Met à jour le statut de paiement (payé/non payé) et la date de paiement. **Accès : Admin uniquement**",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id_campagne",
+            "in": "path",
+            "required": true,
+            "description": "ID de la campagne",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id_prestataire",
+            "in": "path",
+            "required": true,
+            "description": "ID du prestataire",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["statut_paiement", "date_paiement"],
+                "properties": {
+                  "statut_paiement": {
+                    "type": "boolean",
+                    "description": "Statut du paiement (true=payé, false=non payé)"
+                  },
+                  "date_paiement": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date du paiement effectué"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Paiement mis à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "paiement": { "$ref": "#/components/schemas/PaiementPrestataire" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+  },
   components: {
     securitySchemes: {
       bearerAuth: {
@@ -6237,49 +6545,49 @@ const openApi = {
       User: {
         type: "object",
         properties: {
-          id_user: { 
+          id_user: {
             type: "string",
-            description: "Identifiant unique de l'utilisateur" 
+            description: "Identifiant unique de l'utilisateur"
           },
-          email: { 
+          email: {
             type: "string",
             format: "email",
-            description: "Email de l'utilisateur" 
+            description: "Email de l'utilisateur"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom de l'utilisateur" 
+            description: "Nom de l'utilisateur"
           },
-          prenom: { 
+          prenom: {
             type: "string",
-            description: "Prénom de l'utilisateur" 
+            description: "Prénom de l'utilisateur"
           },
-          type_user: { 
+          type_user: {
             type: "string",
             enum: ["ADMIN", "SUPERVISEUR_CAMPAGNE", "CONTROLEUR", "OPERATIONNEL", "EQUIPE"],
-            description: "Rôle de l'utilisateur" 
+            description: "Rôle de l'utilisateur"
           },
-          contact: { 
+          contact: {
             type: "string",
-            description: "Numéro de contact" 
+            description: "Numéro de contact"
           },
           nom_utilisateur: {
             type: "string",
             description: "Nom d'utilisateur"
           },
-          is_active: { 
+          is_active: {
             type: "boolean",
-            description: "Statut d'activation du compte" 
+            description: "Statut d'activation du compte"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
-          updated_at: { 
-            type: "string", 
+          updated_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de dernière modification" 
+            description: "Date de dernière modification"
           }
         },
       },
@@ -6287,22 +6595,22 @@ const openApi = {
       Service: {
         type: "object",
         properties: {
-          id_service: { 
+          id_service: {
             type: "string",
-            description: "Identifiant unique du service" 
+            description: "Identifiant unique du service"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du service" 
+            description: "Nom du service"
           },
-          description: { 
+          description: {
             type: "string",
-            description: "Description du service" 
+            description: "Description du service"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           }
         }
       },
@@ -6310,22 +6618,22 @@ const openApi = {
       ServiceWithStats: {
         type: "object",
         properties: {
-          id_service: { 
+          id_service: {
             type: "string",
-            description: "Identifiant unique du service" 
+            description: "Identifiant unique du service"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du service" 
+            description: "Nom du service"
           },
-          description: { 
+          description: {
             type: "string",
-            description: "Description du service" 
+            description: "Description du service"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
           _count: {
             type: "object",
@@ -6340,22 +6648,22 @@ const openApi = {
       ServiceWithDetails: {
         type: "object",
         properties: {
-          id_service: { 
+          id_service: {
             type: "string",
-            description: "Identifiant unique du service" 
+            description: "Identifiant unique du service"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du service" 
+            description: "Nom du service"
           },
-          description: { 
+          description: {
             type: "string",
-            description: "Description du service" 
+            description: "Description du service"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
           prestataires: {
             type: "array",
@@ -6370,7 +6678,7 @@ const openApi = {
                 nom_campagne: { type: "string" },
                 date_debut: { type: "string", format: "date-time" },
                 date_fin: { type: "string", format: "date-time" },
-                status: { 
+                status: {
                   type: "string",
                   enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
                 },
@@ -6396,11 +6704,12 @@ const openApi = {
           prenom: { type: "string" },
           contact: { type: "string" },
           disponible: { type: "boolean" },
-          created_at: { type: "string", format: "date-time" }
+          created_at: { type: "string", format: "date-time" },
+          updated_at: { type: "string", format: "date-time", description: "Date de dernière modification" }
         }
       },
 
-      "PrestataireWithStats": {
+      PrestataireWithStats: {
         "type": "object",
         "properties": {
           "id_prestataire": { "type": "string" },
@@ -6408,22 +6717,22 @@ const openApi = {
           "prenom": { "type": "string" },
           "contact": { "type": "string" },
           "disponible": { "type": "boolean" },
-          "type_panneau": { 
+          "type_panneau": {
             "type": "string",
             "enum": ["PETIT", "GRAND"],
             "description": "Type de panneau publicitaire"
           },
-          "marque": { 
+          "marque": {
             "type": "string",
-            "description": "Marque du véhicule" 
+            "description": "Marque du véhicule"
           },
-          "modele": { 
+          "modele": {
             "type": "string",
-            "description": "Modèle du véhicule" 
+            "description": "Modèle du véhicule"
           },
-          "plaque": { 
+          "plaque": {
             "type": "string",
-            "description": "Plaque d'immatriculation" 
+            "description": "Plaque d'immatriculation"
           },
           "couleur": {
             "type": "string",
@@ -6434,6 +6743,7 @@ const openApi = {
             "description": "ID de vérification du véhicule"
           },
           "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Date de dernière modification" },
           "_count": {
             "type": "object",
             "properties": {
@@ -6443,56 +6753,57 @@ const openApi = {
           }
         }
       },
-  
+
       Client: {
         type: "object",
         properties: {
-          id_client: { 
+          id_client: {
             type: "string",
-            description: "Identifiant unique du client" 
+            description: "Identifiant unique du client"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du client" 
+            description: "Nom du client"
           },
-          prenom: { 
+          prenom: {
             type: "string",
-            description: "Prénom du client" 
+            description: "Prénom du client"
           },
-          entreprise: { 
+          entreprise: {
             type: "string",
-            description: "Nom de l'entreprise" 
+            description: "Nom de l'entreprise"
           },
-          domaine_entreprise: { 
+          domaine_entreprise: {
             type: "string",
-            description: "Domaine d'activité de l'entreprise" 
+            description: "Domaine d'activité de l'entreprise"
           },
-          adresse: { 
+          adresse: {
             type: "string",
-            description: "Adresse du client" 
+            description: "Adresse du client"
           },
-          contact: { 
+          contact: {
             type: "string",
-            description: "Numéro de contact" 
+            description: "Numéro de contact"
           },
-          mail: { 
+          mail: {
             type: "string",
             format: "email",
-            description: "Email du client" 
+            description: "Email du client"
           },
-          type_client: { 
+          type_client: {
             type: "string",
-            description: "Type de client" 
+            enum: ["EXTERNE", "INTERNE"],
+            description: "Type de client"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
-          updated_at: { 
-            type: "string", 
+          updated_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de dernière modification" 
+            description: "Date de dernière modification"
           }
         }
       },
@@ -6500,52 +6811,53 @@ const openApi = {
       ClientWithStats: {
         type: "object",
         properties: {
-          id_client: { 
+          id_client: {
             type: "string",
-            description: "Identifiant unique du client" 
+            description: "Identifiant unique du client"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du client" 
+            description: "Nom du client"
           },
-          prenom: { 
+          prenom: {
             type: "string",
-            description: "Prénom du client" 
+            description: "Prénom du client"
           },
-          entreprise: { 
+          entreprise: {
             type: "string",
-            description: "Nom de l'entreprise" 
+            description: "Nom de l'entreprise"
           },
-          domaine_entreprise: { 
+          domaine_entreprise: {
             type: "string",
-            description: "Domaine d'activité de l'entreprise" 
+            description: "Domaine d'activité de l'entreprise"
           },
-          adresse: { 
+          adresse: {
             type: "string",
-            description: "Adresse du client" 
+            description: "Adresse du client"
           },
-          contact: { 
+          contact: {
             type: "string",
-            description: "Numéro de contact" 
+            description: "Numéro de contact"
           },
-          mail: { 
+          mail: {
             type: "string",
             format: "email",
-            description: "Email du client" 
+            description: "Email du client"
           },
-          type_client: { 
+          type_client: {
             type: "string",
-            description: "Type de client" 
+            enum: ["EXTERNE", "INTERNE"],
+            description: "Type de client"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
-          updated_at: { 
-            type: "string", 
+          updated_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de dernière modification" 
+            description: "Date de dernière modification"
           },
           _count: {
             type: "object",
@@ -6559,52 +6871,53 @@ const openApi = {
       ClientWithDetails: {
         type: "object",
         properties: {
-          id_client: { 
+          id_client: {
             type: "string",
-            description: "Identifiant unique du client" 
+            description: "Identifiant unique du client"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du client" 
+            description: "Nom du client"
           },
-          prenom: { 
+          prenom: {
             type: "string",
-            description: "Prénom du client" 
+            description: "Prénom du client"
           },
-          entreprise: { 
+          entreprise: {
             type: "string",
-            description: "Nom de l'entreprise" 
+            description: "Nom de l'entreprise"
           },
-          domaine_entreprise: { 
+          domaine_entreprise: {
             type: "string",
-            description: "Domaine d'activité de l'entreprise" 
+            description: "Domaine d'activité de l'entreprise"
           },
-          adresse: { 
+          adresse: {
             type: "string",
-            description: "Adresse du client" 
+            description: "Adresse du client"
           },
-          contact: { 
+          contact: {
             type: "string",
-            description: "Numéro de contact" 
+            description: "Numéro de contact"
           },
-          mail: { 
+          mail: {
             type: "string",
             format: "email",
-            description: "Email du client" 
+            description: "Email du client"
           },
-          type_client: { 
+          type_client: {
             type: "string",
-            description: "Type de client" 
+            enum: ["EXTERNE", "INTERNE"],
+            description: "Type de client"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
-          updated_at: { 
-            type: "string", 
+          updated_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de dernière modification" 
+            description: "Date de dernière modification"
           },
           campagnes: {
             type: "array",
@@ -6615,7 +6928,7 @@ const openApi = {
                 nom_campagne: { type: "string" },
                 date_debut: { type: "string", format: "date-time" },
                 date_fin: { type: "string", format: "date-time" },
-                status: { 
+                status: {
                   type: "string",
                   enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
                 },
@@ -6630,27 +6943,27 @@ const openApi = {
             }
           }
         }
-      }, 
+      },
 
       Lieu: {
         type: "object",
         properties: {
-          id_lieu: { 
+          id_lieu: {
             type: "string",
-            description: "Identifiant unique du lieu" 
+            description: "Identifiant unique du lieu"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du lieu" 
+            description: "Nom du lieu"
           },
-          ville: { 
+          ville: {
             type: "string",
-            description: "Ville du lieu" 
+            description: "Ville du lieu"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           }
         }
       },
@@ -6658,22 +6971,22 @@ const openApi = {
       LieuWithStats: {
         type: "object",
         properties: {
-          id_lieu: { 
+          id_lieu: {
             type: "string",
-            description: "Identifiant unique du lieu" 
+            description: "Identifiant unique du lieu"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du lieu" 
+            description: "Nom du lieu"
           },
-          ville: { 
+          ville: {
             type: "string",
-            description: "Ville du lieu" 
+            description: "Ville du lieu"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
           _count: {
             type: "object",
@@ -6687,22 +7000,22 @@ const openApi = {
       LieuWithDetails: {
         type: "object",
         properties: {
-          id_lieu: { 
+          id_lieu: {
             type: "string",
-            description: "Identifiant unique du lieu" 
+            description: "Identifiant unique du lieu"
           },
-          nom: { 
+          nom: {
             type: "string",
-            description: "Nom du lieu" 
+            description: "Nom du lieu"
           },
-          ville: { 
+          ville: {
             type: "string",
-            description: "Ville du lieu" 
+            description: "Ville du lieu"
           },
-          created_at: { 
-            type: "string", 
+          created_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
           campagnes: {
             type: "array",
@@ -6713,7 +7026,7 @@ const openApi = {
                 nom_campagne: { type: "string" },
                 date_debut: { type: "string", format: "date-time" },
                 date_fin: { type: "string", format: "date-time" },
-                status: { 
+                status: {
                   type: "string",
                   enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
                 },
@@ -6729,61 +7042,61 @@ const openApi = {
             }
           }
         }
-      }, 
+      },
 
       CampagneWithRelations: {
         type: "object",
         properties: {
-          id_campagne: { 
+          id_campagne: {
             type: "string",
-            description: "Identifiant unique de la campagne" 
+            description: "Identifiant unique de la campagne"
           },
-          nom_campagne: { 
+          nom_campagne: {
             type: "string",
-            description: "Nom de la campagne" 
+            description: "Nom de la campagne"
           },
-          description: { 
+          description: {
             type: "string",
-            description: "Description de la campagne" 
+            description: "Description de la campagne"
           },
-          objectif: { 
+          objectif: {
             type: "string",
-            description: "Objectifs de la campagne" 
+            description: "Objectifs de la campagne"
           },
-          quantite_service: { 
+          quantite_service: {
             type: "integer",
-            description: "Quantité de service demandée", 
+            description: "Quantité de service demandée",
             example: 100
           },
-          nbr_prestataire: { 
+          nbr_prestataire: {
             type: "integer",
-            description: "Nombre de prestataires affectés" , 
+            description: "Nombre de prestataires affectés",
             example: 10
           },
-          type_campagne: { 
+          type_campagne: {
             type: "string",
             enum: ["MASSE", "PROXIMITE"],
-            description: "Type de campagne" 
+            description: "Type de campagne"
           },
-          date_debut: { 
-            type: "string", 
+          date_debut: {
+            type: "string",
             format: "date-time",
-            description: "Date de début" 
+            description: "Date de début"
           },
-          date_fin: { 
-            type: "string", 
+          date_fin: {
+            type: "string",
             format: "date-time",
-            description: "Date de fin" 
+            description: "Date de fin"
           },
-          status: { 
+          status: {
             type: "string",
             enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"],
-            description: "Statut de la campagne" 
+            description: "Statut de la campagne"
           },
-          date_creation: { 
-            type: "string", 
+          date_creation: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
           client: {
             type: "object",
@@ -6814,6 +7127,11 @@ const openApi = {
               email: { type: "string" }
             }
           },
+          updated_at: {
+            type: "string",
+            format: "date-time",
+            description: "Date de dernière modification"
+          },
           _count: {
             type: "object",
             properties: {
@@ -6827,59 +7145,59 @@ const openApi = {
       CampagneWithFullDetails: {
         type: "object",
         properties: {
-          id_campagne: { 
+          id_campagne: {
             type: "string",
-            description: "Identifiant unique de la campagne" 
+            description: "Identifiant unique de la campagne"
           },
-          nom_campagne: { 
+          nom_campagne: {
             type: "string",
-            description: "Nom de la campagne" 
+            description: "Nom de la campagne"
           },
-          description: { 
+          description: {
             type: "string",
-            description: "Description de la campagne" 
+            description: "Description de la campagne"
           },
-          objectif: { 
+          objectif: {
             type: "string",
-            description: "Objectifs de la campagne" 
+            description: "Objectifs de la campagne"
           },
-          quantite_service: { 
+          quantite_service: {
             type: "integer",
             description: "Quantité de service demandée"
           },
-          nbr_prestataire: { 
+          nbr_prestataire: {
             type: "integer",
-            description: "Nombre de prestataires affectés" 
+            description: "Nombre de prestataires affectés"
           },
-          type_campagne: { 
+          type_campagne: {
             type: "string",
             enum: ["MASSE", "PROXIMITE"],
-            description: "Type de campagne" 
+            description: "Type de campagne"
           },
-          date_debut: { 
-            type: "string", 
+          date_debut: {
+            type: "string",
             format: "date-time",
-            description: "Date de début" 
+            description: "Date de début"
           },
-          date_fin: { 
-            type: "string", 
+          date_fin: {
+            type: "string",
             format: "date-time",
-            description: "Date de fin" 
+            description: "Date de fin"
           },
-          status: { 
+          status: {
             type: "string",
             enum: ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"],
-            description: "Statut de la campagne" 
+            description: "Statut de la campagne"
           },
-          date_creation: { 
-            type: "string", 
+          date_creation: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
-          updated_at: { 
-            type: "string", 
+          updated_at: {
+            type: "string",
             format: "date-time",
-            description: "Date de dernière modification" 
+            description: "Date de dernière modification"
           },
           client: {
             type: "object",
@@ -6915,7 +7233,7 @@ const openApi = {
               nom: { type: "string" },
               prenom: { type: "string" },
               email: { type: "string" },
-              type_user: { 
+              type_user: {
                 type: "string",
                 enum: ["ADMIN", "SUPERVISEUR_CAMPAGNE", "CONTROLEUR", "OPERATIONNEL", "EQUIPE"]
               }
@@ -6950,31 +7268,31 @@ const openApi = {
       FichierCampagne: {
         type: "object",
         properties: {
-          id_fichier: { 
+          id_fichier: {
             type: "string",
-            description: "Identifiant unique du fichier" 
+            description: "Identifiant unique du fichier"
           },
-          nom_fichier: { 
+          nom_fichier: {
             type: "string",
-            description: "Nom du fichier" 
+            description: "Nom du fichier"
           },
-          description: { 
+          description: {
             type: "string",
-            description: "Description du fichier" 
+            description: "Description du fichier"
           },
-          type_fichier: { 
+          type_fichier: {
             type: "string",
             enum: ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"],
-            description: "Type de fichier" 
+            description: "Type de fichier"
           },
-          lien_canva_drive: { 
+          lien_canva_drive: {
             type: "string",
-            description: "Lien vers le fichier" 
+            description: "Lien vers le fichier"
           },
-          date_creation: { 
-            type: "string", 
+          date_creation: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           }
         }
       },
@@ -6982,31 +7300,31 @@ const openApi = {
       FichierCampagneWithContext: {
         type: "object",
         properties: {
-          id_fichier: { 
+          id_fichier: {
             type: "string",
-            description: "Identifiant unique du fichier" 
+            description: "Identifiant unique du fichier"
           },
-          nom_fichier: { 
+          nom_fichier: {
             type: "string",
-            description: "Nom du fichier" 
+            description: "Nom du fichier"
           },
-          description: { 
+          description: {
             type: "string",
-            description: "Description du fichier" 
+            description: "Description du fichier"
           },
-          type_fichier: { 
+          type_fichier: {
             type: "string",
             enum: ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"],
-            description: "Type de fichier" 
+            description: "Type de fichier"
           },
-          lien_canva_drive: { 
+          lien_canva_drive: {
             type: "string",
-            description: "Lien vers le fichier" 
+            description: "Lien vers le fichier"
           },
-          date_creation: { 
-            type: "string", 
+          date_creation: {
+            type: "string",
             format: "date-time",
-            description: "Date de création" 
+            description: "Date de création"
           },
           campagne: {
             type: "object",
@@ -7022,22 +7340,22 @@ const openApi = {
         properties: {
           id_campagne: { type: "string" },
           id_prestataire: { type: "string" },
-          date_creation: { 
-            type: "string", 
+          date_creation: {
+            type: "string",
             format: "date-time",
             description: "Date de création de l'affectation"
           },
-          date_fin: { 
-            type: "string", 
+          date_fin: {
+            type: "string",
             format: "date-time",
             nullable: true,
             description: "Date de fin d'affectation (null = actif)"
           },
-          status: { 
+          status: {
             type: "string",
             description: "Statut de l'affectation (ACTIF/INACTIF)"
           },
-          image_affiche: { 
+          image_affiche: {
             type: "string",
             nullable: true,
             description: "URL de l'image d'affiche"
@@ -7045,7 +7363,7 @@ const openApi = {
         }
       },
 
-      "PrestataireWithDetails": {
+      PrestataireWithDetails: {
         "type": "object",
         "properties": {
           "id_prestataire": { "type": "string" },
@@ -7053,7 +7371,7 @@ const openApi = {
           "prenom": { "type": "string" },
           "contact": { "type": "string" },
           "disponible": { "type": "boolean" },
-          "type_panneau": { 
+          "type_panneau": {
             "type": "string",
             "enum": ["PETIT", "GRAND"]
           },
@@ -7062,6 +7380,8 @@ const openApi = {
           "modele": { "type": "string" },
           "plaque": { "type": "string" },
           "id_verification": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
           "service": {
             "type": "object",
             "properties": {
@@ -7071,7 +7391,7 @@ const openApi = {
         }
       },
 
-      "PrestataireWithFullDetails": {
+      PrestataireWithFullDetails: {
         "type": "object",
         "properties": {
           "id_prestataire": { "type": "string" },
@@ -7079,7 +7399,7 @@ const openApi = {
           "prenom": { "type": "string" },
           "contact": { "type": "string" },
           "disponible": { "type": "boolean" },
-          "type_panneau": { 
+          "type_panneau": {
             "type": "string",
             "enum": ["PETIT", "GRAND"]
           },
@@ -7110,7 +7430,7 @@ const openApi = {
                     "nom_campagne": { "type": "string" },
                     "date_debut": { "type": "string", "format": "date-time" },
                     "date_fin": { "type": "string", "format": "date-time" },
-                    "status": { 
+                    "status": {
                       "type": "string",
                       "enum": ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
                     }
@@ -7127,7 +7447,7 @@ const openApi = {
               "type": "object",
               "properties": {
                 "id_materiels_case": { "type": "string" },
-                "etat": { 
+                "etat": {
                   "type": "string",
                   "enum": ["BON", "MOYEN", "MAUVAIS"]
                 },
@@ -7154,92 +7474,92 @@ const openApi = {
         }
       },
 
-      "MaterielsCase": {
+      MaterielsCase: {
         "type": "object",
         "properties": {
-          "id_materiels_case": { 
+          "id_materiels_case": {
             "type": "string",
-            "description": "Identifiant unique de l'enregistrement" 
+            "description": "Identifiant unique de l'enregistrement"
           },
           "nom_materiel": {
             "type": "string",
             "description": "Nom du matériel endommagé ou signalé",
             "example": "Panneau publicitaire"
           },
-          "etat": { 
+          "etat": {
             "type": "string",
             "enum": ["BON", "MOYEN", "MAUVAIS"],
-            "description": "État du matériel constaté" 
+            "description": "État du matériel constaté"
           },
-          "description": { 
+          "description": {
             "type": "string",
-            "description": "Description détaillée des dommages" 
+            "description": "Description détaillée des dommages"
           },
-          "montant_penalite": { 
+          "montant_penalite": {
             "type": "number",
-            "description": "Montant de la pénalité appliquée" 
+            "description": "Montant de la pénalité appliquée"
           },
-          "penalite_appliquer": { 
+          "penalite_appliquer": {
             "type": "boolean",
-            "description": "Indique si la pénalité a été appliquée" 
+            "description": "Indique si la pénalité a été appliquée"
           },
-          "photo_url": { 
+          "photo_url": {
             "type": "string",
-            "description": "URL de la photo du dommage" 
+            "description": "URL de la photo du dommage"
           },
-          "preuve_media": { 
+          "preuve_media": {
             "type": "string",
-            "description": "URL d'une preuve média supplémentaire" 
+            "description": "URL d'une preuve média supplémentaire"
           },
-          "date_creation": { 
-            "type": "string", 
+          "date_creation": {
+            "type": "string",
             "format": "date-time",
-            "description": "Date de création de l'enregistrement" 
+            "description": "Date de création de l'enregistrement"
           }
         }
       },
 
-      "MaterielsCaseWithRelations": {
+      MaterielsCaseWithRelations: {
         "type": "object",
         "properties": {
-          "id_materiels_case": { 
+          "id_materiels_case": {
             "type": "string",
-            "description": "Identifiant unique de l'enregistrement" 
+            "description": "Identifiant unique de l'enregistrement"
           },
           "nom_materiel": {
             "type": "string",
             "description": "Nom du matériel endommagé ou signalé",
             "example": "Panneau publicitaire"
           },
-          "etat": { 
+          "etat": {
             "type": "string",
             "enum": ["BON", "MOYEN", "MAUVAIS"],
-            "description": "État du matériel constaté" 
+            "description": "État du matériel constaté"
           },
-          "description": { 
+          "description": {
             "type": "string",
-            "description": "Description détaillée des dommages" 
+            "description": "Description détaillée des dommages"
           },
-          "montant_penalite": { 
+          "montant_penalite": {
             "type": "number",
-            "description": "Montant de la pénalité appliquée (calculé automatiquement si état=MAUVAIS)" 
+            "description": "Montant de la pénalité appliquée (calculé automatiquement si état=MAUVAIS)"
           },
-          "penalite_appliquer": { 
+          "penalite_appliquer": {
             "type": "boolean",
-            "description": "Indique si la pénalité a été appliquée" 
+            "description": "Indique si la pénalité a été appliquée"
           },
-          "photo_url": { 
+          "photo_url": {
             "type": "string",
-            "description": "URL de la photo du dommage" 
+            "description": "URL de la photo du dommage"
           },
-          "preuve_media": { 
+          "preuve_media": {
             "type": "string",
-            "description": "URL d'une preuve média supplémentaire" 
+            "description": "URL d'une preuve média supplémentaire"
           },
-          "date_creation": { 
-            "type": "string", 
+          "date_creation": {
+            "type": "string",
             "format": "date-time",
-            "description": "Date de création de l'enregistrement" 
+            "description": "Date de création de l'enregistrement"
           },
           "campagne": {
             "type": "object",
@@ -7248,7 +7568,7 @@ const openApi = {
               "nom_campagne": { "type": "string" },
               "date_debut": { "type": "string", "format": "date-time" },
               "date_fin": { "type": "string", "format": "date-time" },
-              "status": { 
+              "status": {
                 "type": "string",
                 "enum": ["PLANIFIEE", "EN_COURS", "TERMINEE", "ANNULEE"]
               },
@@ -7257,7 +7577,7 @@ const openApi = {
                 "properties": {
                   "id_client": { "type": "string" },
                   "nom": { "type": "string" },
-                  "type_client": { 
+                  "type_client": {
                     "type": "string",
                     "enum": ["EXTERNE", "INTERNE"],
                     "description": "Type de client (détermine la pénalité automatique)"
@@ -7273,7 +7593,7 @@ const openApi = {
               "nom": { "type": "string" },
               "prenom": { "type": "string" },
               "contact": { "type": "string" },
-              "type_panneau": { 
+              "type_panneau": {
                 "type": "string",
                 "enum": ["PETIT", "GRAND"]
               },
@@ -7283,8 +7603,93 @@ const openApi = {
             }
           }
         }
+      },
+
+      PaiementPrestataire: {
+        type: "object",
+        description: "Paiement pour un prestataire sur une campagne",
+        properties: {
+          id_campagne_id_prestataire: {
+            type: "string",
+            description: "Identifiant unique composite (id_campagne-id_prestataire)"
+          },
+          id_campagne: {
+            type: "string",
+            description: "ID de la campagne"
+          },
+          id_prestataire: {
+            type: "string",
+            description: "ID du prestataire"
+          },
+          paiement_base: {
+            type: "number",
+            description: "Montant de base du paiement (5000 pour EXTERNE, 3000 pour INTERNE)"
+          },
+          sanction_montant: {
+            type: "number",
+            description: "Montant total des pénalités (agrégées depuis MaterielsCase avec état=MAUVAIS)"
+          },
+          paiement_final: {
+            type: "number",
+            description: "Montant final = paiement_base - sanction_montant"
+          },
+          statut_paiement: {
+            type: "boolean",
+            description: "Statut du paiement (true=payé, false=non payé)"
+          },
+          date_paiement: {
+            type: "string",
+            format: "date-time",
+            nullable: true,
+            description: "Date du paiement effectué"
+          },
+          date_creation: {
+            type: "string",
+            format: "date-time",
+            description: "Date de création du paiement"
+          },
+          date_modification: {
+            type: "string",
+            format: "date-time",
+            description: "Date de dernière modification"
+          },
+          affectation: {
+            type: "object",
+            description: "Détails de l'affectation (relation)",
+            properties: {
+              id_campagne: { type: "string" },
+              id_prestataire: { type: "string" },
+              status: { type: "string" },
+              prestataire: {
+                type: "object",
+                properties: {
+                  nom: { type: "string" },
+                  contact: { type: "string" },
+                  email: { type: "string" }
+                }
+              }
+            }
+          },
+          campagne: {
+            type: "object",
+            description: "Détails de la campagne (relation)",
+            properties: {
+              id_campagne: { type: "string" },
+              nom_campagne: { type: "string" },
+              client: {
+                type: "object",
+                properties: {
+                  type_client: {
+                    type: "string",
+                    enum: ["EXTERNE", "INTERNE"],
+                    description: "Type de client (détermine paiement_base)"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-      
     },
     responses: {
       Unauthorized: {
@@ -7327,9 +7732,9 @@ const openApi = {
           }
         }
       }
-    }
-  },
-};
+    },
+  }
+}
 
 export async function GET() {
   return NextResponse.json(openApi);
