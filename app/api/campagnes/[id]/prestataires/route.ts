@@ -6,22 +6,22 @@ import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 // GET /api/campagnes/[id]/prestataires - Lister les prestataires d'une campagne
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const campagneId = id;
 
     // Vérifier que la campagne existe
     const campagne = await prisma.campagne.findUnique({
       where: { id_campagne: campagneId },
-      select: { 
-        id_campagne: true, 
+      select: {
+        id_campagne: true,
         nom_campagne: true,
-        nbr_prestataire: true 
+        nbr_prestataire: true
       }
     });
 
@@ -86,17 +86,17 @@ export async function GET(
 // POST /api/campagnes/[id]/prestataires - Ajouter un prestataire à une campagne
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const campagneId = id;
 
     const body = await request.json();
-    
+
     if (!body.id_prestataire) {
       throw new AppError("ID prestataire requis", 400);
     }
@@ -106,10 +106,10 @@ export async function POST(
     // Vérifier que la campagne existe AVEC nbr_prestataire et id_service
     const campagne = await prisma.campagne.findUnique({
       where: { id_campagne: campagneId },
-      select: { 
+      select: {
         nbr_prestataire: true,
         id_campagne: true,
-        id_service: true 
+        id_service: true
       }
     });
 
@@ -158,7 +158,7 @@ export async function POST(
       const affectationsActives = await prisma.prestataireCampagne.count({
         where: {
           id_campagne: campagneId,
-          date_fin: null 
+          date_fin: null
         }
       });
 
@@ -175,7 +175,7 @@ export async function POST(
       data: {
         id_campagne: campagneId,
         id_prestataire,
-        status: "ACTIF" 
+        status: "ACTIF"
       },
       select: {
         prestataire: {
@@ -201,9 +201,12 @@ export async function POST(
       }
     });
 
-    return NextResponse.json({ 
+    // NOTE : Le paiement sera créé automatiquement lors de l'enregistrement 
+    // du premier matériel casé pour cette affectation (route /api/materiels-cases)
+
+    return NextResponse.json({
       message: "Prestataire affecté à la campagne avec succès",
-      affectation 
+      affectation
     }, { status: 201 });
 
   } catch (error) {
