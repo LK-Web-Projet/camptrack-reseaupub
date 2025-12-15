@@ -25,22 +25,17 @@ interface Prestataire {
 }
 
 export default function PrestataireTable() {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [prestataires, setPrestataires] = useState<Prestataire[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchPrestataires = useCallback(async (page = 1, limit = 500) => {
-    if (!token) return
-      setLoading(true)
+    setLoading(true)
     setError(null)
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
-      const res = await fetch(`/api/prestataires?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const res = await apiClient(`/api/prestataires?${params.toString()}`)
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as Record<string, unknown>
         const errMsg = typeof body?.error === 'string' ? body.error : `Erreur ${res.status}`
@@ -56,7 +51,7 @@ export default function PrestataireTable() {
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [apiClient])
 
   useEffect(() => {
     fetchPrestataires()

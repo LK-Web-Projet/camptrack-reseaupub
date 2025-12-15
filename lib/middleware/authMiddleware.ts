@@ -6,12 +6,8 @@ type TokenPayloadShape = { jti?: string; userId?: string; sub?: string };
 
 interface AuthResult {
   ok: boolean;
-<<<<<<< HEAD
   user?: any;
   loading: boolean;
-=======
-  user?: unknown;
->>>>>>> feature/campagnes_back
   response?: NextResponse;
 }
 

@@ -23,7 +23,7 @@ const Schema = Yup.object().shape({
 });
 
 export default function EditClientModal({ isOpen, onClose, client, onEditClient }: EditClientProps) {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
 
   if (!isOpen || !client) return null;
 
@@ -52,18 +52,11 @@ export default function EditClientModal({ isOpen, onClose, client, onEditClient 
           }}
           validationSchema={Schema}
           onSubmit={async (values, { setSubmitting }) => {
-            if (!token) {
-              toast.error("Vous devez être connecté pour modifier un client");
-              setSubmitting(false);
-              return;
-            }
-
             try {
-              const res = await fetch(`/api/clients/${client.id_client}`, {
+              const res = await apiClient(`/api/clients/${client.id_client}`, {
                 method: "PUT",
                 headers: {
                   "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify(values),
               });
@@ -73,8 +66,6 @@ export default function EditClientModal({ isOpen, onClose, client, onEditClient 
               const updatedClient: Client = await res.json();
               onEditClient(updatedClient);
               toast.success("Informations du client modifiées avec succès");
-                      window.location.href = "/dashboard/clients"; // Actualiser la page pour refléter les changements
-
               onClose();
             } catch (err) {
               console.error(err);

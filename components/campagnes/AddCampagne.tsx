@@ -3,9 +3,22 @@
 import { useCallback, useEffect, useState } from "react"
 import { useFormik } from "formik"
 import * as Yup from "yup"
-import { X } from "lucide-react"
+import { PlusCircle, X } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
+
+import { Button } from "../ui/button"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
+import { Textarea } from "../ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import AddClientModal from "../clients/AddClient"
 
 interface Client {
   id_client: string
@@ -33,21 +46,21 @@ interface AddCampagneModalProps {
 }
 
 export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: AddCampagneModalProps) {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [clients, setClients] = useState<Client[]>([])
   const [lieux, setLieux] = useState<Lieu[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false)
 
-  // Charger les listes au montage
   const fetchOptions = useCallback(async () => {
     setLoading(true)
     try {
       const [clientRes, lieuRes, serviceRes] = await Promise.all([
-        fetch("/api/clients?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
-        fetch("/api/lieux?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
-        fetch("/api/services?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
+        apiClient("/api/clients?limit=500"),
+        apiClient("/api/lieux?limit=500"),
+        apiClient("/api/services?limit=500"),
       ])
 
       if (clientRes.ok) {
@@ -64,16 +77,23 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
       }
     } catch (err) {
       console.error("Erreur chargement options:", err)
+      toast.error("Erreur lors du chargement des options.")
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [apiClient])
 
   useEffect(() => {
     if (isOpen) {
       fetchOptions()
     }
   }, [isOpen, fetchOptions])
+
+  const handleClientAdded = (newClient: Client) => {
+    fetchOptions() // Re-fetch all options to get the latest client list
+    formik.setFieldValue("id_client", newClient.id_client) // Set the new client as selected
+    setIsAddClientOpen(false) // Close the add client modal
+  }
 
   const formik = useFormik({
     initialValues: {
@@ -107,23 +127,13 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
     onSubmit: async (values) => {
       setSubmitting(true)
       try {
-        const res = await fetch("/api/campagnes", {
+        const res = await apiClient("/api/campagnes", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            nom_campagne: values.nom_campagne,
-            type_campagne: values.type_campagne || null,
-            status: values.status || "PLANIFIEE",
-            description: values.description || null,
-            objectif: values.objectif || null,
-            date_debut: values.date_debut,
-            date_fin: values.date_fin,
-            id_client: values.id_client,
-            id_lieu: values.id_lieu,
-            id_service: values.id_service,
+            ...values,
             quantite_service: values.quantite_service ? parseInt(values.quantite_service) : null,
             nbr_prestataire: values.nbr_prestataire ? parseInt(values.nbr_prestataire) : null,
           }),
@@ -151,255 +161,266 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-2xl shadow-xl relative border border-gray-200 dark:border-gray-700 max-h-screen overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X className="w-5 h-5" />
-        </button>
-        <h2 className="text-xl font-semibold mb-4 text-[#d61353]">Ajouter une campagne</h2>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-2xl shadow-xl relative border border-gray-200 dark:border-gray-700 max-h-screen overflow-y-auto">
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="absolute top-4 right-4"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+          <h2 className="text-xl font-semibold mb-4 text-[#d61353]">Ajouter une campagne</h2>
 
-        {loading ? (
-          <p className="text-center text-gray-500">Chargement des options...</p>
-        ) : (
-          <form onSubmit={formik.handleSubmit} className="space-y-4">
-            {/* Nom et Type de campagne côte à côte */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">Nom de la campagne</label>
-                <input
-                  type="text"
-                  name="nom_campagne"
+          {loading ? (
+            <p className="text-center text-gray-500">Chargement des options...</p>
+          ) : (
+            <form onSubmit={formik.handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nom_campagne">Nom de la campagne</Label>
+                  <Input
+                    id="nom_campagne"
+                    name="nom_campagne"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.nom_campagne}
+                  />
+                  {formik.touched.nom_campagne && formik.errors.nom_campagne && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.nom_campagne}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="type_campagne">Type de campagne</Label>
+                  <Select
+                    name="type_campagne"
+                    onValueChange={(value) => formik.setFieldValue("type_campagne", value)}
+                    value={formik.values.type_campagne}
+                  >
+                    <SelectTrigger onBlur={() => formik.setFieldTouched("type_campagne", true)}>
+                      <SelectValue placeholder="-- Sélectionner --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MASSE">MASSE</SelectItem>
+                      <SelectItem value="PROXIMITE">PROXIMITE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formik.touched.type_campagne && formik.errors.type_campagne && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.type_campagne}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="id_client">Client</Label>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      name="id_client"
+                      onValueChange={(value) => formik.setFieldValue("id_client", value)}
+                      value={formik.values.id_client}
+                    >
+                      <SelectTrigger onBlur={() => formik.setFieldTouched("id_client", true)} className="flex-grow">
+                        <SelectValue placeholder="-- Sélectionner un client --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id_client} value={client.id_client}>
+                            {client.nom} {client.prenom} {client.entreprise ? `(${client.entreprise})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" variant="outline" size="icon" onClick={() => setIsAddClientOpen(true)}>
+                      <PlusCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {formik.touched.id_client && formik.errors.id_client && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.id_client}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    name="status"
+                    onValueChange={(value) => formik.setFieldValue("status", value)}
+                    value={formik.values.status}
+                  >
+                    <SelectTrigger onBlur={() => formik.setFieldTouched("status", true)}>
+                      <SelectValue placeholder="-- Sélectionner --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PLANIFIEE">PLANIFIEE</SelectItem>
+                      <SelectItem value="EN_COURS">EN_COURS</SelectItem>
+                      <SelectItem value="TERMINEE">TERMINEE</SelectItem>
+                      <SelectItem value="ANNULEE">ANNULEE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formik.touched.status && formik.errors.status && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.status}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                  <Label htmlFor="id_lieu">Lieu</Label>
+                  <Select
+                    name="id_lieu"
+                    onValueChange={(value) => formik.setFieldValue("id_lieu", value)}
+                    value={formik.values.id_lieu}
+                  >
+                    <SelectTrigger onBlur={() => formik.setFieldTouched("id_lieu", true)}>
+                      <SelectValue placeholder="-- Sélectionner --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lieux.map((lieu) => (
+                        <SelectItem key={lieu.id_lieu} value={lieu.id_lieu}>
+                          {lieu.nom} {lieu.ville ? `(${lieu.ville})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formik.touched.id_lieu && formik.errors.id_lieu && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.id_lieu}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="id_service">Service</Label>
+                  <Select
+                    name="id_service"
+                    onValueChange={(value) => formik.setFieldValue("id_service", value)}
+                    value={formik.values.id_service}
+                  >
+                    <SelectTrigger onBlur={() => formik.setFieldTouched("id_service", true)}>
+                      <SelectValue placeholder="-- Sélectionner --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {services.map((service) => (
+                        <SelectItem key={service.id_service} value={service.id_service}>
+                          {service.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formik.touched.id_service && formik.errors.id_service && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.id_service}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  value={formik.values.nom_campagne}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+                  value={formik.values.description}
+                  rows={2}
                 />
-                {formik.touched.nom_campagne && formik.errors.nom_campagne && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.nom_campagne}</p>
-                )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Type de campagne</label>
-                <select
-                  name="type_campagne"
+              <div className="space-y-2">
+                <Label htmlFor="objectif">Objectif</Label>
+                <Textarea
+                  id="objectif"
+                  name="objectif"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  value={formik.values.type_campagne}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  <option value="MASSE">MASSE</option>
-                  <option value="PROXIMITE">PROXIMITE</option>
-                </select>
-                {formik.touched.type_campagne && formik.errors.type_campagne && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.type_campagne}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Client et Status côte à côte */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">Client</label>
-                <select
-                  name="id_client"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.id_client}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Sélectionner un client --</option>
-                  {clients.map((client) => (
-                    <option key={client.id_client} value={client.id_client}>
-                      {client.nom} {client.prenom} {client.entreprise ? `(${client.entreprise})` : ""}
-                    </option>
-                  ))}
-                </select>
-                {formik.touched.id_client && formik.errors.id_client && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.id_client}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <select
-                  name="status"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.status}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="PLANIFIEE">PLANIFIEE</option>
-                  <option value="EN_COURS">EN_COURS</option>
-                  <option value="TERMINEE">TERMINEE</option>
-                  <option value="ANNULEE">ANNULEE</option>
-                </select>
-                {formik.touched.status && formik.errors.status && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.status}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Lieu et Service côte à côte */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">Lieu</label>
-                <select
-                  name="id_lieu"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.id_lieu}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  {lieux.map((lieu) => (
-                    <option key={lieu.id_lieu} value={lieu.id_lieu}>
-                      {lieu.nom} {lieu.ville ? `(${lieu.ville})` : ""}
-                    </option>
-                  ))}
-                </select>
-                {formik.touched.id_lieu && formik.errors.id_lieu && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.id_lieu}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Service</label>
-                <select
-                  name="id_service"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.id_service}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  {services.map((service) => (
-                    <option key={service.id_service} value={service.id_service}>
-                      {service.nom}
-                    </option>
-                  ))}
-                </select>
-                {formik.touched.id_service && formik.errors.id_service && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.id_service}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
-              <textarea
-                name="description"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.description}
-                className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                rows={2}
-              />
-            </div>
-
-            {/* Objectif */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Objectif</label>
-              <textarea
-                name="objectif"
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.objectif}
-                className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                rows={2}
-              />
-            </div>
-
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">Date début</label>
-                <input
-                  type="date"
-                  name="date_debut"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.date_debut}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
+                  value={formik.values.objectif}
+                  rows={2}
                 />
-                {formik.touched.date_debut && formik.errors.date_debut && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.date_debut}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Date fin</label>
-                <input
-                  type="date"
-                  name="date_fin"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.date_fin}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                />
-                {formik.touched.date_fin && formik.errors.date_fin && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.date_fin}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Quantité de service et Nombre de prestataires côte à côte */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">Quantité de service</label>
-                <input
-                  type="number"
-                  name="quantite_service"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.quantite_service}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                />
-                {formik.touched.quantite_service && formik.errors.quantite_service && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.quantite_service}</p>
-                )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Nombre de prestataires</label>
-                <input
-                  type="number"
-                  name="nbr_prestataire"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.nbr_prestataire}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                />
-                {formik.touched.nbr_prestataire && formik.errors.nbr_prestataire && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.nbr_prestataire}</p>
-                )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date_debut">Date début</Label>
+                  <Input
+                    id="date_debut"
+                    type="date"
+                    name="date_debut"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.date_debut}
+                  />
+                  {formik.touched.date_debut && formik.errors.date_debut && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.date_debut}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date_fin">Date fin</Label>
+                  <Input
+                    id="date_fin"
+                    type="date"
+                    name="date_fin"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.date_fin}
+                  />
+                  {formik.touched.date_fin && formik.errors.date_fin && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.date_fin}</p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Boutons */}
-            <div className="flex justify-between gap-4 mt-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-md border hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 rounded-md bg-[#d61353] text-white hover:bg-[#b01044] disabled:opacity-50 transition"
-              >
-                {submitting ? "Création..." : "Créer la campagne"}
-              </button>
-            </div>
-          </form>
-        )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="quantite_service">Quantité de service</Label>
+                  <Input
+                    id="quantite_service"
+                    type="number"
+                    name="quantite_service"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.quantite_service}
+                  />
+                  {formik.touched.quantite_service && formik.errors.quantite_service && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.quantite_service}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="nbr_prestataire">Nombre de prestataires</Label>
+                  <Input
+                    id="nbr_prestataire"
+                    type="number"
+                    name="nbr_prestataire"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.nbr_prestataire}
+                  />
+                  {formik.touched.nbr_prestataire && formik.errors.nbr_prestataire && (
+                    <p className="text-red-500 text-xs mt-1">{formik.errors.nbr_prestataire}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between gap-4 pt-4">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Création..." : "Créer la campagne"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
-    </div>
+      
+      {/* Add Client Modal */}
+      {isAddClientOpen && (
+        <AddClientModal
+          isOpen={isAddClientOpen}
+          onClose={() => setIsAddClientOpen(false)}
+          onAddClient={handleClientAdded}
+        />
+      )}
+    </>
   )
 }

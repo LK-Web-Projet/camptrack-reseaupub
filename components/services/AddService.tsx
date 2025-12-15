@@ -21,7 +21,7 @@ interface AddServiceProps {
 }
 
 export default function AddService({ isOpen, onClose, onServiceUpdated }: AddServiceProps) {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
 
   const formik = useFormik({
     initialValues: {
@@ -33,17 +33,11 @@ export default function AddService({ isOpen, onClose, onServiceUpdated }: AddSer
       description: Yup.string().nullable(),
     }),
     onSubmit: async (values, { resetForm }) => {
-      if (!token) {
-        toast.error("Vous devez être connecté pour ajouter un service");
-        return;
-      }
-
       try {
-        const res = await fetch("/api/services?page=1&limit=50", {
+        const res = await apiClient("/api/services", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(values),
         });

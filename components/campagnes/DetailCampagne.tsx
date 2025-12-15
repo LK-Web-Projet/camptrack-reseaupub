@@ -1,11 +1,50 @@
 "use client";
 
-import { ArrowLeft, Megaphone, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  Megaphone,
+  FileText,
+  Calendar,
+  User,
+  Target,
+  Info,
+  Building,
+  MapPin,
+  ClipboardList,
+  Users,
+  Paperclip,
+  PlusCircle,
+} from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PrestataireCampagne, PaiementPrestataire } from '../../app/generated/prisma/index';
 
+
+// Interfaces (gardées telles quelles)
 interface Client {
 	id_client?: string;
 	nom?: string;
@@ -14,479 +53,481 @@ interface Client {
 	contact?: string | null;
 	mail?: string | null;
 }
-
-interface Lieu {
-	id_lieu?: string;
-	nom?: string;
-	ville?: string;
-}
-
-interface Service {
-	id_service?: string;
-	nom?: string;
-	description?: string | null;
-}
-
-interface Gestionnaire {
-	id_user?: string;
-	nom?: string;
-	prenom?: string;
-	email?: string;
-}
-
+interface Lieu { id_lieu?: string; nom?: string; ville?: string; }
+interface Service { id_service?: string; nom?: string; description?: string | null; }
+interface Gestionnaire { id_user?: string; nom?: string; prenom?: string; email?: string; }
 interface Affectation {
-	prestataire: {
-		id_prestataire: string;
-		nom?: string;
-		prenom?: string;
-		contact?: string;
-	};
-	date_creation?: string;
-	status?: string;
+  prestataire: {
+    id_prestataire: string;
+    nom?: string;
+    prenom?: string;
+    contact?: string;
+    service?: { nom?: string } | null;
+  };
+  PaiementPrestataire?: {
+    paiement_base?: number;
+    sanction_montant?: number;
+    paiement_final?: number;
+  } | null; // Ajout de la relation
+  date_creation?: string;
+  status?: string;
 }
-
-interface Fichier {
-	id_fichier: string;
-	nom_fichier?: string;
-	description?: string | null;
-	type_fichier?: string | null;
-	date_creation?: string;
-}
-
-interface PrestataireListItem {
-	id_prestataire: string;
-	nom?: string;
-	prenom?: string;
-	contact?: string | null;
-	service?: { nom?: string } | null;
-}
-
+interface Fichier { id_fichier: string; nom_fichier?: string; url?: string; description?: string | null; type_fichier?: string | null; date_creation?: string; }
+interface PrestataireListItem { id_prestataire: string; nom?: string; prenom?: string; contact?: string | null; service?: { nom?: string } | null; }
 interface Campagne {
-	id_campagne: string;
-	nom_campagne?: string;
-	description?: string | null;
-	objectif?: string | null;
-	quantite_service?: number | null;
-	nbr_prestataire?: number | null;
-	type_campagne?: string | null;
-	date_debut?: string | null;
-	date_fin?: string | null;
-	status?: string | null;
-	date_creation?: string | null;
-	updated_at?: string | null;
-	client?: Client | null;
-	lieu?: Lieu | null;
-	service?: Service | null;
-	gestionnaire?: Gestionnaire | null;
-	affectations?: Affectation[] | null;
-	fichiers?: Fichier[] | null;
-	_count?: { affectations?: number; fichiers?: number; dommages?: number };
+	id_campagne: string; nom_campagne?: string; description?: string | null; objectif?: string | null; quantite_service?: number | null; nbr_prestataire?: number | null; type_campagne?: string | null; date_debut?: string | null; date_fin?: string | null; status?: string | null; date_creation?: string | null; updated_at?: string | null; client?: Client | null; lieu?: Lieu | null; service?: Service | null; gestionnaire?: Gestionnaire | null; affectations?: Affectation[] | null; fichiers?: Fichier[] | null; _count?: { affectations?: number; fichiers?: number; dommages?: number };
 }
 
-export default function DetailCampagne({ id }: { id: string }) {
-	const { token } = useAuth();
-	const [campagne, setCampagne] = useState<Campagne | null>(null);
-	const [loading, setLoading] = useState(true);
-	// assign prestataire states
-		const [showAssign, setShowAssign] = useState(false);
-		const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
-	const [fetchingPrestataires, setFetchingPrestataires] = useState(false);
-	const [selectedPrestataire, setSelectedPrestataire] = useState<string | null>(null);
-	const [assignLoading, setAssignLoading] = useState(false);
-	// Upload fichier states
-const [showFileForm, setShowFileForm] = useState(false);
-const [fileType, setFileType] = useState("");
-const [fileUpload, setFileUpload] = useState<File | null>(null);
-const [uploadLoading, setUploadLoading] = useState(false);
+// Composant pour afficher une information
+const InfoItem = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
+  <div className="flex items-start gap-3">
+    <div className="text-gray-500 dark:text-gray-400 mt-1">{icon}</div>
+    <div>
+      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{label}</p>
+      <p className="text-base font-semibold">{value || "-"}</p>
+    </div>
+  </div>
+);
 
-// Les types du fichier depuis Prisma
-const fileTypes = [
-
-   "RAPPORT_JOURNALIER",
-  "RAPPORT_FINAL",
-  "PIGE",
-];
-
-
-	useEffect(() => {
-		const fetchCampagne = async () => {
-			if (!id || !token) return;
-			setLoading(true);
-			try {
-				const res = await fetch(`/api/campagnes/${id}`, {
-					headers: { Authorization: `Bearer ${token}` },
-				});
-				if (!res.ok) {
-					const body = await res.json().catch(() => ({}));
-					throw new Error(body.error || `Erreur ${res.status}`);
-				}
-				const data = await res.json();
-				setCampagne(data.campagne ?? null);
-			} catch (err) {
-				console.error("Erreur fetch campagne:", err);
-				const msg = err instanceof Error ? err.message : "Erreur lors du chargement";
-				toast.error(msg);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		fetchCampagne();
-	}, [id, token]);
-
-		const fetchPrestataires = async () => {
-			if (!token) return;
-			setFetchingPrestataires(true);
-			try {
-				const res = await fetch(`/api/prestataires?limit=200`, {
-					headers: { Authorization: `Bearer ${token}` },
-				});
-				if (!res.ok) throw new Error(`Erreur ${res.status}`);
-				const data = await res.json();
-				setPrestataires(data.prestataires || []);
-			} catch (err) {
-				console.error("Erreur fetch prestataires:", err);
-				const msg = err instanceof Error ? err.message : "Erreur lors du chargement des prestataires";
-				toast.error(msg);
-			} finally {
-				setFetchingPrestataires(false);
-			}
-		};
-		const handleFileUpload = async () => {
-  if (!fileUpload || !fileType || !token) {
-    toast.error("Veuillez sélectionner un fichier et un type");
-    return;
-  }
-
-  setUploadLoading(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("file", fileUpload);
-    formData.append("type_fichier", fileType);
-
-    const res = await fetch(`/api/campagnes/${id}/fichiers`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.error || "Erreur upload fichier");
-
-    toast.success("Fichier téléchargé avec succès");
-
-    // mise à jour locale
-    setCampagne((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        fichiers: [body.fichier, ...(prev.fichiers || [])],
-      };
-    });
-
-    // reset form
-    setFileUpload(null);
-    setFileType("");
-    setShowFileForm(false);
-
-  } catch (err) {
-    toast.error(err instanceof Error ? err.message : "Erreur upload");
-  } finally {
-    setUploadLoading(false);
-  }
+// Mapping des status et couleurs de badge
+const statusMap: { [key: string]: { label: string; color: "default" | "destructive" | "outline" | "secondary" | "warning" | "success" } } = {
+  PLANIFIEE: { label: "Planifiée", color: "secondary" },
+  EN_COURS: { label: "En cours", color: "warning" },
+  TERMINEE: { label: "Terminée", color: "success" },
+  ANNULEE: { label: "Annulée", color: "destructive" },
 };
 
-		const handleAssign = async () => {
-			if (!selectedPrestataire || !token) {
-				toast.error("Veuillez sélectionner un prestataire");
-				return;
-			}
-			setAssignLoading(true);
-			try {
-				const res = await fetch(`/api/campagnes/${id}/prestataires`, {
-					method: "POST",
-					headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-					body: JSON.stringify({ id_prestataire: selectedPrestataire }),
-				});
-				const body = await res.json().catch(() => ({}));
-				if (!res.ok) {
-					throw new Error(body.error || `Erreur ${res.status}`);
-				}
+export default function DetailCampagne({ id }: { id: string }) {
+	const { apiClient } = useAuth();
+	const [campagne, setCampagne] = useState<Campagne | null>(null);
+	const [loading, setLoading] = useState(true);
+	
+	// Assign prestataire states
+	const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
+	const [selectedPrestataire, setSelectedPrestataire] = useState<string | null>(null);
+	const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+	
+	// Upload fichier states
+	const [fileType, setFileType] = useState("");
+	const [fileUpload, setFileUpload] = useState<File | null>(null);
+	const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
-				// API returns { affectation }
-				const affectation = body.affectation;
-				toast.success(body.message || "Prestataire affecté avec succès");
+	const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
 
-				// Update local campagne state: prepend new affectation
-				setCampagne((prev) => {
-					if (!prev) return prev;
-					const updated = { ...prev } as Campagne;
-					updated.affectations = [affectation, ...(prev.affectations || [])];
-					// update counts
-					if (updated._count) updated._count.affectations = (updated._count.affectations || 0) + 1;
-					return updated;
-				});
+  const fetchCampagne = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const res = await apiClient(`/api/campagnes/${id}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Erreur ${res.status}`);
+      }
+      const data = await res.json();
+      setCampagne(data.campagne ?? null);
+    } catch (err) {
+      console.error("Erreur fetch campagne:", err);
+      toast.error(err instanceof Error ? err.message : "Erreur lors du chargement");
+    } finally {
+      setLoading(false);
+    }
+  }, [id, apiClient]);
 
-				// reset assign UI
-				setSelectedPrestataire(null);
-				setShowAssign(false);
-			} catch (err) {
-				console.error("Erreur assign prestataire:", err);
-				const msg = err instanceof Error ? err.message : "Erreur lors de l'affectation";
-				toast.error(msg);
-			} finally {
-				setAssignLoading(false);
-			}
-		};
+	useEffect(() => {
+		fetchCampagne();
+	}, [fetchCampagne]);
 
-	if (loading) {
-		return (
-			 <div className="flex flex-col items-center justify-center py-10">
-    <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
-    <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
-      Chargement des détails de la campagne...
-    </p>
-  </div>
-		);
-	}
+	const fetchPrestataires = useCallback(async () => {
+		try {
+			const res = await apiClient(`/api/prestataires?limit=500`);
+			if (!res.ok) throw new Error(`Erreur ${res.status}`);
+			const data = await res.json();
+			setPrestataires(data.prestataires || []);
+		} catch (err) {
+			console.error("Erreur fetch prestataires:", err);
+			toast.error(err instanceof Error ? err.message : "Erreur lors du chargement des prestataires");
+		}
+	}, [apiClient]);
 
-	if (!campagne) {
-		return (
-			<div className="p-6">
-				<Link href="/dashboard/campagnes">
-					<button className="flex items-center  gap-2 text-[#d61353] hover:text-[#b01044] mb-6">
-						<ArrowLeft className="w-5 h-5 cursor-pointer" />
-						Retour
-					</button>
-				</Link>
-				<div className="flex items-center justify-center h-96 bg-white dark:bg-gray-900 rounded-lg shadow">
-					<p className="text-gray-500">Campagne non trouvée</p>
-				</div>
-			</div>
-		);
-	}
+	const handleFileUpload = async () => {
+    if (!fileUpload || !fileType) {
+      toast.error("Veuillez sélectionner un fichier et un type");
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append("file", fileUpload);
+      formData.append("type_fichier", fileType);
+
+      const res = await apiClient(`/api/campagnes/${id}/fichiers`, { method: "POST", body: formData });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "Erreur upload fichier");
+      
+      toast.success("Fichier téléchargé avec succès");
+      setCampagne(prev => prev ? { ...prev, fichiers: [body.fichier, ...(prev.fichiers || [])] } : null);
+      setFileUpload(null); setFileType(""); setIsUploadDialogOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur upload");
+    }
+  };
+
+	const handleAssign = async () => {
+		if (!selectedPrestataire) {
+			toast.error("Veuillez sélectionner un prestataire");
+			return;
+		}
+		try {
+			const res = await apiClient(`/api/campagnes/${id}/prestataires`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ id_prestataire: selectedPrestataire }),
+			});
+			const body = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
+
+			toast.success(body.message || "Prestataire affecté avec succès");
+      setCampagne(prev => {
+        if (!prev) return prev;
+        const updatedAffectations = [body.affectation, ...(prev.affectations || [])];
+        return { 
+          ...prev, 
+          affectations: updatedAffectations,
+          _count: { ...prev._count, affectations: updatedAffectations.length }
+        };
+      });
+			setSelectedPrestataire(null);
+			setIsAssignDialogOpen(false);
+		} catch (err) {
+			console.error("Erreur assign prestataire:", err);
+			toast.error(err instanceof Error ? err.message : "Erreur lors de l'affectation");
+		}
+	};
+
+	if (loading) return (
+    <div className="flex flex-col items-center justify-center py-10">
+      <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
+      <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">Chargement...</p>
+    </div>
+  );
+
+	if (!campagne) return (
+    <div className="p-6 text-center">
+      <p className="text-gray-500">Campagne non trouvée.</p>
+      <Link href="/dashboard/campagnes" className="mt-4 inline-block">
+        <Button variant="outline"><ArrowLeft className="w-4 h-4 mr-2" /> Retour</Button>
+      </Link>
+    </div>
+  );
+
+	const currentStatus = statusMap[campagne.status || ""] || { label: campagne.status, color: "default" };
 
 	return (
-		<div className="p-6 text-gray-900 dark:text-white">
-			<div className="flex items-center gap-4 mb-6">
-				<Link href="/dashboard/campagnes">
-					<button className="flex items-center gap-2 text-[#d61353] hover:text-[#b01044] transition">
-						<ArrowLeft className="w-5 h-5" />
-						Retour
-					</button>
-				</Link>
-				<div className="flex items-center gap-2 text-[#d61353]">
-					<Megaphone className="w-6 h-6" />
-					<h1 className="text-2xl font-bold">{campagne.nom_campagne}</h1>
-				</div>
-			</div>
-
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Informations générales</h2>
-					<div className="space-y-2 text-sm">
-						<p><strong>ID:</strong> <span className="font-mono">{campagne.id_campagne}</span></p>
-						<p><strong>Nom:</strong> {campagne.nom_campagne ?? '-'}</p>
-						<p><strong>Description:</strong> {campagne.description ?? '-'}</p>
-						<p><strong>Objectif:</strong> {campagne.objectif ?? '-'}</p>
-						<p><strong>Type:</strong> {campagne.type_campagne ?? '-'}</p>
-						<p><strong>Date début:</strong> {campagne.date_debut ? new Date(campagne.date_debut).toLocaleDateString('fr-FR') : '-'}</p>
-						<p><strong>Date fin:</strong> {campagne.date_fin ? new Date(campagne.date_fin).toLocaleDateString('fr-FR') : '-'}</p>
-						<p><strong>Status:</strong> {campagne.status ?? '-'}</p>
-<div className="mt-4">
-  <button
-    onClick={() => setShowFileForm(!showFileForm)}
-    className="px-3 py-1 text-sm rounded bg-[#d61353] cursor-pointer text-white hover:bg-[#b01044]"
-  >
-    {showFileForm ? "Fermer l'upload fichier" : "Ajouter un fichier"}
-  </button>
-
-  {showFileForm && (
-    <div className="mt-3 border p-4 rounded space-y-3 bg-gray-50 dark:bg-gray-800">
-      <div>
-        <label className="block text-sm font-medium mb-1">Type de fichier</label>
-        <select
-          value={fileType}
-          onChange={(e) => setFileType(e.target.value)}
-          className="border p-2 rounded w-full"
-        >
-          <option value="">-- Sélectionner --</option>
-          {fileTypes.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <Link href="/dashboard/campagnes">
+          <Button variant="outline" className="flex items-center gap-2">
+            <ArrowLeft className="w-5 h-5" />
+            Retour
+          </Button>
+        </Link>
+        <div className="flex items-center gap-3 text-[#d61353]">
+          <Megaphone className="w-7 h-7" />
+          <h1 className="text-3xl font-bold">{campagne.nom_campagne}</h1>
+        </div>
+        <div />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Fichier à uploader</label>
-        <input
-          type="file"
-          className="p-2 border rounded w-full"
-          onChange={(e) => {
-            const file = e.target.files?.[0] || null;
-            setFileUpload(file);
-          }}
-        />
-      </div>
+      {/* Carte Principale */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>Synthèse de la Campagne</CardTitle>
+              <CardDescription>
+                {campagne.description || "Aucune description"}
+              </CardDescription>
+            </div>
+            <Badge variant={currentStatus.color}>{currentStatus.label}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <InfoItem
+            icon={<Calendar size={20} />}
+            label="Période"
+            value={`${
+              campagne.date_debut
+                ? new Date(campagne.date_debut).toLocaleDateString("fr-FR")
+                : "-"
+            } au ${
+              campagne.date_fin
+                ? new Date(campagne.date_fin).toLocaleDateString("fr-FR")
+                : "-"
+            }`}
+          />
+          <InfoItem
+            icon={<User size={20} />}
+            label="Client"
+            value={`${campagne.client?.nom ?? ""} ${
+              campagne.client?.prenom ?? ""
+            } (${campagne.client?.entreprise ?? "N/A"})`}
+          />
+          <InfoItem
+            icon={<MapPin size={20} />}
+            label="Lieu"
+            value={`${campagne.lieu?.nom ?? "-"} (${
+              campagne.lieu?.ville ?? "N/A"
+            })`}
+          />
+          <InfoItem
+            icon={<ClipboardList size={20} />}
+            label="Service"
+            value={campagne.service?.nom ?? "-"}
+          />
+          <InfoItem
+            icon={<Target size={20} />}
+            label="Objectif"
+            value={campagne.objectif}
+          />
+          <InfoItem
+            icon={<Info size={20} />}
+            label="Type"
+            value={campagne.type_campagne}
+          />
+          <InfoItem
+            icon={<Users size={20} />}
+            label="Prestataires"
+            value={`${campagne._count?.affectations ?? 0} / ${
+              campagne.nbr_prestataire ?? "N/A"
+            }`}
+          />
+          <InfoItem
+            icon={<Paperclip size={20} />}
+            label="Fichiers"
+            value={campagne._count?.fichiers ?? 0}
+          />
+          <InfoItem
+            icon={<User size={20} />}
+            label="Gestionnaire"
+            value={
+              campagne.gestionnaire
+                ? `${campagne.gestionnaire.nom} ${campagne.gestionnaire.prenom}`
+                : "-"
+            }
+          />
+        </CardContent>
+      </Card>
 
-      <button
-        onClick={handleFileUpload}
-        disabled={uploadLoading}
-        className="px-3 py-2 bg-green-600 text-white rounded disabled:opacity-60"
-      >
-        {uploadLoading ? "Upload..." : "Uploader"}
-      </button>
+      {/* Section Fichiers */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Fichiers de la Campagne</CardTitle>
+            <CardDescription>
+              Consultez et ajoutez des rapports et autres documents.
+            </CardDescription>
+          </div>
+          <Dialog
+            open={isUploadDialogOpen}
+            onOpenChange={setIsUploadDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter Fichier
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajouter un nouveau fichier</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fileType">Type de fichier</Label>
+                  <Select onValueChange={setFileType} value={fileType}>
+                    <SelectTrigger id="fileType">
+                      <SelectValue placeholder="-- Sélectionner un type --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fileTypes.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fileUpload">Fichier</Label>
+                  <Input
+                    id="fileUpload"
+                    type="file"
+                    onChange={(e) => setFileUpload(e.target.files?.[0] || null)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsUploadDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button onClick={handleFileUpload}>Uploader</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          {campagne.fichiers && campagne.fichiers.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom du fichier</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {campagne.fichiers.map((f) => (
+                  <TableRow key={f.id_fichier}>
+                    <TableCell className="font-medium">
+                      {f.nom_fichier ?? "Fichier"}
+                    </TableCell>
+                    <TableCell>{f.type_fichier}</TableCell>
+                    <TableCell>
+                      {f.date_creation
+                        ? new Date(f.date_creation).toLocaleDateString("fr-FR")
+                        : ""}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-center text-gray-500 py-8">
+              Aucun fichier associé.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Section Prestataires */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Prestataires Assignés</CardTitle>
+            <CardDescription>
+              Gérez les prestataires affectés à cette campagne.
+            </CardDescription>
+          </div>
+          <Dialog
+            open={isAssignDialogOpen}
+            onOpenChange={setIsAssignDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => {
+                  if (!prestataires.length) fetchPrestataires();
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" /> Assigner
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Assigner un nouveau prestataire</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <Label htmlFor="prestataire">Choisir un prestataire</Label>
+                <Select onValueChange={setSelectedPrestataire}>
+                  <SelectTrigger id="prestataire">
+                    <SelectValue placeholder="-- Sélectionner --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {prestataires.map((p) => (
+                      <SelectItem
+                        key={p.id_prestataire}
+                        value={p.id_prestataire}
+                      >
+                        {p.nom} {p.prenom}{" "}
+                        {p.service?.nom ? `— ${p.service.nom}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAssignDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button onClick={handleAssign}>Assigner</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          {campagne.affectations && campagne.affectations.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Prestataire</TableHead>
+                  <TableHead>Date d'assignation</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Montant Initial</TableHead>
+                  <TableHead>Pénalité</TableHead>
+                  <TableHead>Montant payé</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {campagne.affectations.map((a, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="font-medium">
+                      {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
+                    </TableCell>
+                    <TableCell>
+                      {a.date_creation
+                        ? new Date(a.date_creation).toLocaleDateString("fr-FR")
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{a.status ?? "-"}</TableCell>
+                    <TableCell>
+                      {a.PaiementPrestataire?.paiement_base ?? "-"}
+                    </TableCell>
+                    <TableCell>
+                      {a.PaiementPrestataire?.sanction_montant ?? "-"}
+                    </TableCell>
+                    <TableCell>
+                      {a.PaiementPrestataire?.paiement_final ?? "-"}
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/prestataires/${a.prestataire?.id_prestataire}`}
+                      >
+                        <Button variant="outline" size="sm">
+                          Voir
+                        </Button>
+                      </Link>
+                      <Link href={`#`}>
+                        <Button variant="outline" size="sm">
+                          Verification Materiels
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-center text-gray-500 py-8">
+              Aucun prestataire assigné.
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </div>
-  )}
-</div>
-
-					</div>
-				</div>
-
-				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Infos système</h2>
-					<div className="space-y-2 text-sm">
-						<p><strong>Date de création:</strong> {campagne.date_creation ?? '-'}</p>
-						<p><strong>Dernière mise à jour:</strong> {campagne.updated_at ?? '-'}</p>
-						<p><strong>Nb. prestataires:</strong> {campagne.nbr_prestataire ?? '-'}</p>
-						<p><strong>Quantité service:</strong> {campagne.quantite_service ?? '-'}</p>
-						<p><strong>Counts:</strong> Affectations: {campagne._count?.affectations ?? 0} — Fichiers: {campagne._count?.fichiers ?? 0} — Dommages: {campagne._count?.dommages ?? 0}</p>
-					</div>
-				</div>
-
-				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 lg:col-span-2">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Client associé à la campagne  {campagne.nom_campagne ?? '-'}</h2>
-					<p><strong>Nom:</strong> {campagne.client?.nom ?? '-'} {campagne.client?.prenom ?? ''}</p>
-					<p><strong>Entreprise:</strong> {campagne.client?.entreprise ?? '-'}</p>
-					<p><strong>Contact:</strong> {campagne.client?.contact ?? '-'}</p>
-					<p><strong>Email:</strong> {campagne.client?.mail ?? '-'}</p>
-				</div>
-
-				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Lieu de la campagne </h2>
-					<p><strong>Nom:</strong> {campagne.lieu?.nom ?? '-'}</p>
-					<p><strong>Ville:</strong> {campagne.lieu?.ville ?? '-'}</p>
-				</div>
-
-				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Gestionnaire de la campagne</h2>
-					<p><strong>Nom:</strong> {campagne.gestionnaire ? `${campagne.gestionnaire.nom ?? ''} ${campagne.gestionnaire.prenom ?? ''}` : '-'}</p>
-					<p><strong>Email:</strong> {campagne.gestionnaire?.email ?? '-'}</p>
-				</div>
-
-				<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 lg:col-span-2">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Service lié à la campagne</h2>
-					<p><strong>Nom:</strong> {campagne.service?.nom ?? '-'}</p>
-					<p><strong>Description:</strong> {campagne.service?.description ?? '-'}</p>
-				</div>
-
-						{/* Prestataires assignés & assignation */}
-							<div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 lg:col-span-2">
-								<div className="flex items-center justify-between mb-4">
-									<h2 className="text-lg font-bold text-[#d61353]">Prestataires assignés</h2>
-									<div className="flex items-center gap-2">
-										<button
-											onClick={async () => {
-												// toggle assign panel; fetch prestataires when opening
-												if (!showAssign) await fetchPrestataires();
-												setShowAssign(!showAssign);
-											}}
-											className="px-3 py-1 text-sm rounded bg-[#d61353] text-white hover:bg-[#b01044]"
-										>
-											{showAssign ? 'Annuler' : 'Assigner un prestataire'}
-										</button>
-									</div>
-								</div>
-
-								{showAssign && (
-									<div className="mb-4">
-										{fetchingPrestataires ? (
-											<div className="text-sm text-gray-500">Chargement des prestataires...</div>
-										) : (
-											<div className="flex gap-2">
-												<select
-													value={selectedPrestataire ?? ""}
-													onChange={(e) => setSelectedPrestataire(e.target.value || null)}
-													className="border p-2 rounded flex-1"
-												>
-													<option value="">-- Sélectionner un prestataire --</option>
-																		{prestataires.map((p: PrestataireListItem) => (
-																			<option key={p.id_prestataire} value={p.id_prestataire}>
-																				{p.nom} {p.prenom} {p.service?.nom ? `— ${p.service.nom}` : ''}
-																			</option>
-																		))}
-												</select>
-												<button
-													onClick={handleAssign}
-													disabled={assignLoading}
-													className="px-3 py-2 bg-green-600 text-white rounded disabled:opacity-60"
-												>
-													{assignLoading ? 'Assignation...' : 'Assigner'}
-												</button>
-											</div>
-										)}
-									</div>
-								)}
-
-								{campagne.affectations && campagne.affectations.length > 0 ? (
-									<div className="overflow-x-auto">
-										<table className="w-full text-sm">
-											<thead>
-												<tr className="border-b border-gray-200 dark:border-gray-700">
-													<th className="text-left py-2 px-2 font-semibold">Prestataire</th>
-													<th className="text-left py-2 px-2 font-semibold">Date</th>
-													<th className="text-left py-2 px-2 font-semibold">Status</th>
-													<th className="text-left py-2 px-2 font-semibold">Actions</th>
-												</tr>
-											</thead>
-											<tbody>
-												{campagne.affectations.map((a, idx) => (
-													<tr key={idx} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-														<td className="py-3 px-2">{a.prestataire?.nom ?? '-'} {a.prestataire?.prenom ?? ''} <div className="text-xs text-gray-500">{a.prestataire?.service?.nom ?? ''}</div></td>
-														<td className="py-3 px-2">{a.date_creation ? new Date(a.date_creation).toLocaleDateString('fr-FR') : '-'}</td>
-														<td className="py-3 px-2">{a.status ?? '-'}</td>
-														<td className="py-3 px-2">
-															<div className="flex gap-2">
-																<Link href={`/dashboard/prestataires/${a.prestataire?.id_prestataire}`} className="text-sm px-2 py-1 bg-gray-100 rounded">Voir</Link>
-																<Link href={`/dashboard/prestataires/${a.prestataire?.id_prestataire}`} className="text-sm px-2 py-1 bg-blue-50 rounded">Vérification matérielle</Link>
-															</div>
-														</td>
-													</tr>
-												))}
-											</tbody>
-										</table>
-									</div>
-								) : (
-									<p className="text-gray-500">Aucun prestataire assigné</p>
-								)}
-							</div>
-
-				{/* Fichiers */}
-				<div className="bg-white dark: bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6 lg:col-span-2">
-					<h2 className="text-lg font-bold text-[#d61353] mb-4">Fichiers</h2>
-					{campagne.fichiers && campagne.fichiers.length > 0 ? (
-						<div className="space-y-3">
-							{campagne.fichiers.map((f) => (
-								<div key={f.id_fichier} className="flex items-center justify-between border p-3 rounded">
-									<div className="flex items-center gap-3">
-										<FileText className="w-5 h-5 text-gray-500" />
-										<div>
-											<div className="font-medium">{f.nom_fichier ?? 'Fichier'}</div>
-											<div className="text-xs text-gray-500">{f.description ?? ''}</div>
-										</div>
-									</div>
-									<div className="text-sm text-gray-500">{f.date_creation ? new Date(f.date_creation).toLocaleDateString('fr-FR') : ''}</div>
-								</div>
-							))}
-						</div>
-					) : (
-						<p className="text-gray-500">Aucun fichier associé</p>
-					)}
-				</div>
-			</div>
-		</div>
-	);
+  );
 }

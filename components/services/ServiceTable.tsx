@@ -21,24 +21,16 @@ export default function ServiceTable() {
   const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
   
-const { token } = useAuth()
+const { apiClient } = useAuth()
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [serviceToEdit, setServiceToEdit] = useState<Service | null>(null);
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
 const fetchServices = async () => {
-    if (!token) return;
-
     setLoading(true);
-
     try {
-      const res = await fetch(`/api/services/`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await apiClient(`/api/services/`);
 
       if (!res.ok) throw new Error("Erreur API");
 
@@ -47,7 +39,7 @@ const fetchServices = async () => {
 
     } catch (error) {
       console.error("Erreur API :", error);
-      toast.error("Impossible de charger les lieux");
+      toast.error("Impossible de charger les services");
     } finally {
       setLoading(false);
     }
@@ -55,7 +47,7 @@ const fetchServices = async () => {
 
   useEffect(() => {
     fetchServices();
-  }, [token]);
+  }, [apiClient]);
 
   return (
     <div className="p-6 text-gray-900 dark:text-white">

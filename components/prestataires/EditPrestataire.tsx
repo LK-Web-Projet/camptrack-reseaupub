@@ -49,20 +49,16 @@ const validationSchema = Yup.object().shape({
 })
 
 export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEditPrestataire }: EditPrestaireModalProps) {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [services, setServices] = useState<Service[]>([])
 
   // Charger les services au montage ou quand le modal s'ouvre
   useEffect(() => {
     const fetchServices = async () => {
-      if (!token || services.length > 0) return
+      if (services.length > 0) return
       try {
-        const res = await fetch("/api/services?page=1&limit=100", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        const res = await apiClient("/api/services?page=1&limit=100")
         if (!res.ok) throw new Error("Erreur lors du chargement des services")
         const data = await res.json()
         setServices(data.services || [])
@@ -75,7 +71,7 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
     if (isOpen) {
       fetchServices()
     }
-  }, [isOpen, token, services.length])
+  }, [isOpen, apiClient, services.length])
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -96,7 +92,6 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
     onSubmit: async (values) => {
       setSubmitting(true)
       try {
-        if (!token) throw new Error("Vous devez être connecté")
         if (!prestataire) throw new Error("Prestataire introuvable")
 
         const body = {
@@ -113,11 +108,10 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
           id_verification: values.id_verification || null,
         }
 
-        const res = await fetch(`/api/prestataires/${prestataire.id_prestataire}`, {
+        const res = await apiClient(`/api/prestataires/${prestataire.id_prestataire}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(body),
         })

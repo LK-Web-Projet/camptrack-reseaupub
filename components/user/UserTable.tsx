@@ -22,7 +22,7 @@ interface User {
 }
 
 export default function TableUser() {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,9 +42,7 @@ export default function TableUser() {
     const fetchUsers = async () => {
       setLoading(true)
       try {
-    const res = await fetch("/api/users?page="+page+"&limit=1", {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        })
+        const res = await apiClient("/api/users?page="+page+"&limit=1")
         if (!res.ok) throw new Error("Erreur lors du chargement des utilisateurs")
         const data = await res.json()
         setUsers(Array.isArray(data) ? data : data?.users || [])
@@ -56,16 +54,15 @@ export default function TableUser() {
         setLoading(false)
       }
     }
-    if (token) fetchUsers()
-  }, [token])
+    fetchUsers()
+  }, [apiClient, page])
 
   const handleAddUser = async (newUser: User) => {
     try {
-      const res = await fetch("/api/users", {
+      const res = await apiClient("/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(newUser),
       })
@@ -80,11 +77,10 @@ export default function TableUser() {
 
   const handleEditUser = async (updatedUser: User) => {
     try {
-      const res = await fetch(`/api/users/${updatedUser.id_user}`, {
+      const res = await apiClient(`/api/users/${updatedUser.id_user}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(updatedUser),
       })
@@ -100,9 +96,8 @@ export default function TableUser() {
   const confirmDeleteUser = async () => {
     if (userToDelete) {
       try {
-        const res = await fetch(`/api/users/${userToDelete.id_user}`, {
+        const res = await apiClient(`/api/users/${userToDelete.id_user}`, {
           method: "DELETE",
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
         if (!res.ok) throw new Error("Erreur lors de la suppression")
         setUsers((prev) => prev.filter((u) => u.id_user !== userToDelete.id_user))

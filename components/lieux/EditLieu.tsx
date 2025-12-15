@@ -22,7 +22,7 @@ interface EditLieuProps {
 }
 
 export default function EditLieu({ isOpen, onClose, lieu, onLieuUpdated }: EditLieuProps) {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -35,18 +35,17 @@ export default function EditLieu({ isOpen, onClose, lieu, onLieuUpdated }: EditL
       ville: Yup.string().required("Ville requise"),
     }),
     onSubmit: async (values, { setSubmitting }) => {
-      if (!token || !lieu) {
-        toast.error("Vous devez être connecté pour modifier un lieu");
+      if (!lieu) {
+        toast.error("Aucun lieu sélectionné.");
         setSubmitting(false);
         return;
       }
 
       try {
-        const res = await fetch(`/api/lieux/${lieu.id_lieu}`, {
+        const res = await apiClient(`/api/lieux/${lieu.id_lieu}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(values),
         });
@@ -55,8 +54,6 @@ export default function EditLieu({ isOpen, onClose, lieu, onLieuUpdated }: EditL
 
         const data = await res.json();
         toast.success(data.message || "Lieu modifié avec succès");
-                        window.location.href = "/dashboard/lieux";  
-
         onLieuUpdated();
         onClose();
       } catch (err) {

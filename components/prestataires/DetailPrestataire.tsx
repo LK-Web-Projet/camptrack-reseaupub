@@ -1,335 +1,199 @@
 "use client"
 
-import { ArrowLeft, Users } from "lucide-react"
+import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
+// Interfaces (gardées telles quelles)
 interface Service {
   id_service: string
   nom: string
   description?: string
 }
-
 interface Affectation {
-  campagne: {
-    id_campagne: string
-    nom_campagne: string
-    date_debut: string
-    date_fin: string
-    status: string
-  }
+  campagne: { id_campagne: string; nom_campagne: string; date_debut: string; date_fin: string; status: string }
   date_creation: string
   status?: string
 }
-
 interface Dommage {
-  id_materiels_case: string
-  etat: string
-  description: string
-  montant_penalite: number
-  penalite_appliquer: boolean
-  date_creation: string
-  campagne?: {
-    nom_campagne: string
-  }
+  id_materiels_case: string; etat: string; description: string; montant_penalite: number; penalite_appliquer: boolean; date_creation: string; campagne?: { nom_campagne: string }
 }
-
 interface Prestataire {
-  id_prestataire: string
-  nom: string
-  prenom: string
-  contact: string
-  disponible: boolean
-  type_panneau?: string | null
-  couleur?: string | null
-  marque?: string | null
-  modele?: string | null
-  plaque?: string | null
-  id_verification?: string | null
-  service?: Service
-  created_at?: string
-  updated_at?: string
-  affectations?: Affectation[]
-  dommages?: Dommage[]
-  _count?: {
-    affectations: number
-    dommages: number
-  }
+  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; _count?: { affectations: number; dommages: number }
 }
 
-interface DetailPrestaireProps {
-  id: string
-}
+// Composant pour afficher une information
+const InfoItem = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
+  <div className="flex items-start gap-3">
+    <div className="text-gray-500 dark:text-gray-400 mt-1">{icon}</div>
+    <div>
+      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{label}</p>
+      <p className="text-base font-semibold">{value || "-"}</p>
+    </div>
+  </div>
+);
 
-export default function DetailPrestataire({ id }: DetailPrestaireProps) {
-  const { token } = useAuth()
+// Composant pour le badge de disponibilité
+const AvailabilityBadge = ({ available }: { available: boolean }) => (
+  <Badge variant={available ? "success" : "destructive"}>
+    {available ? "Disponible" : "Non disponible"}
+  </Badge>
+);
+
+export default function DetailPrestataire({ id }: { id: string }) {
+  const { apiClient } = useAuth()
   const [prestataire, setPrestataire] = useState<Prestataire | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const fetchPrestataire = useCallback(async () => {
+    if (!id) return;
+    setLoading(true)
+    try {
+      const res = await apiClient(`/api/prestataires/${id}`)
+      if (!res.ok) throw new Error("Erreur lors du chargement du prestataire")
+      const data = await res.json()
+      setPrestataire(data.prestataire)
+    } catch (err) {
+      console.error("Erreur fetch prestataire:", err)
+      const msg = err instanceof Error ? err.message : "Erreur lors du chargement"
+      toast.error(msg)
+    } finally {
+      setLoading(false)
+    }
+  }, [id, apiClient]);
+  
   useEffect(() => {
-    const fetchPrestataire = async () => {
-      if (!token) return
-      setLoading(true)
-      try {
-        const res = await fetch(`/api/prestataires/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        if (!res.ok) {
-          throw new Error("Erreur lors du chargement du prestataire")
-        }
-        const data = await res.json()
-        setPrestataire(data.prestataire)
-      } catch (err) {
-        console.error("Erreur fetch prestataire:", err)
-        const msg = err instanceof Error ? err.message : "Erreur lors du chargement"
-        toast.error(msg)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (id && token) {
-      fetchPrestataire()
-    }
-  }, [id, token])
+    fetchPrestataire()
+  }, [fetchPrestataire])
 
   if (loading) {
     return (
-       <div className="flex flex-col items-center justify-center py-10">
-    <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
-    <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
-      Chargement des détails du prestataire...
-    </p>
-  </div>
+      <div className="flex flex-col items-center justify-center py-10">
+        <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
+        <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">Chargement du prestataire...</p>
+      </div>
     )
   }
 
   if (!prestataire) {
     return (
-      <div className="p-6">
-        <Link href="/prestataires">
-          <button className="flex items-center  gap-2 text-[#d61353] hover:text-[#b01044] mb-6">
-            <ArrowLeft className="w-5 h-5 cursor-pointer"  />
-            Retour
-          </button>
+      <div className="p-6 text-center">
+        <p className="text-gray-500">Prestataire non trouvé.</p>
+        <Link href="/dashboard/prestataires" className="mt-4 inline-block">
+          <Button variant="outline"><ArrowLeft className="w-4 h-4 mr-2" /> Retour</Button>
         </Link>
-        <div className="flex items-center justify-center h-96 bg-white dark:bg-gray-900 rounded-lg shadow">
-          <p className="text-gray-500">Prestataire non trouvé</p>
-        </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 text-gray-900 dark:text-white">
+    <div className="p-6 space-y-6">
       {/* HEADER */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/prestataires">
-          <button className="flex items-center gap-2 text-[#d61353] hover:text-[#b01044] transition">
+      <div className="flex items-center justify-between">
+        <Link href="/dashboard/prestataires">
+          <Button variant="outline" className="flex items-center gap-2">
             <ArrowLeft className="w-5 h-5" />
             Retour
-          </button>
+          </Button>
         </Link>
-        <div className="flex items-center gap-2 text-[#d61353]">
-          <Users className="w-6 h-6" />
-          <h1 className="text-2xl font-bold">
-            {prestataire.nom} {prestataire.prenom}
-          </h1>
+        <div className="flex items-center gap-3 text-[#d61353]">
+          <Users className="w-7 h-7" />
+          <h1 className="text-3xl font-bold">{prestataire.nom} {prestataire.prenom}</h1>
         </div>
+        <div/>
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Card 1: Informations personnelles */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-          <h2 className="text-lg font-bold text-[#d61353] mb-4">Informations personnelles</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Nom</label>
-              <p className="text-base">{prestataire.nom}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Prénom</label>
-              <p className="text-base">{prestataire.prenom}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Contact</label>
-              <p className="text-base">{prestataire.contact}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Service</label>
-              <p className="text-base">{prestataire.service?.nom ?? "-"}</p>
-            </div>
+      {/* Carte Principale */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <CardTitle>Synthèse du Prestataire</CardTitle>
+            <AvailabilityBadge available={prestataire.disponible} />
           </div>
-        </div>
+          <CardDescription>Informations personnelles et matériel du prestataire.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <InfoItem icon={<User size={20} />} label="Nom complet" value={`${prestataire.nom} ${prestataire.prenom}`} />
+          <InfoItem icon={<Phone size={20} />} label="Contact" value={prestataire.contact} />
+          <InfoItem icon={<Briefcase size={20} />} label="Service" value={prestataire.service?.nom} />
+          <InfoItem icon={<Car size={20} />} label="Véhicule" value={`${prestataire.marque ?? ''} ${prestataire.modele ?? ''}`} />
+          <InfoItem icon={<Palette size={20} />} label="Couleur" value={prestataire.couleur} />
+          <InfoItem icon={<Fingerprint size={20} />} label="Plaque" value={prestataire.plaque} />
+          <InfoItem icon={<ShieldCheck size={20} />} label="Type Panneau" value={prestataire.type_panneau} />
+          <InfoItem icon={<Hash size={20} />} label="ID Vérification" value={prestataire.id_verification} />
+          <InfoItem icon={<Calendar size={20} />} label="Date de création" value={prestataire.created_at ? new Date(prestataire.created_at).toLocaleDateString('fr-FR') : '-'} />
+        </CardContent>
+      </Card>
 
-        {/* Card 2: État et disponibilité */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-          <h2 className="text-lg font-bold text-[#d61353] mb-4">État et disponibilité</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Disponibilité</label>
-              <div className="mt-1">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    prestataire.disponible
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                  }`}
-                >
-                  {prestataire.disponible ? "Disponible" : "Non disponible"}
-                </span>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Type de panneau</label>
-              <p className="text-base">{prestataire.type_panneau ?? "-"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">ID Vérification</label>
-              <p className="text-base">{prestataire.id_verification ?? "-"}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Matériel/Véhicule */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-          <h2 className="text-lg font-bold text-[#d61353] mb-4">Matériel / Véhicule</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Marque</label>
-              <p className="text-base">{prestataire.marque ?? "-"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Modèle</label>
-              <p className="text-base">{prestataire.modele ?? "-"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Couleur</label>
-              <p className="text-base">{prestataire.couleur ?? "-"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Plaque d&apos;immatriculation</label>
-              <p className="text-base font-mono">{prestataire.plaque ?? "-"}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4: Informations système */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-          <h2 className="text-lg font-bold text-[#d61353] mb-4">Informations système</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">ID Prestataire</label>
-              <p className="text-xs font-mono">{prestataire.id_prestataire}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">ID Service</label>
-              <p className="text-xs font-mono">{prestataire.service?.id_service ?? "-"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Date de création</label>
-              <p className="text-sm">{prestataire.created_at ?? "-"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Dernière mise à jour</label>
-              <p className="text-sm">{prestataire.updated_at ?? "-"}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* AFFECTATIONS SECTION */}
-      <div className="mt-8 bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-        <h2 className="text-lg font-bold text-[#d61353] mb-4">Affectations en campagnes</h2>
-        {prestataire.affectations && prestataire.affectations.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Campagne</th>
-                  <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Début</th>
-                  <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Fin</th>
-                  <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                </tr>
-              </thead>
-              <tbody>
+      {/* AFFECTATIONS */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Affectations en Campagnes ({prestataire._count?.affectations ?? 0})</CardTitle>
+          <CardDescription>Historique des campagnes auxquelles ce prestataire a été assigné.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {prestataire.affectations && prestataire.affectations.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Campagne</TableHead>
+                  <TableHead>Début</TableHead>
+                  <TableHead>Fin</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {prestataire.affectations.map((aff) => (
-                    <tr key={aff.campagne.id_campagne} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="py-3 px-2">{aff.campagne.nom_campagne}</td>
-                      <td className="py-3 px-2">{new Date(aff.campagne.date_debut).toLocaleDateString("fr-FR")}</td>
-                      <td className="py-3 px-2">{aff.campagne.date_fin ? new Date(aff.campagne.date_fin).toLocaleDateString("fr-FR") : "-"}</td>
-                      <td className="py-3 px-2">  
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          aff.campagne.status === "actif" 
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                        }`}>
-                          {aff.campagne.status}
-                      </span>
-                    </td>
-                  </tr>
+                  <TableRow key={aff.campagne.id_campagne}>
+                    <TableCell className="font-medium">{aff.campagne.nom_campagne}</TableCell>
+                    <TableCell>{new Date(aff.campagne.date_debut).toLocaleDateString("fr-FR")}</TableCell>
+                    <TableCell>{aff.campagne.date_fin ? new Date(aff.campagne.date_fin).toLocaleDateString("fr-FR") : "-"}</TableCell>
+                    <TableCell><Badge variant="secondary">{aff.campagne.status}</Badge></TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">Aucune affectation</p>
-        )}
-      </div>
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-center text-gray-500 py-8">Aucune affectation à afficher.</p>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* DOMMAGES SECTION */}
-      <div className="mt-8 bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 p-6">
-        <h2 className="text-lg font-bold text-[#d61353] mb-4">Dommages et cas matériels</h2>
+      {/* DOMMAGES */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Dommages et Cas Matériels ({prestataire._count?.dommages ?? 0})</CardTitle>
+          <CardDescription>Historique des dommages matériels enregistrés pour ce prestataire.</CardDescription>
+        </CardHeader>
+        <CardContent>
         {prestataire.dommages && prestataire.dommages.length > 0 ? (
           <div className="space-y-4">
             {prestataire.dommages.map((dmg) => (
-                <div key={dmg.id_materiels_case} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div key={dmg.id_materiels_case} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex justify-between items-start">
                   <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Campagne</label>
-                      <p className="text-base font-semibold">{dmg.campagne?.nom_campagne ?? "-"}</p>
+                    <p className="font-semibold">{dmg.campagne?.nom_campagne ?? "Campagne non spécifiée"}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{dmg.description ?? "Pas de description"}</p>
+                    <p className="text-xs text-gray-500 mt-1">Enregistré le: {new Date(dmg.date_creation).toLocaleDateString("fr-FR")}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">État</label>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium inline-block mt-1 ${
-                      dmg.etat === "grave"
-                        ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        : dmg.etat === "moyen"
-                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                        : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                    }`}>
-                      {dmg.etat}
-                    </span>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Description</label>
-                    <p className="text-base mt-1">{dmg.description ?? "-"}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Montant estimé</label>
-                    <p className="text-base font-semibold">{dmg.montant_penalite ? `${dmg.montant_penalite}€` : "-"}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Pénalité appliquée</label>
-                    <p className="text-base">{dmg.penalite_appliquer ? "✓ Oui" : "✗ Non"}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Date</label>
-                    <p className="text-sm">{new Date(dmg.date_creation).toLocaleDateString("fr-FR")}</p>
+                  <div className="text-right">
+                    <Badge variant={dmg.etat === 'grave' ? 'destructive' : 'warning'}>{dmg.etat}</Badge>
+                    <p className="text-lg font-bold mt-1">{dmg.montant_penalite ? `${dmg.montant_penalite}FCFA` : ""}</p>
+                    {dmg.penalite_appliquer && <p className="text-xs text-green-600">Pénalité appliquée</p>}
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400">Aucun dommage enregistré</p>
+          <p className="text-sm text-center text-gray-500 py-8">Aucun dommage enregistré.</p>
         )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

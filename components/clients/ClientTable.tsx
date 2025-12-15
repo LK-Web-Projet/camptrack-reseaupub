@@ -33,19 +33,14 @@ const formatDate = (iso?: string | null) => {
 export default function ClientTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [clients, setClients] = useState<Client[]>([]);
-
-  
-
 
   useEffect(() => {
     const fetchClients = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/api/clients?page=1&limit=50", {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
+        const res = await apiClient("/api/clients?page=1&limit=50");
 
         if (!res.ok) throw new Error("Erreur lors du chargement des clients");
 
@@ -59,16 +54,15 @@ export default function ClientTable() {
       }
     };
 
-    if (token) fetchClients();
-  }, [token]);
+    fetchClients();
+  }, [apiClient]);
 
    const handleAddClient = async (newUser: Client) => {
     try {
-      const res = await fetch("/api/clients?page=1&limit=50", {
+      const res = await apiClient("/api/clients", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(newUser),
       })
@@ -76,8 +70,6 @@ export default function ClientTable() {
       const created = await res.json()
       setClients((prev) => [...prev, created])
       toast.success("Client ajouté avec succès")
-                            window.location.href = "/dashboard/clients"; // Actualiser la page pour refléter les changements
-
     } catch {
       toast.error("Erreur lors de l'ajout du client")
     }
@@ -92,11 +84,10 @@ export default function ClientTable() {
  
  const handleEditClient = async (updatedClient: Client) => {
     try {
-      const res = await fetch(`/api/clients?page=1&limit=50${updatedClient.id_client}`, {
+      const res = await apiClient(`/api/clients/${updatedClient.id_client}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(updatedClient),
       })
@@ -113,9 +104,8 @@ export default function ClientTable() {
 const confirmDeleteClient = async (client: Client) => {
     if (clientToDelete) {
       try {
-    const res = await fetch(`/api/clients/${client.id_client}`, {
+    const res = await apiClient(`/api/clients/${client.id_client}`, {
           method: "DELETE",
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
         if (!res.ok) throw new Error("Erreur lors de la suppression")
         setClients((prev) => prev.filter((c) => c.id_client !== clientToDelete.id_client))

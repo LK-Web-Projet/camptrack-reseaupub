@@ -22,7 +22,7 @@ interface EditServiceProps {
 }
 
 export default function EditService({ isOpen, onClose, service, onServiceUpdated }: EditServiceProps) {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -35,18 +35,17 @@ export default function EditService({ isOpen, onClose, service, onServiceUpdated
       description: Yup.string().nullable(),
     }),
     onSubmit: async (values, { setSubmitting }) => {
-      if (!token || !service) {
-        toast.error("Vous devez être connecté pour modifier un service");
+      if (!service) {
+        toast.error("Aucun service sélectionné.");
         setSubmitting(false);
         return;
       }
 
       try {
-        const res = await fetch(`/api/services/${service.id_service}`, {
+        const res = await apiClient(`/api/services/${service.id_service}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(values),
         });

@@ -20,23 +20,18 @@ interface DeleteLieuProps {
 }
 
 export default function DeleteLieu({ isOpen, onClose, lieu, onLieuUpdated }: DeleteLieuProps) {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!token || !lieu) {
-      toast.error("Vous devez être connecté pour supprimer un lieu");
+    if (!lieu) {
       return;
     }
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/lieux/${lieu.id_lieu}`, {
+      const res = await apiClient(`/api/lieux/${lieu.id_lieu}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (!res.ok) {
@@ -46,8 +41,6 @@ export default function DeleteLieu({ isOpen, onClose, lieu, onLieuUpdated }: Del
 
       const data = await res.json();
       toast.success(data.message || "Lieu supprimé avec succès");
-                      window.location.href = "/dashboard/lieux";  
-
       onLieuUpdated();
       onClose();
     } catch (err) {

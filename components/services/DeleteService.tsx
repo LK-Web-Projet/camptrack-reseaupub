@@ -20,22 +20,20 @@ interface DeleteServiceProps {
 }
 
 export default function DeleteService({ isOpen, onClose, service, onServiceUpdated }: DeleteServiceProps) {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!token || !service) {
-      toast.error("Vous devez être connecté pour supprimer un service");
+    if (!service) {
       return;
     }
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/services/${service.id_service}`, {
+      const res = await apiClient(`/api/services/${service.id_service}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
 

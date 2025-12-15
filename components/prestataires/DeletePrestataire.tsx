@@ -28,7 +28,7 @@ interface DeleteProps {
 }
 
 export default function DeletePrestataire({ isOpen, onClose, prestataire, onConfirm }: DeleteProps) {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [loading, setLoading] = useState(false)
 
   if (!isOpen || !prestataire) return null
@@ -36,13 +36,8 @@ export default function DeletePrestataire({ isOpen, onClose, prestataire, onConf
   const handleDelete = async () => {
     setLoading(true)
     try {
-      if (!token) throw new Error("Vous devez être connecté")
-
-      const res = await fetch(`/api/prestataires/${prestataire.id_prestataire}`, {
+      const res = await apiClient(`/api/prestataires/${prestataire.id_prestataire}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       })
 
       const data = await res.json().catch(() => ({})) as Record<string, unknown>

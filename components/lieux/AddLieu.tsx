@@ -20,7 +20,7 @@ interface AddLieuProps {
 }
 
 export default function AddLieu({ isOpen, onClose, onLieuUpdated }: AddLieuProps) {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
 
   const formik = useFormik({
     initialValues: {
@@ -32,17 +32,11 @@ export default function AddLieu({ isOpen, onClose, onLieuUpdated }: AddLieuProps
       ville: Yup.string().required("Ville requise"),
     }),
     onSubmit: async (values, { resetForm }) => {
-      if (!token) {
-        toast.error("Vous devez être connecté pour ajouter un lieu");
-        return;
-      }
-
       try {
-        const res = await fetch("/api/lieux/", {
+        const res = await apiClient("/api/lieux/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(values),
         });
@@ -51,8 +45,6 @@ export default function AddLieu({ isOpen, onClose, onLieuUpdated }: AddLieuProps
 
         const data = await res.json();
         toast.success(data.message || "Lieu ajouté avec succès");
-                window.location.href = "/dashboard/lieux";  
-
         onLieuUpdated();
         resetForm();
         onClose();

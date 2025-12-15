@@ -23,11 +23,11 @@ export type Client = {
 interface AddClientProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddClient: (client: Client) => void;
+  onAddClient?: (client: Client) => void; // Make this optional
 }
 
 export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClientProps) {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
 
   const formik = useFormik({
     initialValues: {
@@ -38,7 +38,7 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
       adresse: "",
       contact: "",
       mail: "",
-      type_client: "CLIENT",
+      type_client: "EXTERNE",
     },
     validationSchema: Yup.object({
       nom: Yup.string().required("Nom requis"),
@@ -48,31 +48,30 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
       type_client: Yup.string().required("Type requis"),
     }),
     onSubmit: async (values, { resetForm }) => {
-      if (!token) {
-        toast.error("Vous devez être connecté pour ajouter un client");
-        return;
-      }
-
       try {
-        const res = await fetch("/api/clients?page=1&limit=50", {
+        const res = await apiClient("/api/clients", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(values),
         });
 
         if (!res.ok) throw new Error("Erreur lors de l'ajout");
 
-        const created: Client = await res.json();
-        onAddClient(created);
+        const createdClient: Client = await res.json();
         toast.success("Client ajouté avec succès");
-        window.location.href = "/dashboard/clients"; // Actualiser la page pour refléter les changements
-
+        
+        if (onAddClient) {
+          // If used as a dialog, call the callback
+          onAddClient(createdClient);
+        } else {
+          // Default behavior: redirect
+          window.location.href = "/dashboard/clients";
+        }
 
         resetForm();
-        onClose();
+        onClose(); // Close the modal in both cases
       } catch (err) {
         console.error(err);
         toast.error("Erreur lors de l'ajout du client");
@@ -197,9 +196,8 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
               onChange={formik.handleChange}
               className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
             >
-              <option value="CLIENT">CLIENT</option>
-              <option value="PROSPECT">PROSPECT</option>
-              <option value="PARTENAIRE">PARTENAIRE</option>
+              <option value="EXTERNE">EXTERNE</option>
+              <option value="INTERNE">INTERNE</option>
             </select>
             {formik.touched.type_client && formik.errors.type_client && (
               <div className="text-red-500 text-sm mt-1">{formik.errors.type_client}</div>

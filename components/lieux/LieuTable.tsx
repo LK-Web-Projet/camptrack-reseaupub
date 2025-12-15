@@ -17,7 +17,7 @@ export type Lieu = {
 };
 
 export default function LieuTable() {
-  const { token } = useAuth();
+  const { apiClient } = useAuth();
 
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,17 +32,9 @@ export default function LieuTable() {
 
   // ✅ Recharger les lieux
   const fetchLieux = async () => {
-    if (!token) return;
-
     setLoading(true);
-
     try {
-      const res = await fetch(`/api/lieux/`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await apiClient(`/api/lieux/`);
 
       if (!res.ok) throw new Error("Erreur API");
 
@@ -59,7 +51,7 @@ export default function LieuTable() {
 
   useEffect(() => {
     fetchLieux();
-  }, [token]);
+  }, [apiClient]);
 
   return (
     <div className="p-6 text-gray-900 dark:text-white">
