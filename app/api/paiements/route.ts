@@ -18,13 +18,20 @@ export async function GET(request: NextRequest) {
 
     // Récupérer et valider les query params
     const { searchParams } = new URL(request.url);
-    const queryParams = {
+    const queryParams: any = {
       page: searchParams.get("page"),
       limit: searchParams.get("limit"),
       id_campagne: searchParams.get("id_campagne"),
       id_prestataire: searchParams.get("id_prestataire"),
       statut_paiement: searchParams.get("statut_paiement"),
     };
+
+    // Supprimer les clés avec des valeurs nulles (paramètres non fournis)
+    Object.keys(queryParams).forEach(key => {
+      if (queryParams[key] === null) {
+        delete queryParams[key];
+      }
+    });
 
     const validation = validateData(paiementQuerySchema, queryParams);
     if (!validation.success) {
