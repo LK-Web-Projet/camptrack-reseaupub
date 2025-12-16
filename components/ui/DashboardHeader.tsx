@@ -68,9 +68,7 @@ export default function DashboardHeader({
           </svg>
         </button>
 
-        <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 md:block hidden">
-          Tableau de bord
-        </h1>
+
       </div>
 
       <div className="flex-1 flex justify-center">
@@ -95,27 +93,26 @@ export default function DashboardHeader({
           </button>
 
           {isUserMenuOpen && (
-           <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
-  <ul className="py-2">
-    <li>
-      <Link
-        href="/dashboard/profil"
-        className="w-full block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
-      >
-        Mon profil
-      </Link>
-    </li>
-
-    <li>
-     <button
-          onClick={logoutUser}
-          className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500"
-        >
-          Déconnexion
-        </button>
-    </li>
-  </ul>
-</div>
+            <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
+              <ul className="py-2">
+                <li>
+                  <Link
+                    href="/dashboard/profil"
+                    className="w-full block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
+                  >
+                    Mon profil
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    onClick={logoutUser}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500"
+                  >
+                    Déconnexion
+                  </button>
+                </li>
+              </ul>
+            </div>
           )}
         </div>
       </div>

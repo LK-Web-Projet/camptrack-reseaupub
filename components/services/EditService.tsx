@@ -6,6 +6,7 @@ import * as Yup from "yup";
 import { X } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
+import { Button } from "@/components/ui/button";
 
 export type Service = {
   id_service: string;
@@ -72,7 +73,7 @@ export default function EditService({ isOpen, onClose, service, onServiceUpdated
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-[#d61353]">Modifier les informations du service service</h2>
+          <h2 className="text-xl font-semibold text-[#d61353]">Modifier les informations du service</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-[#d61353] transition">
             <X className="w-5 h-5" />
           </button>
@@ -117,13 +118,13 @@ export default function EditService({ isOpen, onClose, service, onServiceUpdated
             >
               Annuler
             </button>
-            <button
+            <Button
               type="submit"
-              disabled={formik.isSubmitting}
-              className="px-4 py-2 rounded bg-[#d61353] text-white hover:bg-[#b80d45] transition disabled:opacity-50"
+              loading={formik.isSubmitting}
+              className="px-4 py-2 rounded bg-[#d61353] text-white hover:bg-[#b80d45] transition"
             >
               {formik.isSubmitting ? "Modification..." : "Valider"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

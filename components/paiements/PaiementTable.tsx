@@ -11,7 +11,9 @@ import {
     Search,
     Filter,
     Download,
-    X
+    X,
+    Save,
+    Edit2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -50,11 +52,17 @@ export default function PaiementTable() {
     // Filtres
     const [filterStatut, setFilterStatut] = useState<string>("all"); // all, paid, pending
 
-    // Modal de détails
+    // Modal de détails et édition
     const [selectedPaiement, setSelectedPaiement] = useState<Paiement | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [materiels, setMateriels] = useState<any[]>([]);
     const [loadingMateriels, setLoadingMateriels] = useState(false);
+
+    // États d'édition
+    const [isEditing, setIsEditing] = useState(false);
+    const [editStatut, setEditStatut] = useState<boolean>(false);
+    const [editDate, setEditDate] = useState<string>("");
+    const [saving, setSaving] = useState(false);
 
     const fetchPaiements = useCallback(async () => {
         setLoading(true);
@@ -102,6 +110,12 @@ export default function PaiementTable() {
     // Fonction pour ouvrir le modal de détails
     const handleViewDetails = async (paiement: Paiement) => {
         setSelectedPaiement(paiement);
+        setIsEditing(false); // Reset edit mode
+
+        // Initialiser les valeurs d'édition
+        setEditStatut(paiement.statut_paiement);
+        setEditDate(paiement.date_paiement ? new Date(paiement.date_paiement).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+
         setIsDetailModalOpen(true);
 
         // Charger les matériels casés associés
@@ -120,6 +134,45 @@ export default function PaiementTable() {
             console.error("Erreur chargement matériels:", err);
         } finally {
             setLoadingMateriels(false);
+        }
+    };
+
+    // Fonction pour sauvegarder les modifications
+    const handleSaveStatus = async () => {
+        if (!selectedPaiement) return;
+
+        setSaving(true);
+        try {
+            const body = {
+                statut_paiement: editStatut,
+                date_paiement: editStatut ? editDate : null // Si non payé, pas de date
+            };
+
+            const res = await apiClient(`/api/paiements/${selectedPaiement.id_campagne}/${selectedPaiement.id_prestataire}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || "Erreur lors de la mise à jour");
+            }
+
+            const data = await res.json();
+            toast.success("Statut de paiement mis à jour");
+
+            // Mettre à jour l'état local et la liste
+            setSelectedPaiement(data.paiement);
+            setIsEditing(false);
+            fetchPaiements(); // Rafraîchir la liste
+        } catch (err) {
+            console.error(err);
+            toast.error(err instanceof Error ? err.message : "Erreur de mise à jour");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -244,7 +297,7 @@ export default function PaiementTable() {
                                             <button
                                                 onClick={() => handleViewDetails(paiement)}
                                                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-[#d61353] transition"
-                                                title="Voir détails"
+                                                title="Voir détails / Modifier"
                                             >
                                                 <Eye className="w-4 h-4" />
                                             </button>
@@ -262,16 +315,19 @@ export default function PaiementTable() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Header */}
-                        <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between">
+                        <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between z-10">
                             <div className="flex items-center gap-3">
                                 <CreditCard className="w-6 h-6 text-[#d61353]" />
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Détails du Paiement</h2>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {isEditing ? "Modifier le paiement" : "Détails du Paiement"}
+                                </h2>
                             </div>
                             <button
                                 onClick={() => {
                                     setIsDetailModalOpen(false);
                                     setSelectedPaiement(null);
                                     setMateriels([]);
+                                    setIsEditing(false);
                                 }}
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
                             >
@@ -320,35 +376,109 @@ export default function PaiementTable() {
                                 </div>
                             </div>
 
-                            {/* Statut du paiement */}
-                            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Statut</p>
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${selectedPaiement.statut_paiement
-                                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                            }`}>
-                                            {selectedPaiement.statut_paiement ? (
-                                                <><CheckCircle className="w-4 h-4 mr-1" /> Payé</>
-                                            ) : (
-                                                <><AlertCircle className="w-4 h-4 mr-1" /> En attente</>
-                                            )}
-                                        </span>
-                                    </div>
-                                    {selectedPaiement.date_paiement && (
-                                        <div className="text-right">
-                                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Date de paiement</p>
-                                            <p className="font-medium text-gray-900 dark:text-white">
-                                                {new Date(selectedPaiement.date_paiement).toLocaleDateString("fr-FR", {
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                })}
-                                            </p>
-                                        </div>
+                            {/* Statut du paiement - Zone Modifiable */}
+                            <div className={`p-4 rounded-lg ${isEditing ? "bg-white border-2 border-[#d61353]/20" : "bg-gray-50 dark:bg-gray-800"}`}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-semibold text-gray-900 dark:text-white">Statut du Paiement</h3>
+                                    {!isEditing && (
+                                        <button
+                                            onClick={() => setIsEditing(true)}
+                                            className="flex items-center gap-2 text-sm text-[#d61353] hover:underline"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                            Modifier
+                                        </button>
                                     )}
                                 </div>
+
+                                {isEditing ? (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">État du paiement</label>
+                                            <div className="flex gap-4">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="radio"
+                                                        checked={!editStatut}
+                                                        onChange={() => setEditStatut(false)}
+                                                        className="text-[#d61353] focus:ring-[#d61353]"
+                                                    />
+                                                    <span className="flex items-center gap-1 text-yellow-600"><AlertCircle className="w-4 h-4" /> En attente</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="radio"
+                                                        checked={editStatut}
+                                                        onChange={() => setEditStatut(true)}
+                                                        className="text-[#d61353] focus:ring-[#d61353]"
+                                                    />
+                                                    <span className="flex items-center gap-1 text-green-600"><CheckCircle className="w-4 h-4" /> Payé</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {editStatut && (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">Date de paiement</label>
+                                                <input
+                                                    type="date"
+                                                    value={editDate}
+                                                    onChange={(e) => setEditDate(e.target.value)}
+                                                    className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+                                            <button
+                                                onClick={() => setIsEditing(false)}
+                                                disabled={saving}
+                                                className="px-4 py-2 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                                            >
+                                                Annuler
+                                            </button>
+                                            <button
+                                                onClick={handleSaveStatus}
+                                                disabled={saving}
+                                                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[#d61353] hover:bg-[#b01044] text-white disabled:opacity-50"
+                                            >
+                                                {saving ? "Enregistrement..." : (
+                                                    <><Save className="w-4 h-4" /> Enregistrer</>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Affichage Lecture Seule */
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${selectedPaiement.statut_paiement
+                                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                                }`}>
+                                                {selectedPaiement.statut_paiement ? (
+                                                    <><CheckCircle className="w-4 h-4 mr-1" /> Payé</>
+                                                ) : (
+                                                    <><AlertCircle className="w-4 h-4 mr-1" /> En attente</>
+                                                )}
+                                            </span>
+                                        </div>
+                                        {selectedPaiement.date_paiement ? (
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Date de paiement</p>
+                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                    {new Date(selectedPaiement.date_paiement).toLocaleDateString("fr-FR", {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-400 italic">Aucune date enregistrée</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Matériels casés */}
@@ -366,15 +496,15 @@ export default function PaiementTable() {
                                             {materiels.map((materiel: any) => (
                                                 <div key={materiel.id_materiels_case} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                                     <div className={`w-2 h-2 rounded-full mt-2 ${materiel.etat === 'BON' ? 'bg-green-500' :
-                                                            materiel.etat === 'MOYEN' ? 'bg-yellow-500' :
-                                                                'bg-red-500'
+                                                        materiel.etat === 'MOYEN' ? 'bg-yellow-500' :
+                                                            'bg-red-500'
                                                         }`}></div>
                                                     <div className="flex-1">
                                                         <div className="flex items-center justify-between mb-1">
                                                             <span className="font-medium text-gray-900 dark:text-white">{materiel.nom_materiel}</span>
                                                             <span className={`text-xs px-2 py-1 rounded ${materiel.etat === 'BON' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                                                    materiel.etat === 'MOYEN' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                                        'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                                materiel.etat === 'MOYEN' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                                                 }`}>
                                                                 {materiel.etat}
                                                             </span>

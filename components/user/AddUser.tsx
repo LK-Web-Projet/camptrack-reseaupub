@@ -5,12 +5,13 @@ import * as Yup from "yup"
 import { X } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
+import { Button } from "@/components/ui/button"
 
 interface AddUserModalProps {
   isOpen: boolean
   onClose: () => void
-     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-onAddUser: (user: any) => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onAddUser: (user: any) => void
 }
 
 export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) {
@@ -32,7 +33,7 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
       contact: Yup.string().required("Champ obligatoire"),
       password: Yup.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").required("Champ obligatoire"),
     }),
-    onSubmit: async (values, { resetForm }) => {
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
       try {
         const res = await fetch("/api/users", {
           method: "POST",
@@ -46,12 +47,14 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
         const created = await res.json()
         onAddUser(created)
         toast.success("Utilisateur ajouté avec succès")
-        window.location.href = "/dashboard/admin"; 
+        window.location.href = "/dashboard/admin";
 
         resetForm()
         onClose()
       } catch {
         toast.error("Erreur lors de l'ajout de l'utilisateur")
+      } finally {
+        setSubmitting(false)
       }
     },
   })
@@ -62,7 +65,7 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
   type FieldKey = typeof fields[number]
 
   return (
- <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Fond semi-transparent */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -124,12 +127,13 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
             >
               Annuler
             </button>
-            <button
+            <Button
               type="submit"
+              loading={formik.isSubmitting}
               className="px-4 py-2 rounded-md bg-[#d61353] text-white hover:bg-[#b01044] transition-smooth"
             >
-              Valider
-            </button>
+              {formik.isSubmitting ? "Ajout..." : "Valider"}
+            </Button>
           </div>
         </form>
       </div>

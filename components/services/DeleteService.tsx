@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export type Service = {
   id_service: string;
@@ -83,13 +84,13 @@ export default function DeleteService({ isOpen, onClose, service, onServiceUpdat
           >
             Annuler
           </button>
-          <button
+          <Button
             onClick={handleDelete}
-            disabled={isDeleting}
+            loading={isDeleting}
             className="px-4 py-2 rounded-md bg-[#d61353] hover:bg-[#b01044] text-white disabled:opacity-50 transition"
           >
             {isDeleting ? "Suppression..." : "Valider"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

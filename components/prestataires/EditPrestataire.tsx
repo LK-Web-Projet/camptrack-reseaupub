@@ -6,6 +6,7 @@ import * as Yup from "yup"
 import { X } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
+import { Button } from "@/components/ui/button"
 
 interface Service {
   id_service: string
@@ -152,7 +153,7 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
         <form onSubmit={formik.handleSubmit}>
           {/* === INFORMATIONS PERSONNELLES === */}
           <h4 className="text-sm font-semibold text-[#d61353] mb-3 border-b pb-2">Informations personnelles</h4>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1">Nom *</label>
@@ -162,11 +163,10 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 value={formik.values.nom}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${
-                  formik.touched.nom && formik.errors.nom
+                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${formik.touched.nom && formik.errors.nom
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
-                }`}
+                  }`}
                 placeholder="Ex: Dupont"
               />
               {formik.touched.nom && formik.errors.nom && (
@@ -181,11 +181,10 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 value={formik.values.prenom}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${
-                  formik.touched.prenom && formik.errors.prenom
+                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${formik.touched.prenom && formik.errors.prenom
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
-                }`}
+                  }`}
                 placeholder="Ex: Jean"
               />
               {formik.touched.prenom && formik.errors.prenom && (
@@ -202,11 +201,10 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 value={formik.values.id_service}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${
-                  formik.touched.id_service && formik.errors.id_service
+                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${formik.touched.id_service && formik.errors.id_service
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
-                }`}
+                  }`}
               >
                 <option value="">-- Sélectionner un service --</option>
                 {services.map((service) => (
@@ -227,11 +225,10 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 value={formik.values.contact}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${
-                  formik.touched.contact && formik.errors.contact
+                className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${formik.touched.contact && formik.errors.contact
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
-                }`}
+                  }`}
                 placeholder="Ex: 06 12 34 56 78"
               />
               {formik.touched.contact && formik.errors.contact && (
@@ -351,17 +348,16 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
             >
               Annuler
             </button>
-            <button
+            <Button
               type="submit"
-              disabled={submitting}
+              loading={submitting}
               className="px-4 py-2 rounded-lg bg-[#d61353] hover:bg-[#b01044] text-white disabled:opacity-50 transition"
             >
-              {submitting ? "Enregistrement..." : "Enregistrer"}
-            </button>
+              Enregistrer
+            </Button>
           </div>
         </form>
       </div>
     </div>
   )
 }
-

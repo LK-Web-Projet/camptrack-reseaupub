@@ -5,7 +5,6 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
 	const [email, setEmail] = useState("");
@@ -55,15 +54,8 @@ export default function LoginPage() {
 						style={{ width: "100%", padding: 8 }}
 					/>
 				</div>
-				<Button type="submit" disabled={loading} className="w-full">
-					{loading ? (
-						<>
-							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-							Connexion...
-						</>
-					) : (
-						"Se connecter"
-					)}
+				<Button type="submit" loading={loading} className="w-full">
+					{loading ? "Connexion..." : "Se connecter"}
 				</Button>
 			</form>
 		</div>

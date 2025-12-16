@@ -6,6 +6,7 @@ import * as Yup from "yup"
 import { X } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
+import { Button } from "@/components/ui/button"
 
 interface User {
   id_user: string
@@ -20,7 +21,7 @@ interface User {
 interface EditUserModalProps {
   isOpen: boolean
   onClose: () => void
-   onEditUser: (updatedUser: User) => void
+  onEditUser: (updatedUser: User) => void
   user: User | null
   // user?: User | null
 }
@@ -43,7 +44,7 @@ export default function EditUserModal({ isOpen, onClose, user, onEditUser }: Edi
       email: Yup.string().email("Email invalide").required("Champ obligatoire"),
       contact: Yup.string().required("Champ obligatoire"),
     }),
-    onSubmit: async (values, { resetForm }) => {
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
       if (!user) return;
       try {
         const res = await fetch(`/api/users/${user.id_user}`, {
@@ -64,17 +65,19 @@ export default function EditUserModal({ isOpen, onClose, user, onEditUser }: Edi
         onClose()
       } catch {
         toast.error("Erreur lors de la modification des informations de l'utilisateur")
+      } finally {
+        setSubmitting(false)
       }
     },
   })
 
   if (!isOpen || !user) return null
 
-  const fields = ["nom", "prenom",  "email", "contact"] as const
+  const fields = ["nom", "prenom", "email", "contact"] as const
   type FieldKey = typeof fields[number]
 
   return (
- <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Fond semi-transparent */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -136,12 +139,13 @@ export default function EditUserModal({ isOpen, onClose, user, onEditUser }: Edi
             >
               Annuler
             </button>
-            <button
+            <Button
               type="submit"
+              loading={formik.isSubmitting}
               className="px-4 py-2 rounded-md bg-[#d61353] text-white hover:bg-[#b01044] transition-smooth"
             >
               Valider
-            </button>
+            </Button>
           </div>
         </form>
       </div>

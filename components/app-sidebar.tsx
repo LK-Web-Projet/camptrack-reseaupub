@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react"
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   LayoutDashboard,
   Megaphone,
@@ -106,40 +107,63 @@ export function AppSidebar({ isOpen }: { isOpen: boolean }) {
 
         {/* Menu */}
         <div className="flex-1 overflow-y-auto p-2 mb-4">
-          {data.navMain.map((group, index) => (
-            <Collapsible key={group.title} defaultOpen={isOpen && index === 0}>
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton>
-                    <group.icon className="w-5 h-5" />
-                    {isOpen && <span>{group.title}</span>}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
+          {data.navMain.map((group, index) => {
+            const isSingleItem = group.items.length === 1;
+            const singleItem = group.items[0];
+            const isActiveGroup = group.items.some((item) => pathname === item.url);
 
-                {group.items && isOpen && (
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {group.items.map((item) => (
-                        <SidebarMenuSubItem key={item.title}>
-                          <SidebarMenuSubButton asChild>
-                            <a
-                              href={item.url}
-                              className={`block text-sm px-3 py-2 rounded-md ${pathname === item.url
+            if (isSingleItem && singleItem) {
+              return (
+                <SidebarMenuItem key={group.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === singleItem.url}
+                    className={pathname === singleItem.url ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 hover:bg-pink-100 dark:hover:bg-pink-900/30" : ""}
+                  >
+                    <Link href={singleItem.url}>
+                      <group.icon className="w-5 h-5" />
+                      {isOpen && <span>{singleItem.title}</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )
+            }
+
+            return (
+              <Collapsible key={group.title} defaultOpen={isOpen && (index === 0 || isActiveGroup)} className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <group.icon className="w-5 h-5" />
+                      {isOpen && <span>{group.title}</span>}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+
+                  {group.items && isOpen && (
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {group.items.map((item) => (
+                          <SidebarMenuSubItem key={item.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link
+                                href={item.url}
+                                className={`block text-sm px-3 py-2 rounded-md ${pathname === item.url
                                   ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30"
                                   : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                                }`}
-                            >
-                              {item.title}
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                )}
-              </SidebarMenuItem>
-            </Collapsible>
-          ))}
+                                  }`}
+                              >
+                                {item.title}
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  )}
+                </SidebarMenuItem>
+              </Collapsible>
+            )
+          })}
         </div>
 
       </div>

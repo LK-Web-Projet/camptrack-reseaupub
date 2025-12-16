@@ -4,6 +4,7 @@ import { X } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
+import { Button } from "@/components/ui/button"
 
 interface Prestataire {
   id_prestataire: string
@@ -76,13 +77,13 @@ export default function DeletePrestataire({ isOpen, onClose, prestataire, onConf
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600">
             Annuler
           </button>
-          <button
+          <Button
             onClick={handleDelete}
+            loading={loading}
             className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
-            disabled={loading}
           >
             {loading ? "Suppression..." : "Supprimer"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

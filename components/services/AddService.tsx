@@ -6,6 +6,7 @@ import * as Yup from "yup";
 import { X } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
+import { Button } from "@/components/ui/button";
 
 export type Service = {
   id_service: string;
@@ -32,7 +33,7 @@ export default function AddService({ isOpen, onClose, onServiceUpdated }: AddSer
       nom: Yup.string().required("Le nom est obligatoire"),
       description: Yup.string().nullable(),
     }),
-    onSubmit: async (values, { resetForm }) => {
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
       try {
         const res = await apiClient("/api/services", {
           method: "POST",
@@ -52,6 +53,8 @@ export default function AddService({ isOpen, onClose, onServiceUpdated }: AddSer
       } catch (err) {
         console.error(err);
         toast.error("Erreur lors de l'ajout du service");
+      } finally {
+        setSubmitting(false);
       }
     },
   });
@@ -108,12 +111,13 @@ export default function AddService({ isOpen, onClose, onServiceUpdated }: AddSer
             >
               Annuler
             </button>
-            <button
+            <Button
               type="submit"
+              loading={formik.isSubmitting}
               className="px-4 py-2 rounded bg-[#d61353] text-white hover:bg-[#b80d45] transition"
             >
-              Ajouter
-            </button>
+              {formik.isSubmitting ? "Ajout..." : "Ajouter"}
+            </Button>
           </div>
         </form>
       </div>

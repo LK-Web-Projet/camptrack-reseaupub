@@ -1,273 +1,205 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { toast } from "react-toastify";
-import { useAuth } from "@/app/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useState } from "react"
+import { useFormik } from "formik"
+import * as Yup from "yup"
+import { useAuth } from "@/app/context/AuthContext"
+import { toast } from "react-toastify"
+import { Button } from "@/components/ui/button"
 
 export default function ProfilePage() {
-  const { user, token, logout } = useAuth();
-  const router = useRouter();
+  const { user, apiClient } = useAuth()
+  const [loadingEmail, setLoadingEmail] = useState(false)
+  const [loadingPassword, setLoadingPassword] = useState(false)
 
-  const [initialEmail, setInitialEmail] = useState("");
-
-  useEffect(() => {
-    if (user?.email) {
-      setInitialEmail(user.email);
-    }
-
-    const fetchMe = async () => {
-      if (!token) return;
+  // Formulaire pour modifier l'email
+  const formikEmail = useFormik({
+    initialValues: {
+      email: user?.email || "",
+    },
+    enableReinitialize: true,
+    validationSchema: Yup.object({
+      email: Yup.string().email("Email invalide").required("L'email est requis"),
+    }),
+    onSubmit: async (values) => {
+      setLoadingEmail(true)
       try {
-        const res = await fetch("/api/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data?.user?.email) {
-          setInitialEmail(data.user.email);
-        }
-      } catch (err) {
-        console.error("Erreur fetch /api/users/me", err);
+        const res = await apiClient(`/api/users/${user?.id_user}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: values.email }),
+        })
+
+        if (!res.ok) throw new Error("Erreur lors de la mise à jour de l'email")
+
+        toast.success("Email mis à jour avec succès")
+      } catch (error) {
+        console.error(error)
+        toast.error("Impossible de mettre à jour l'email")
+      } finally {
+        setLoadingEmail(false)
       }
-    };
+    },
+  })
 
-    fetchMe();
-  }, [user, token]);
+  // Formulaire pour modifier le mot de passe
+  const formikPassword = useFormik({
+    initialValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+    validationSchema: Yup.object({
+      currentPassword: Yup.string().required("Mot de passe actuel requis"),
+      newPassword: Yup.string().min(6, "Minimum 6 caractères").required("Nouveau mot de passe requis"),
+      confirmPassword: Yup.string()
+        .oneOf([Yup.ref("newPassword")], "Les mots de passe ne correspondent pas")
+        .required("Confirmation requise"),
+    }),
+    onSubmit: async (values, { resetForm }) => {
+      setLoadingPassword(true)
+      try {
+        const res = await apiClient("/api/auth/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        })
 
-  // Schéma Yup pour email
-  const profileSchema = Yup.object({
-    email: Yup.string()
-      .email("Email invalide")
-      .required("L'email est requis"),
-  });
+        if (!res.ok) throw new Error("Erreur lors du changement de mot de passe")
 
-  // Schéma Yup pour mot de passe
-  const passwordSchema = Yup.object({
-    oldPassword: Yup.string()
-      .min(6, "Min. 6 caractères")
-      .required("Ancien mot de passe requis"),
-    newPassword: Yup.string()
-      .min(6, "Min. 6 caractères")
-      .required("Nouveau mot de passe requis"),
-    confirmPassword: Yup.string()
-      .oneOf(
-        [Yup.ref("newPassword")],
-        "Les mots de passe doivent correspondre"
-      )
-      .required("Confirmez le nouveau mot de passe"),
-  });
-
-  const handleProfileSubmit = async (
-    values: Record<string, string>,
-    helpers: { setSubmitting: (value: boolean) => void }
-  ): Promise<void> => {
-    if (!token) {
-      toast.error("Session expirée. Veuillez vous reconnecter.");
-      logout();
-      return;
-    }
-    try {
-      const res = await fetch("/api/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(values),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data?.error || "Erreur lors de la mise à jour du profil");
-        helpers.setSubmitting(false);
-        return;
+        toast.success("Mot de passe changé avec succès")
+        resetForm()
+      } catch (error) {
+        console.error(error)
+        toast.error("Impossible de changer le mot de passe")
+      } finally {
+        setLoadingPassword(false)
       }
-
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-
-      toast.success("Email mis à jour avec succès");
-      setTimeout(() => window.location.reload(), 500);
-    } catch (err) {
-      console.error(err);
-      toast.error("Erreur réseau");
-    } finally {
-      helpers.setSubmitting(false);
-    }
-  };
-
-  const handlePasswordSubmit = async (
-    values: Record<string, string>,
-    helpers: { setSubmitting: (value: boolean) => void }
-  ): Promise<void> => {
-    if (!token) {
-      toast.error("Session expirée. Veuillez vous reconnecter.");
-      logout();
-      return;
-    }
-
-    try {
-      // Call the users/{id}/password route with PUT
-      const userId = user?.id_user;
-      const res = await fetch(`/api/users/${userId}/password`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          oldPassword: values.oldPassword,
-          newPassword: values.newPassword,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data?.error || "Erreur lors du changement de mot de passe");
-        helpers.setSubmitting(false);
-        return;
-      }
-
-      toast.success("Mot de passe changé. Vous allez être déconnecté(e).");
-      setTimeout(() => {
-        logout();
-        router.push("/");
-      }, 800);
-    } catch (err) {
-      console.error(err);
-      toast.error("Erreur réseau");
-    } finally {
-      helpers.setSubmitting(false);
-    }
-  };
+    },
+  })
 
   return (
-    <div
-      className="max-w-3xl mx-auto p-6 bg-white dark:bg-gray-900 text-black dark:text-white rounded-lg shadow-md"
-      style={{ fontFamily: "Montserrat, sans-serif" }}
-    >
-      <h1 className="text-2xl font-bold mb-6">Mon Profil</h1>
+    <div className="p-6 max-w-4xl mx-auto space-y-8">
+      <h1 className="text-2xl font-bold text-[#d61353]">Mon Profil</h1>
 
-      {/* FORMULAIRE EMAIL */}
-      <Formik
-        enableReinitialize
-        initialValues={{
-          email: initialEmail,
-        }}
-        validationSchema={profileSchema}
-        onSubmit={handleProfileSubmit}
-      >
-        {({ isSubmitting }) => (
-          <Form className="space-y-6 mb-6">
-            <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-semibold mb-4">Adresse Email</h2>
+      {/* Section Informations */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold mb-4 border-b pb-2">Mes informations</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Nom</label>
+            <input
+              type="text"
+              value={user?.nom || ""}
+              disabled
+              className="w-full px-3 py-2 border rounded-lg bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Prénom</label>
+            <input
+              type="text"
+              value={user?.prenom || ""}
+              disabled
+              className="w-full px-3 py-2 border rounded-lg bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Rôle</label>
+            <input
+              type="text"
+              value={user?.type_user || ""}
+              disabled
+              className="w-full px-3 py-2 border rounded-lg bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+            />
+          </div>
+        </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <Field
-                  type="email"
-                  name="email"
-                  className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                />
-                <ErrorMessage
-                  name="email"
-                  component="div"
-                  className="text-red-500 text-sm"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-4 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50"
-              >
-                {isSubmitting ? "Mise à jour..." : "Mettre à jour l'email"}
-              </button>
+        {/* Modification Email */}
+        <form onSubmit={formikEmail.handleSubmit} className="mt-6 border-t pt-4">
+          <h3 className="text-md font-medium mb-3">Modifier mon email</h3>
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="w-full md:w-1/2">
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formikEmail.values.email}
+                onChange={formikEmail.handleChange}
+                onBlur={formikEmail.handleBlur}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+              />
+              {formikEmail.touched.email && formikEmail.errors.email && (
+                <p className="text-red-500 text-xs mt-1">{formikEmail.errors.email}</p>
+              )}
             </div>
-          </Form>
-        )}
-      </Formik>
+            <Button
+              type="submit"
+              loading={loadingEmail}
+              className="px-4 py-2 bg-[#d61353] hover:bg-[#b01044] text-white rounded-lg transition"
+            >
+              Mettre à jour l&apos;email
+            </Button>
+          </div>
+        </form>
+      </div>
 
-      {/* FORMULAIRE MOT DE PASSE */}
-      <Formik
-        initialValues={{
-          oldPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        }}
-        validationSchema={passwordSchema}
-        onSubmit={handlePasswordSubmit}
-      >
-        {({ isSubmitting }) => (
-          <Form className="space-y-6">
-            <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-semibold mb-4">Mot de passe</h2>
+      {/* Section Sécurité */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold mb-4 border-b pb-2">Sécurité</h2>
+        <form onSubmit={formikPassword.handleSubmit} className="space-y-4 max-w-md">
+          <div>
+            <label className="block text-sm font-medium mb-1">Mot de passe actuel</label>
+            <input
+              type="password"
+              name="currentPassword"
+              value={formikPassword.values.currentPassword}
+              onChange={formikPassword.handleChange}
+              onBlur={formikPassword.handleBlur}
+              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+            />
+            {formikPassword.touched.currentPassword && formikPassword.errors.currentPassword && (
+              <p className="text-red-500 text-xs mt-1">{formikPassword.errors.currentPassword}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Nouveau mot de passe</label>
+            <input
+              type="password"
+              name="newPassword"
+              value={formikPassword.values.newPassword}
+              onChange={formikPassword.handleChange}
+              onBlur={formikPassword.handleBlur}
+              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+            />
+            {formikPassword.touched.newPassword && formikPassword.errors.newPassword && (
+              <p className="text-red-500 text-xs mt-1">{formikPassword.errors.newPassword}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Confirmer le nouveau mot de passe</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formikPassword.values.confirmPassword}
+              onChange={formikPassword.handleChange}
+              onBlur={formikPassword.handleBlur}
+              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+            />
+            {formikPassword.touched.confirmPassword && formikPassword.errors.confirmPassword && (
+              <p className="text-red-500 text-xs mt-1">{formikPassword.errors.confirmPassword}</p>
+            )}
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Ancien mot de passe
-                  </label>
-                  <Field
-                    type="password"
-                    name="oldPassword"
-                    className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <ErrorMessage
-                    name="oldPassword"
-                    component="div"
-                    className="text-red-500 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Nouveau mot de passe
-                  </label>
-                  <Field
-                    type="password"
-                    name="newPassword"
-                    className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <ErrorMessage
-                    name="newPassword"
-                    component="div"
-                    className="text-red-500 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Confirmer mot de passe
-                  </label>
-                  <Field
-                    type="password"
-                    name="confirmPassword"
-                    className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <ErrorMessage
-                    name="confirmPassword"
-                    component="div"
-                    className="text-red-500 text-sm"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-              >
-                {isSubmitting ? "Mise à jour..." : "Changer le mot de passe"}
-              </button>
-            </div>
-          </Form>
-        )}
-      </Formik>
+          <Button
+            type="submit"
+            loading={loadingPassword}
+            className="w-full px-4 py-2 bg-[#d61353] hover:bg-[#b01044] text-white rounded-lg transition"
+          >
+            Changer le mot de passe
+          </Button>
+        </form>
+      </div>
     </div>
-  );
+  )
 }

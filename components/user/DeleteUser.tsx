@@ -1,12 +1,26 @@
 "use client"
 
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+
 interface DeleteUserModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: () => Promise<void> | void
 }
 
 export default function DeleteUserModal({ isOpen, onClose, onConfirm }: DeleteUserModalProps) {
+  const [loading, setLoading] = useState(false)
+
+  const handleConfirm = async () => {
+    setLoading(true)
+    try {
+      await onConfirm()
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -33,12 +47,13 @@ export default function DeleteUserModal({ isOpen, onClose, onConfirm }: DeleteUs
           >
             Annuler
           </button>
-          <button
-            onClick={onConfirm}
+          <Button
+            onClick={handleConfirm}
+            loading={loading}
             className="px-4 py-2 rounded-md bg-[#d61353] hover:bg-[#b01044] text-white"
           >
             Valider
-          </button>
+          </Button>
         </div>
       </div>
     </div>
