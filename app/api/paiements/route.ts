@@ -19,11 +19,11 @@ export async function GET(request: NextRequest) {
     // Récupérer et valider les query params
     const { searchParams } = new URL(request.url);
     const queryParams = {
-      page: searchParams.get("page"),
-      limit: searchParams.get("limit"),
-      id_campagne: searchParams.get("id_campagne"),
-      id_prestataire: searchParams.get("id_prestataire"),
-      statut_paiement: searchParams.get("statut_paiement"),
+      page: searchParams.get("page") || undefined,
+      limit: searchParams.get("limit") || undefined,
+      id_campagne: searchParams.get("id_campagne") || undefined,
+      id_prestataire: searchParams.get("id_prestataire") || undefined,
+      statut_paiement: searchParams.get("statut_paiement") || undefined,
     };
 
     const validation = validateData(paiementQuerySchema, queryParams);

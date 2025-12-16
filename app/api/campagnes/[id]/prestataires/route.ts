@@ -153,6 +153,59 @@ export async function POST(
       throw new AppError("Ce prestataire n'est pas disponible", 400);
     }
 
+    // ========================================================================
+    // VALIDATION MÉTIER : Vérifier les affectations actives
+    // ========================================================================
+    // Un prestataire ne peut être affecté à une nouvelle campagne que s'il
+    // n'est pas déjà affecté à une autre campagne active (non terminée).
+    // Les statuts de campagne considérés comme "terminés" : TERMINEE, ANNULEE
+    // ========================================================================
+    const activeAssignments = await prisma.prestataireCampagne.findMany({
+      where: {
+        id_prestataire,
+        // Exclure l'affectation à la campagne actuelle (si elle existe déjà)
+        id_campagne: { not: campagneId },
+        // Affectation encore active (pas de date de fin)
+        date_fin: null
+      },
+      include: {
+        campagne: {
+          select: {
+            id_campagne: true,
+            nom_campagne: true,
+            status: true
+          }
+        }
+      }
+    });
+
+    // Filtrer pour ne garder que les campagnes non terminées
+    const nonTerminatedAssignments = activeAssignments.filter(
+      assignment =>
+        assignment.campagne.status !== 'TERMINEE' &&
+        assignment.campagne.status !== 'ANNULEE'
+    );
+
+    if (nonTerminatedAssignments.length > 0) {
+      // Le prestataire a des affectations actives à des campagnes non terminées
+      const activeCampaigns = nonTerminatedAssignments
+        .map(a => a.campagne.nom_campagne)
+        .join(', ');
+
+      // Mettre à jour le statut de disponibilité du prestataire à false
+      await prisma.prestataire.update({
+        where: { id_prestataire },
+        data: { disponible: false }
+      });
+
+      throw new AppError(
+        `Ce prestataire est déjà affecté à une ou plusieurs campagnes actives (${activeCampaigns}). ` +
+        `Il doit d'abord terminer ses affectations en cours avant d'être assigné à une nouvelle campagne. ` +
+        `Son statut de disponibilité a été mis à jour.`,
+        409
+      );
+    }
+
     // Vérifier la contrainte de nbr_prestataire si définie
     if (campagne.nbr_prestataire !== null) {
       const affectationsActives = await prisma.prestataireCampagne.count({
@@ -199,6 +252,13 @@ export async function POST(
         date_creation: true,
         status: true
       }
+    });
+
+    // Mettre à jour le statut de disponibilité du prestataire à false
+    // car il est maintenant affecté à une campagne active
+    await prisma.prestataire.update({
+      where: { id_prestataire },
+      data: { disponible: false }
     });
 
     // NOTE : Le paiement sera créé automatiquement lors de l'enregistrement 

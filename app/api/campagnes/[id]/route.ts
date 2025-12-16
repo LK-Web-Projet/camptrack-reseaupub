@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/middleware/authMiddleware"; 
+import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { campagneUpdateSchema, validateData } from "@/lib/validation/campagneSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 
 // GET /api/campagnes/[id] - Récupérer une campagne spécifique
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const campagneId = id;
 
     const campagne = await prisma.campagne.findUnique({
@@ -81,6 +81,17 @@ export async function GET(
                 id_verification: true
               }
             },
+            paiement: {
+              select: {
+                id_paiement: true,
+                paiement_base: true,
+                paiement_final: true,
+                sanction_montant: true,
+                date_paiement: true,
+                statut_paiement: true,
+                created_at: true
+              }
+            },
             date_creation: true,
             status: true
           }
@@ -119,17 +130,17 @@ export async function GET(
 // PUT /api/campagnes/[id] - Modifier une campagne
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const campagneId = id;
 
     const body = await request.json();
-    
+
     const validation = validateData(campagneUpdateSchema, body);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
@@ -215,13 +226,13 @@ export async function PUT(
 // DELETE /api/campagnes/[id] - Supprimer une campagne
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const campagneId = id;
 
     const existingCampagne = await prisma.campagne.findUnique({

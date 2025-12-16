@@ -43,12 +43,6 @@ export const materielsCaseCreateSchema = Joi.object({
     'string.min': 'La description doit contenir au moins 5 caractères',
     'any.required': 'Description des dommages requise'
   }),
-  montant_penalite: Joi.number().min(0).required().messages({
-    'number.base': 'Le montant de pénalité doit être un nombre',
-    'number.min': 'Le montant de pénalité ne peut pas être négatif',
-    'any.required': 'Montant de pénalité requis'
-  }),
-  penalite_appliquer: Joi.boolean().default(false),
   photo_url: Joi.string().uri().optional().allow('', null).messages({
     'string.uri': 'L\'URL de la photo doit être une URL valide'
   }),
@@ -58,7 +52,9 @@ export const materielsCaseCreateSchema = Joi.object({
 }).custom((value, helpers) => {
   // Validation personnalisée : au moins id_campagne ou id_prestataire doit être fourni
   if (!value.id_campagne && !value.id_prestataire) {
-    return helpers.message('Au moins une relation (campagne ou prestataire) doit être fournie');
+    return helpers.error('any.custom', {
+      message: 'Au moins une relation (campagne ou prestataire) doit être fournie'
+    });
   }
   return value
 })

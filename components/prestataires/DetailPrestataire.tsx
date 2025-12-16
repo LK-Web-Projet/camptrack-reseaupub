@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import AddIncidentModal from "./AddIncidentModal"
 
 // Interfaces (gardées telles quelles)
 interface Service {
@@ -50,6 +51,7 @@ export default function DetailPrestataire({ id }: { id: string }) {
   const { apiClient } = useAuth()
   const [prestataire, setPrestataire] = useState<Prestataire | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false)
 
   const fetchPrestataire = useCallback(async () => {
     if (!id) return;
@@ -67,7 +69,7 @@ export default function DetailPrestataire({ id }: { id: string }) {
       setLoading(false)
     }
   }, [id, apiClient]);
-  
+
   useEffect(() => {
     fetchPrestataire()
   }, [fetchPrestataire])
@@ -106,7 +108,7 @@ export default function DetailPrestataire({ id }: { id: string }) {
           <Users className="w-7 h-7" />
           <h1 className="text-3xl font-bold">{prestataire.nom} {prestataire.prenom}</h1>
         </div>
-        <div/>
+        <div />
       </div>
 
       {/* Carte Principale */}
@@ -167,14 +169,20 @@ export default function DetailPrestataire({ id }: { id: string }) {
 
       {/* DOMMAGES */}
       <Card>
-        <CardHeader>
-          <CardTitle>Dommages et Cas Matériels ({prestataire._count?.dommages ?? 0})</CardTitle>
-          <CardDescription>Historique des dommages matériels enregistrés pour ce prestataire.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Dommages et Cas Matériels ({prestataire._count?.dommages ?? 0})</CardTitle>
+            <CardDescription>Historique des dommages matériels enregistrés pour ce prestataire.</CardDescription>
+          </div>
+          <Button onClick={() => setIsIncidentModalOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
+            <Wrench className="w-4 h-4 mr-2" />
+            Signaler un problème
+          </Button>
         </CardHeader>
         <CardContent>
-        {prestataire.dommages && prestataire.dommages.length > 0 ? (
-          <div className="space-y-4">
-            {prestataire.dommages.map((dmg) => (
+          {prestataire.dommages && prestataire.dommages.length > 0 ? (
+            <div className="space-y-4">
+              {prestataire.dommages.map((dmg) => (
                 <div key={dmg.id_materiels_case} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex justify-between items-start">
                   <div>
                     <p className="font-semibold">{dmg.campagne?.nom_campagne ?? "Campagne non spécifiée"}</p>
@@ -188,12 +196,21 @@ export default function DetailPrestataire({ id }: { id: string }) {
                   </div>
                 </div>
               ))}
-          </div>
-        ) : (
-          <p className="text-sm text-center text-gray-500 py-8">Aucun dommage enregistré.</p>
-        )}
+            </div>
+          ) : (
+            <p className="text-sm text-center text-gray-500 py-8">Aucun dommage enregistré.</p>
+          )}
         </CardContent>
       </Card>
-    </div>
+
+
+      <AddIncidentModal
+        isOpen={isIncidentModalOpen}
+        onClose={() => setIsIncidentModalOpen(false)}
+        prestataireId={id}
+        affectations={prestataire.affectations || []}
+        onIncidentAdded={fetchPrestataire}
+      />
+    </div >
   )
 }

@@ -4,15 +4,11 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Megaphone,
- Briefcase,
+  Briefcase,
   Users,
   UserRound,
-  Truck,
   MapPin,
-  AlertTriangle,
-  LineChart,
-  Minus,
-  Plus,
+  CreditCard,
 } from "lucide-react"
 
 // import { SearchForm } from "@/components/search-form"
@@ -43,37 +39,42 @@ const data = {
   navMain: [
     {
       title: "Tableau de bord",
-            icon: LayoutDashboard,
+      icon: LayoutDashboard,
       items: [{ title: "Tableau de bord", url: "/dashboard/admin" }],
     },
-     {
+    {
       title: "Clients",
-            icon: UserRound,
+      icon: UserRound,
       items: [{ title: "Liste des clients", url: "/dashboard/clients" }],
     },
     {
       title: "Campagnes",
-            icon: Megaphone,
+      icon: Megaphone,
       items: [{ title: "Gestion des campagnes", url: "/dashboard/campagnes" }],
     },
     {
       title: "Services",
-            icon: Briefcase,
+      icon: Briefcase,
       items: [{ title: "Liste des services", url: "/dashboard/services" }],
     },
-     {
+    {
       title: "Lieux",
-            icon: MapPin,
+      icon: MapPin,
       items: [{ title: "Liste des lieux", url: "/dashboard/lieux" }],
     },
-    
+
     {
       title: "Prestataires",
-            icon: Users,
+      icon: Users,
       items: [{ title: "Gestion des prestataires", url: "/prestataires" }],
     },
-   
-   
+    {
+      title: "Paiements",
+      icon: CreditCard,
+      items: [{ title: "Gestion des Paiements", url: "/paiements" }],
+    },
+
+
   ],
 
 }
@@ -123,11 +124,10 @@ export function AppSidebar({ isOpen }: { isOpen: boolean }) {
                           <SidebarMenuSubButton asChild>
                             <a
                               href={item.url}
-                              className={`block text-sm px-3 py-2 rounded-md ${
-                                pathname === item.url
+                              className={`block text-sm px-3 py-2 rounded-md ${pathname === item.url
                                   ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30"
                                   : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                              }`}
+                                }`}
                             >
                               {item.title}
                             </a>

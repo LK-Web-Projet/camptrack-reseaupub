@@ -42,16 +42,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PrestataireCampagne, PaiementPrestataire } from '../../app/generated/prisma/index';
+import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
 
 
 // Interfaces (gardées telles quelles)
 interface Client {
-	id_client?: string;
-	nom?: string;
-	prenom?: string;
-	entreprise?: string | null;
-	contact?: string | null;
-	mail?: string | null;
+  id_client?: string;
+  nom?: string;
+  prenom?: string;
+  entreprise?: string | null;
+  contact?: string | null;
+  mail?: string | null;
 }
 interface Lieu { id_lieu?: string; nom?: string; ville?: string; }
 interface Service { id_service?: string; nom?: string; description?: string | null; }
@@ -64,18 +65,18 @@ interface Affectation {
     contact?: string;
     service?: { nom?: string } | null;
   };
-  PaiementPrestataire?: {
+  paiement?: {
     paiement_base?: number;
     sanction_montant?: number;
     paiement_final?: number;
-  } | null; // Ajout de la relation
+  } | null;
   date_creation?: string;
   status?: string;
 }
 interface Fichier { id_fichier: string; nom_fichier?: string; url?: string; description?: string | null; type_fichier?: string | null; date_creation?: string; }
 interface PrestataireListItem { id_prestataire: string; nom?: string; prenom?: string; contact?: string | null; service?: { nom?: string } | null; }
 interface Campagne {
-	id_campagne: string; nom_campagne?: string; description?: string | null; objectif?: string | null; quantite_service?: number | null; nbr_prestataire?: number | null; type_campagne?: string | null; date_debut?: string | null; date_fin?: string | null; status?: string | null; date_creation?: string | null; updated_at?: string | null; client?: Client | null; lieu?: Lieu | null; service?: Service | null; gestionnaire?: Gestionnaire | null; affectations?: Affectation[] | null; fichiers?: Fichier[] | null; _count?: { affectations?: number; fichiers?: number; dommages?: number };
+  id_campagne: string; nom_campagne?: string; description?: string | null; objectif?: string | null; quantite_service?: number | null; nbr_prestataire?: number | null; type_campagne?: string | null; date_debut?: string | null; date_fin?: string | null; status?: string | null; date_creation?: string | null; updated_at?: string | null; client?: Client | null; lieu?: Lieu | null; service?: Service | null; gestionnaire?: Gestionnaire | null; affectations?: Affectation[] | null; fichiers?: Fichier[] | null; _count?: { affectations?: number; fichiers?: number; dommages?: number };
 }
 
 // Composant pour afficher une information
@@ -98,21 +99,29 @@ const statusMap: { [key: string]: { label: string; color: "default" | "destructi
 };
 
 export default function DetailCampagne({ id }: { id: string }) {
-	const { apiClient } = useAuth();
-	const [campagne, setCampagne] = useState<Campagne | null>(null);
-	const [loading, setLoading] = useState(true);
-	
-	// Assign prestataire states
-	const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
-	const [selectedPrestataire, setSelectedPrestataire] = useState<string | null>(null);
-	const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-	
-	// Upload fichier states
-	const [fileType, setFileType] = useState("");
-	const [fileUpload, setFileUpload] = useState<File | null>(null);
-	const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const { apiClient } = useAuth();
+  const [campagne, setCampagne] = useState<Campagne | null>(null);
+  const [loading, setLoading] = useState(true);
 
-	const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
+  // Assign prestataire states
+  const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
+  const [selectedPrestataire, setSelectedPrestataire] = useState<string | null>(null);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+
+  // Upload fichier states
+  const [fileType, setFileType] = useState("");
+  const [fileUpload, setFileUpload] = useState<File | null>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+
+  // Incident modal states
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+  const [selectedPrestataireForIncident, setSelectedPrestataireForIncident] = useState<{
+    id: string;
+    nom: string;
+    prenom: string;
+  } | null>(null);
+
+  const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
 
   const fetchCampagne = useCallback(async () => {
     if (!id) return;
@@ -133,23 +142,23 @@ export default function DetailCampagne({ id }: { id: string }) {
     }
   }, [id, apiClient]);
 
-	useEffect(() => {
-		fetchCampagne();
-	}, [fetchCampagne]);
+  useEffect(() => {
+    fetchCampagne();
+  }, [fetchCampagne]);
 
-	const fetchPrestataires = useCallback(async () => {
-		try {
-			const res = await apiClient(`/api/prestataires?limit=500`);
-			if (!res.ok) throw new Error(`Erreur ${res.status}`);
-			const data = await res.json();
-			setPrestataires(data.prestataires || []);
-		} catch (err) {
-			console.error("Erreur fetch prestataires:", err);
-			toast.error(err instanceof Error ? err.message : "Erreur lors du chargement des prestataires");
-		}
-	}, [apiClient]);
+  const fetchPrestataires = useCallback(async () => {
+    try {
+      const res = await apiClient(`/api/prestataires?limit=500`);
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      const data = await res.json();
+      setPrestataires(data.prestataires || []);
+    } catch (err) {
+      console.error("Erreur fetch prestataires:", err);
+      toast.error(err instanceof Error ? err.message : "Erreur lors du chargement des prestataires");
+    }
+  }, [apiClient]);
 
-	const handleFileUpload = async () => {
+  const handleFileUpload = async () => {
     if (!fileUpload || !fileType) {
       toast.error("Veuillez sélectionner un fichier et un type");
       return;
@@ -162,7 +171,7 @@ export default function DetailCampagne({ id }: { id: string }) {
       const res = await apiClient(`/api/campagnes/${id}/fichiers`, { method: "POST", body: formData });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || "Erreur upload fichier");
-      
+
       toast.success("Fichier téléchargé avec succès");
       setCampagne(prev => prev ? { ...prev, fichiers: [body.fichier, ...(prev.fichiers || [])] } : null);
       setFileUpload(null); setFileType(""); setIsUploadDialogOpen(false);
@@ -171,46 +180,46 @@ export default function DetailCampagne({ id }: { id: string }) {
     }
   };
 
-	const handleAssign = async () => {
-		if (!selectedPrestataire) {
-			toast.error("Veuillez sélectionner un prestataire");
-			return;
-		}
-		try {
-			const res = await apiClient(`/api/campagnes/${id}/prestataires`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ id_prestataire: selectedPrestataire }),
-			});
-			const body = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
+  const handleAssign = async () => {
+    if (!selectedPrestataire) {
+      toast.error("Veuillez sélectionner un prestataire");
+      return;
+    }
+    try {
+      const res = await apiClient(`/api/campagnes/${id}/prestataires`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_prestataire: selectedPrestataire }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
 
-			toast.success(body.message || "Prestataire affecté avec succès");
+      toast.success(body.message || "Prestataire affecté avec succès");
       setCampagne(prev => {
         if (!prev) return prev;
         const updatedAffectations = [body.affectation, ...(prev.affectations || [])];
-        return { 
-          ...prev, 
+        return {
+          ...prev,
           affectations: updatedAffectations,
           _count: { ...prev._count, affectations: updatedAffectations.length }
         };
       });
-			setSelectedPrestataire(null);
-			setIsAssignDialogOpen(false);
-		} catch (err) {
-			console.error("Erreur assign prestataire:", err);
-			toast.error(err instanceof Error ? err.message : "Erreur lors de l'affectation");
-		}
-	};
+      setSelectedPrestataire(null);
+      setIsAssignDialogOpen(false);
+    } catch (err) {
+      console.error("Erreur assign prestataire:", err);
+      toast.error(err instanceof Error ? err.message : "Erreur lors de l'affectation");
+    }
+  };
 
-	if (loading) return (
+  if (loading) return (
     <div className="flex flex-col items-center justify-center py-10">
       <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
       <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">Chargement...</p>
     </div>
   );
 
-	if (!campagne) return (
+  if (!campagne) return (
     <div className="p-6 text-center">
       <p className="text-gray-500">Campagne non trouvée.</p>
       <Link href="/dashboard/campagnes" className="mt-4 inline-block">
@@ -219,9 +228,9 @@ export default function DetailCampagne({ id }: { id: string }) {
     </div>
   );
 
-	const currentStatus = statusMap[campagne.status || ""] || { label: campagne.status, color: "default" };
+  const currentStatus = statusMap[campagne.status || ""] || { label: campagne.status, color: "default" };
 
-	return (
+  return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -255,29 +264,25 @@ export default function DetailCampagne({ id }: { id: string }) {
           <InfoItem
             icon={<Calendar size={20} />}
             label="Période"
-            value={`${
-              campagne.date_debut
-                ? new Date(campagne.date_debut).toLocaleDateString("fr-FR")
-                : "-"
-            } au ${
-              campagne.date_fin
+            value={`${campagne.date_debut
+              ? new Date(campagne.date_debut).toLocaleDateString("fr-FR")
+              : "-"
+              } au ${campagne.date_fin
                 ? new Date(campagne.date_fin).toLocaleDateString("fr-FR")
                 : "-"
-            }`}
+              }`}
           />
           <InfoItem
             icon={<User size={20} />}
             label="Client"
-            value={`${campagne.client?.nom ?? ""} ${
-              campagne.client?.prenom ?? ""
-            } (${campagne.client?.entreprise ?? "N/A"})`}
+            value={`${campagne.client?.nom ?? ""} ${campagne.client?.prenom ?? ""
+              } (${campagne.client?.entreprise ?? "N/A"})`}
           />
           <InfoItem
             icon={<MapPin size={20} />}
             label="Lieu"
-            value={`${campagne.lieu?.nom ?? "-"} (${
-              campagne.lieu?.ville ?? "N/A"
-            })`}
+            value={`${campagne.lieu?.nom ?? "-"} (${campagne.lieu?.ville ?? "N/A"
+              })`}
           />
           <InfoItem
             icon={<ClipboardList size={20} />}
@@ -297,9 +302,8 @@ export default function DetailCampagne({ id }: { id: string }) {
           <InfoItem
             icon={<Users size={20} />}
             label="Prestataires"
-            value={`${campagne._count?.affectations ?? 0} / ${
-              campagne.nbr_prestataire ?? "N/A"
-            }`}
+            value={`${campagne._count?.affectations ?? 0} / ${campagne.nbr_prestataire ?? "N/A"
+              }`}
           />
           <InfoItem
             icon={<Paperclip size={20} />}
@@ -495,13 +499,13 @@ export default function DetailCampagne({ id }: { id: string }) {
                     </TableCell>
                     <TableCell>{a.status ?? "-"}</TableCell>
                     <TableCell>
-                      {a.PaiementPrestataire?.paiement_base ?? "-"}
+                      {a.paiement?.paiement_base ?? "-"}
                     </TableCell>
                     <TableCell>
-                      {a.PaiementPrestataire?.sanction_montant ?? "-"}
+                      {a.paiement?.sanction_montant ?? "-"}
                     </TableCell>
                     <TableCell>
-                      {a.PaiementPrestataire?.paiement_final ?? "-"}
+                      {a.paiement?.paiement_final ?? "-"}
                     </TableCell>
                     <TableCell>
                       <Link
@@ -511,11 +515,20 @@ export default function DetailCampagne({ id }: { id: string }) {
                           Voir
                         </Button>
                       </Link>
-                      <Link href={`#`}>
-                        <Button variant="outline" size="sm">
-                          Verification Materiels
-                        </Button>
-                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedPrestataireForIncident({
+                            id: a.prestataire.id_prestataire,
+                            nom: a.prestataire.nom || "",
+                            prenom: a.prestataire.prenom || ""
+                          });
+                          setIsIncidentModalOpen(true);
+                        }}
+                      >
+                        Verification Materiels
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -528,6 +541,31 @@ export default function DetailCampagne({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal d'incident */}
+      {selectedPrestataireForIncident && (
+        <AddIncidentModal
+          isOpen={isIncidentModalOpen}
+          onClose={() => {
+            setIsIncidentModalOpen(false);
+            setSelectedPrestataireForIncident(null);
+          }}
+          prestataireId={selectedPrestataireForIncident.id}
+          affectations={[
+            {
+              campagne: {
+                id_campagne: campagne?.id_campagne || "",
+                nom_campagne: campagne?.nom_campagne || ""
+              }
+            }
+          ]}
+          onIncidentAdded={() => {
+            // Recharger les données de la campagne pour mettre à jour les paiements
+            fetchCampagne();
+            toast.success("Incident enregistré avec succès");
+          }}
+        />
+      )}
     </div>
   );
 }

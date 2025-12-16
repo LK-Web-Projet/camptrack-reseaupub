@@ -121,8 +121,6 @@ export async function POST(request: NextRequest) {
       nom_materiel,
       etat,
       description,
-      montant_penalite,
-      penalite_appliquer,
       photo_url,
       preuve_media
     } = validation.data as MaterielsCase;
@@ -154,8 +152,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculer la pénalité automatique si l'état est MAUVAIS
-    let penaliteCalculee = montant_penalite;
+    // ========================================================================
+    // CALCUL AUTOMATIQUE DE LA PÉNALITÉ
+    // ========================================================================
+    // Si l'état est MAUVAIS, appliquer automatiquement une pénalité
+    // Le montant dépend du type de client (EXTERNE: 2000 FCFA, INTERNE: 1000 FCFA)
+    // Pour BON ou MOYEN, aucune pénalité n'est appliquée
+    // ========================================================================
+    let penaliteCalculee = 0;
+    let penaliteAppliquer = false;
+
     if (etat === 'MAUVAIS' && id_campagne) {
       const campagne = await prisma.campagne.findUnique({
         where: { id_campagne },
@@ -171,6 +177,7 @@ export async function POST(request: NextRequest) {
       if (campagne && campagne.client) {
         // Définir la pénalité selon le type de client
         penaliteCalculee = campagne.client.type_client === 'EXTERNE' ? 2000 : 1000;
+        penaliteAppliquer = true; // Appliquer automatiquement pour état MAUVAIS
       }
     }
 
@@ -183,7 +190,7 @@ export async function POST(request: NextRequest) {
         etat,
         description,
         montant_penalite: penaliteCalculee,
-        penalite_appliquer: penalite_appliquer || false,
+        penalite_appliquer: penaliteAppliquer,
         photo_url: photo_url || null,
         preuve_media: preuve_media || null
       },
