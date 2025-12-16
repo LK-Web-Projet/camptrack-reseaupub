@@ -19,12 +19,12 @@ export async function GET(request: NextRequest) {
     // Récupérer et valider les query params
     const { searchParams } = new URL(request.url);
     const queryParams = {
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      id_campagne: searchParams.get('id_campagne'),
-      id_prestataire: searchParams.get('id_prestataire'),
-      etat: searchParams.get('etat'),
-      penalite_appliquer: searchParams.get('penalite_appliquer')
+      page: searchParams.get('page') || undefined,
+      limit: searchParams.get('limit') || undefined,
+      id_campagne: searchParams.get('id_campagne') || undefined,
+      id_prestataire: searchParams.get('id_prestataire') || undefined,
+      etat: searchParams.get('etat') || undefined,
+      penalite_appliquer: searchParams.get('penalite_appliquer') || undefined
     };
 
     const validation = validateData(materielsCaseQuerySchema, queryParams);
@@ -149,6 +149,21 @@ export async function POST(request: NextRequest) {
       });
       if (!prestataire) {
         throw new AppError("Prestataire non trouvé", 404);
+      }
+    }
+
+    // Vérifier si ce matériel a déjà été vérifié pour cette campagne et ce prestataire
+    if (id_campagne && id_prestataire) {
+      const existingCase = await prisma.materielsCase.findFirst({
+        where: {
+          id_campagne,
+          id_prestataire,
+          nom_materiel
+        }
+      });
+
+      if (existingCase) {
+        throw new AppError("Ce matériel a déjà été vérifié pour cette campagne et ce prestataire", 409);
       }
     }
 

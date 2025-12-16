@@ -16,6 +16,8 @@ import {
     Edit2
 } from "lucide-react";
 import Link from "next/link";
+import { Paginate } from "../Paginate";
+import { useSearchParams } from "next/navigation";
 
 // Types basés sur l'API
 interface Paiement {
@@ -64,14 +66,18 @@ export default function PaiementTable() {
     const [editDate, setEditDate] = useState<string>("");
     const [saving, setSaving] = useState(false);
 
+    const searchParam = useSearchParams();
+    const page = parseInt(searchParam?.get("page") || "1");
+    const [totalPages, setTotalPages] = useState(1);
+
     const fetchPaiements = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             // Construction des query params
             const params = new URLSearchParams({
-                limit: "100",
-                page: "1"
+                limit: "7",
+                page: String(page)
             });
             if (filterStatut === "paid") params.append("statut_paiement", "true");
             if (filterStatut === "pending") params.append("statut_paiement", "false");
@@ -84,6 +90,7 @@ export default function PaiementTable() {
 
             const data = await res.json();
             setPaiements(data.paiements || []);
+            setTotalPages(data?.pagination?.totalPages || 1);
         } catch (err) {
             console.error("Erreur fetch paiements:", err);
             const message = err instanceof Error ? err.message : "Erreur inconnue";
@@ -92,7 +99,7 @@ export default function PaiementTable() {
         } finally {
             setLoading(false);
         }
-    }, [apiClient, filterStatut]);
+    }, [apiClient, filterStatut, page]);
 
     useEffect(() => {
         fetchPaiements();
@@ -109,6 +116,7 @@ export default function PaiementTable() {
 
     // Fonction pour ouvrir le modal de détails
     const handleViewDetails = async (paiement: Paiement) => {
+        console.log("handleViewDetails called with:", paiement);
         setSelectedPaiement(paiement);
         setIsEditing(false); // Reset edit mode
 
@@ -121,14 +129,26 @@ export default function PaiementTable() {
         // Charger les matériels casés associés
         setLoadingMateriels(true);
         try {
-            const params = new URLSearchParams({
+            console.log("Fetching materiels for:", {
                 id_campagne: paiement.id_campagne,
                 id_prestataire: paiement.id_prestataire
             });
-            const res = await apiClient(`/api/materiels-cases?${params.toString()}`);
+            const params = new URLSearchParams({
+                page: "1",
+                limit: "100",
+                id_campagne: paiement.id_campagne,
+                id_prestataire: paiement.id_prestataire
+            });
+            const url = `/api/materiels-cases?${params.toString()}`;
+            console.log("Fetching URL:", url);
+            const res = await apiClient(url);
+            console.log("Response status:", res.status);
             if (res.ok) {
                 const data = await res.json();
+                console.log("Materiels fetched:", data);
                 setMateriels(data.materiels_cases || []);
+            } else {
+                console.error("Error fetching materiels:", await res.text());
             }
         } catch (err) {
             console.error("Erreur chargement matériels:", err);
@@ -229,84 +249,87 @@ export default function PaiementTable() {
                         Aucun paiement trouvé pour ces critères.
                     </div>
                 ) : (
-                    <table className="min-w-full border-collapse text-left">
-                        <thead>
-                            <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Prestataire</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Campagne</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Montant Base</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Pénalités</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Net à Payer</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Statut</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {paiements.map((paiement) => (
-                                <tr key={paiement.id_paiement} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center">
-                                            <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold mr-3 text-gray-600 dark:text-gray-300">
-                                                {paiement.affectation.prestataire.nom.charAt(0)}{paiement.affectation.prestataire.prenom.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-gray-900 dark:text-white">
-                                                    {paiement.affectation.prestataire.nom} {paiement.affectation.prestataire.prenom}
-                                                </div>
-                                                <div className="text-xs text-gray-500">{paiement.affectation.prestataire.contact}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                        <div className="font-medium">{paiement.affectation.campagne.nom_campagne}</div>
-                                        <div className="text-xs text-gray-500">{paiement.affectation.campagne.client.nom}</div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-medium text-right text-gray-900 dark:text-white">
-                                        {formatMoney(paiement.paiement_base)}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-medium text-right text-red-600 dark:text-red-400">
-                                        {paiement.sanction_montant > 0 ? `-${formatMoney(paiement.sanction_montant)}` : "-"}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-bold text-right text-gray-900 dark:text-white">
-                                        {formatMoney(paiement.paiement_final)}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${paiement.statut_paiement
-                                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                            }`}>
-                                            {paiement.statut_paiement ? (
-                                                <>
-                                                    <CheckCircle className="w-3 h-3 mr-1" /> Payé
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <AlertCircle className="w-3 h-3 mr-1" /> En attente
-                                                </>
-                                            )}
-                                        </span>
-                                        {paiement.date_paiement && (
-                                            <div className="text-[10px] text-gray-400 mt-1">
-                                                le {new Date(paiement.date_paiement).toLocaleDateString("fr-FR")}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="flex justify-center gap-2">
-                                            {/* Action Voir */}
-                                            <button
-                                                onClick={() => handleViewDetails(paiement)}
-                                                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-[#d61353] transition"
-                                                title="Voir détails / Modifier"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
+                    <div>
+                        <table className="min-w-full border-collapse text-left">
+                            <thead>
+                                <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Prestataire</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Campagne</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Montant Base</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Pénalités</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Net à Payer</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Statut</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {paiements.map((paiement) => (
+                                    <tr key={paiement.id_paiement} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center">
+                                                <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold mr-3 text-gray-600 dark:text-gray-300">
+                                                    {paiement.affectation.prestataire.nom.charAt(0)}{paiement.affectation.prestataire.prenom.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-gray-900 dark:text-white">
+                                                        {paiement.affectation.prestataire.nom} {paiement.affectation.prestataire.prenom}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">{paiement.affectation.prestataire.contact}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                            <div className="font-medium">{paiement.affectation.campagne.nom_campagne}</div>
+                                            <div className="text-xs text-gray-500">{paiement.affectation.campagne.client.nom}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm font-medium text-right text-gray-900 dark:text-white">
+                                            {formatMoney(paiement.paiement_base)}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm font-medium text-right text-red-600 dark:text-red-400">
+                                            {paiement.sanction_montant > 0 ? `-${formatMoney(paiement.sanction_montant)}` : "-"}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm font-bold text-right text-gray-900 dark:text-white">
+                                            {formatMoney(paiement.paiement_final)}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${paiement.statut_paiement
+                                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                                }`}>
+                                                {paiement.statut_paiement ? (
+                                                    <>
+                                                        <CheckCircle className="w-3 h-3 mr-1" /> Payé
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <AlertCircle className="w-3 h-3 mr-1" /> En attente
+                                                    </>
+                                                )}
+                                            </span>
+                                            {paiement.date_paiement && (
+                                                <div className="text-[10px] text-gray-400 mt-1">
+                                                    le {new Date(paiement.date_paiement).toLocaleDateString("fr-FR")}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="flex justify-center gap-2">
+                                                {/* Action Voir */}
+                                                <button
+                                                    onClick={() => handleViewDetails(paiement)}
+                                                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-[#d61353] transition"
+                                                    title="Voir détails / Modifier"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/paiements" />}
+                    </div>
                 )}
             </div>
 

@@ -9,7 +9,7 @@ import EditUserModal from "@/components/user/EditUser"
 import DeleteUserModal from "@/components/user/DeleteUser"
 import { Paginate } from "../Paginate"
 
-import {useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 interface User {
   id_user: string
@@ -20,6 +20,20 @@ interface User {
   contact: string
   created_at: string
 }
+
+const getUserBadgeColor = (type: string) => {
+  switch (type) {
+    case "ADMIN": return "bg-pink-100 text-pink-700";
+    case "SUPERVISEUR_CAMPAGNE": return "bg-blue-100 text-blue-700";
+    case "CONTROLEUR": return "bg-yellow-100 text-yellow-700";
+    case "OPERATIONNEL": return "bg-green-100 text-green-700";
+    default: return "bg-gray-100 text-gray-700";
+  }
+};
+
+const formatUserType = (type: string) => {
+  return type.replace(/_/g, " ");
+};
 
 export default function TableUser() {
   const { apiClient } = useAuth()
@@ -34,15 +48,15 @@ export default function TableUser() {
   const [userToEdit, setUserToEdit] = useState<User | null>(null)
   const [totalPages, setTotalPages] = useState(1);
 
-  
-    const searchParam = useSearchParams();
-    const page = parseInt(searchParam?.get("page") || "1");
+
+  const searchParam = useSearchParams();
+  const page = parseInt(searchParam?.get("page") || "1");
 
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true)
       try {
-        const res = await apiClient("/api/users?page="+page+"&limit=1")
+        const res = await apiClient("/api/users?page=" + page + "&limit=7")
         if (!res.ok) throw new Error("Erreur lors du chargement des utilisateurs")
         const data = await res.json()
         setUsers(Array.isArray(data) ? data : data?.users || [])
@@ -132,14 +146,14 @@ export default function TableUser() {
 
       {/* TABLE */}
       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
-       {loading ? (
-  <div className="flex flex-col items-center justify-center py-10">
-    <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
-    <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
-      Chargement des utilisateurs...
-    </p>
-  </div>
-)  : error ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
+            <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
+              Chargement des utilisateurs...
+            </p>
+          </div>
+        ) : error ? (
 
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : users.length === 0 ? (
@@ -147,81 +161,70 @@ export default function TableUser() {
         ) : (
           <div>
             <table className="min-w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800 text-left text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">
-                <th className="px-6 py-3">Nom & Prénom</th>
-                <th className="px-6 py-3">Type d&apos;utilisateur</th>
-                <th className="px-6 py-3">Email & Contact</th>
-                <th className="px-6 py-3">Date de création</th>
-                <th className="px-6 py-3 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {users.map((user, index) => (
-                <tr
-                  key={user.id_user}
-                  className={`transition hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                    index % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-950"
-                  }`}
-                >
-                  <td className="px-6 py-4 font-medium">
-                    {user.nom} {user.prenom}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                        user.type_user === "ADMIN"
-                          ? "bg-pink-100 text-pink-700"
-                          : user.type_user === "SUPERVISEUR_CAMPAGNE"
-                          ? "bg-blue-100 text-blue-700"
-                          : user.type_user === "CONTROLEUR"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : user.type_user === "OPERATIONNEL"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {user.type_user.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{user.email}</span>
-                      <span className="text-xs text-gray-500">{user.contact}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {new Date(user.created_at).toLocaleDateString("fr-FR")}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center gap-3">
-                     <button
-  onClick={() => {
-    setUserToEdit(user) // 👈 On stocke l'utilisateur sélectionné
-    setIsEditModalOpen(true)
-  }}
-  className="p-2 rounded-lg  cursor-pointer  bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
->
-  <Pencil className="w-4 h-4" />
-</button>
-
-                      <button
-                        onClick={() => {
-                          setUserToDelete(user)
-                          setIsDeleteOpen(true)
-                        }}
-                        className="p-2  cursor-pointer  rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800 text-left text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">
+                  <th className="px-6 py-3">Nom & Prénom</th>
+                  <th className="px-6 py-3">Type d&apos;utilisateur</th>
+                  <th className="px-6 py-3">Email & Contact</th>
+                  <th className="px-6 py-3">Date de création</th>
+                  <th className="px-6 py-3 text-center">Actions</th>
                 </tr>
-              ))}
-            </tbody>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {users.map((user, index) => (
+                  <tr
+                    key={user.id_user}
+                    className={`transition hover:bg-gray-100 dark:hover:bg-gray-800 ${index % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-950"
+                      }`}
+                  >
+                    <td className="px-6 py-4 font-medium">
+                      {user.nom} {user.prenom}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-3 py-1 text-xs font-semibold rounded-full ${getUserBadgeColor(user.type_user)}`}
+                      >
+                        {formatUserType(user.type_user)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{user.email}</span>
+                        <span className="text-xs text-gray-500">{user.contact}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {new Date(user.created_at).toLocaleDateString("fr-FR")}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center gap-3">
+                        <button
+                          onClick={() => {
+                            setUserToEdit(user) // 👈 On stocke l'utilisateur sélectionné
+                            setIsEditModalOpen(true)
+                          }}
+                          className="p-2 rounded-lg  cursor-pointer  bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setUserToDelete(user)
+                            setIsDeleteOpen(true)
+                          }}
+                          className="p-2  cursor-pointer  rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
-            { totalPages === 1 ? ''
-            :<Paginate pages ={totalPages} currentPage={page} path="/dashboard/admin" />
+            {totalPages === 1 ? ''
+              : <Paginate pages={totalPages} currentPage={page} path="/dashboard/admin" />
             }
           </div>
 
@@ -234,15 +237,15 @@ export default function TableUser() {
         onClose={() => setIsModalOpen(false)}
         onAddUser={handleAddUser}
       />
-    <EditUserModal
-  isOpen={isEditModalOpen}
-  onClose={() => {
-    setIsEditModalOpen(false)
-    setUserToEdit(null)
-  }}
-  onEditUser={handleEditUser}
-  user={userToEdit} 
-/>
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setUserToEdit(null)
+        }}
+        onEditUser={handleEditUser}
+        user={userToEdit}
+      />
 
       <DeleteUserModal
         isOpen={isDeleteOpen}

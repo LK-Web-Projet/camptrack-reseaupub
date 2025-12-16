@@ -7,6 +7,8 @@ import EditClientModal from "@/components/clients/EditClient";
 import DeleteClientModal from "@/components/clients/DeleteClient";
 import { toast } from "react-toastify";
 import { useAuth } from "@/app/context/AuthContext";
+import { Paginate } from "../Paginate";
+import { useSearchParams } from "next/navigation";
 
 type Client = {
   id_client: string;
@@ -36,16 +38,21 @@ export default function ClientTable() {
   const { apiClient } = useAuth()
   const [clients, setClients] = useState<Client[]>([]);
 
+  const searchParam = useSearchParams();
+  const page = parseInt(searchParam?.get("page") || "1");
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     const fetchClients = async () => {
       setLoading(true);
       try {
-        const res = await apiClient("/api/clients?page=1&limit=50");
+        const res = await apiClient(`/api/clients?page=${page}&limit=7`);
 
         if (!res.ok) throw new Error("Erreur lors du chargement des clients");
 
         const data = await res.json();
         setClients(Array.isArray(data) ? data : data?.clients || []);
+        setTotalPages(data?.pagination?.totalPages || 1);
       } catch (e) {
         setError("Impossible de charger les clients");
         toast.error("Impossible de charger les clients");
@@ -55,9 +62,9 @@ export default function ClientTable() {
     };
 
     fetchClients();
-  }, [apiClient]);
+  }, [apiClient, page]);
 
-   const handleAddClient = async (newUser: Client) => {
+  const handleAddClient = async (newUser: Client) => {
     try {
       const res = await apiClient("/api/clients", {
         method: "POST",
@@ -81,8 +88,8 @@ export default function ClientTable() {
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
- 
- const handleEditClient = async (updatedClient: Client) => {
+
+  const handleEditClient = async (updatedClient: Client) => {
     try {
       const res = await apiClient(`/api/clients/${updatedClient.id_client}`, {
         method: "PUT",
@@ -101,10 +108,10 @@ export default function ClientTable() {
   }
 
 
-const confirmDeleteClient = async (client: Client) => {
+  const confirmDeleteClient = async (client: Client) => {
     if (clientToDelete) {
       try {
-    const res = await apiClient(`/api/clients/${client.id_client}`, {
+        const res = await apiClient(`/api/clients/${client.id_client}`, {
           method: "DELETE",
         })
         if (!res.ok) throw new Error("Erreur lors de la suppression")
@@ -138,102 +145,104 @@ const confirmDeleteClient = async (client: Client) => {
         </button>
       </div>
 
-       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
-       {loading ? (
-  <div className="flex flex-col items-center justify-center py-10">
-    <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
-    <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
-      Chargement des clients...
-    </p>
-  </div>
-)  : error ? (
+      <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
+            <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
+              Chargement des clients...
+            </p>
+          </div>
+        ) : error ? (
 
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : clients.length === 0 ? (
           <div className="text-center py-8 text-gray-500">Aucun client trouvé</div>
         ) : (
-          <table className="min-w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800 text-left text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">
-                <th className="px-6 py-3">Client</th>
-                <th className="px-6 py-3">Entreprise / Adresse</th>
-                <th className="px-6 py-3">Email / Contact</th>
-                <th className="px-6 py-3">Domaine / Type</th>
-                <th className="px-6 py-3">Date de création</th>
-                <th className="px-6 py-3">Actions</th>
-              </tr>
-            </thead>
+          <div>
+            <table className="min-w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800 text-left text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">
+                  <th className="px-6 py-3">Client</th>
+                  <th className="px-6 py-3">Entreprise / Adresse</th>
+                  <th className="px-6 py-3">Email / Contact</th>
+                  <th className="px-6 py-3">Domaine / Type</th>
+                  <th className="px-6 py-3">Date de création</th>
+                  <th className="px-6 py-3">Actions</th>
+                </tr>
+              </thead>
 
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {clients.map((c, i) => (
-                <tr
-                  key={c.id_client}
-                  className={`transition hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                    i % 2 === 0
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {clients.map((c, i) => (
+                  <tr
+                    key={c.id_client}
+                    className={`transition hover:bg-gray-50 dark:hover:bg-gray-800 ${i % 2 === 0
                       ? "bg-white dark:bg-gray-900"
                       : "bg-gray-50 dark:bg-gray-950"
-                  }`}
-                >
-                  <td className="px-6 py-4 font-medium">
-                    {c.nom} {c.prenom}
-                  </td>
+                      }`}
+                  >
+                    <td className="px-6 py-4 font-medium">
+                      {c.nom} {c.prenom}
+                    </td>
 
-                  <td className="px-6 py-4">
-                    <div className="font-medium">{c.entreprise || "-"}</div>
-                    <div className="text-xs text-gray-500">
-                      {c.adresse || "-"}
-                    </div>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium">{c.entreprise || "-"}</div>
+                      <div className="text-xs text-gray-500">
+                        {c.adresse || "-"}
+                      </div>
+                    </td>
 
-                  <td className="px-6 py-4">
-                    <div className="font-medium">{c.mail || "-"}</div>
-                    <div className="text-xs text-gray-500">
-                      {c.contact || "-"}
-                    </div>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium">{c.mail || "-"}</div>
+                      <div className="text-xs text-gray-500">
+                        {c.contact || "-"}
+                      </div>
+                    </td>
 
-                  <td className="px-6 py-4">
-                    <div className="font-medium">
-                      {c.domaine_entreprise || "-"}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {c.type_client || "-"}
-                    </div>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium">
+                        {c.domaine_entreprise || "-"}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {c.type_client || "-"}
+                      </div>
+                    </td>
 
-                  <td className="px-6 py-4">{formatDate(c.created_at)}</td>
+                    <td className="px-6 py-4">{formatDate(c.created_at)}</td>
 
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center gap-3">
-                      <button
-                        onClick={() => {
-                          setClientToEdit(c);
-                          setIsEditOpen(true);
-                        }}
-                        className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center gap-3">
+                        <button
+                          onClick={() => {
+                            setClientToEdit(c);
+                            setIsEditOpen(true);
+                          }}
+                          className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
 
-                      <button
-                        onClick={() => {
-                          setClientToDelete(c);
-                          setIsDeleteOpen(true);
-                        }}
-                        className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-           )}
-        </div>
-        
-     
+                        <button
+                          onClick={() => {
+                            setClientToDelete(c);
+                            setIsDeleteOpen(true);
+                          }}
+                          className="p-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/clients" />}
+          </div>
+        )}
+      </div>
+
+
 
       {/* Modals */}
       <AddClientModal
@@ -245,31 +254,33 @@ const confirmDeleteClient = async (client: Client) => {
         }}
       />
 
-      {clientToEdit && (
-        <EditClientModal
-          isOpen={isEditOpen}
-          onClose={() => setIsEditOpen(false)}
-          client={clientToEdit}
-          onEditClient={(c) => {
-            handleEditClient(c);
-            setIsEditOpen(false);
-            setClientToEdit(null);
-          }}
-        />
-      )}
+      {
+        clientToEdit && (
+          <EditClientModal
+            isOpen={isEditOpen}
+            onClose={() => setIsEditOpen(false)}
+            client={clientToEdit}
+            onEditClient={(c) => {
+              handleEditClient(c);
+              setIsEditOpen(false);
+              setClientToEdit(null);
+            }}
+          />
+        )
+      }
 
-       <DeleteClientModal
-              isOpen={isDeleteOpen}
-              onClose={() => {
-                setIsDeleteOpen(false)
-                setClientToDelete(null)
-              }}
-              onConfirm={() => {
-                if (clientToDelete) {
-                  confirmDeleteClient(clientToDelete)
-                }
-              }}
-            />
-    </div>
+      <DeleteClientModal
+        isOpen={isDeleteOpen}
+        onClose={() => {
+          setIsDeleteOpen(false)
+          setClientToDelete(null)
+        }}
+        onConfirm={() => {
+          if (clientToDelete) {
+            confirmDeleteClient(clientToDelete)
+          }
+        }}
+      />
+    </div >
   );
 }

@@ -7,6 +7,8 @@ import EditLieuModal from "./EditLieu";
 import DeleteLieuModal from "./DeleteLieu";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
+import { Paginate } from "../Paginate";
+import { useSearchParams } from "next/navigation";
 
 export type Lieu = {
   id_lieu: string;
@@ -21,7 +23,7 @@ export default function LieuTable() {
 
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -30,16 +32,21 @@ export default function LieuTable() {
   const [lieuToEdit, setLieuToEdit] = useState<Lieu | null>(null);
   const [lieuToDelete, setLieuToDelete] = useState<Lieu | null>(null);
 
+  const searchParam = useSearchParams();
+  const page = parseInt(searchParam?.get("page") || "1");
+  const [totalPages, setTotalPages] = useState(1);
+
   // ✅ Recharger les lieux
   const fetchLieux = async () => {
     setLoading(true);
     try {
-      const res = await apiClient(`/api/lieux/`);
+      const res = await apiClient(`/api/lieux?page=${page}&limit=7`);
 
       if (!res.ok) throw new Error("Erreur API");
 
       const data = await res.json();
       setLieux(data.lieux || []);
+      setTotalPages(data?.pagination?.totalPages || 1);
 
     } catch (error) {
       console.error("Erreur API :", error);
@@ -51,7 +58,7 @@ export default function LieuTable() {
 
   useEffect(() => {
     fetchLieux();
-  }, [apiClient]);
+  }, [apiClient, page]);
 
   return (
     <div className="p-6 text-gray-900 dark:text-white">
@@ -72,78 +79,81 @@ export default function LieuTable() {
       </div>
 
       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
-       {loading ? (
-  <div className="flex flex-col items-center justify-center py-10">
-    <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
-    <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
-      Chargement des lieux...
-    </p>
-  </div>
-)  : error ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
+            <p className="mt-3 text-gray-600 dark:text-gray-300 font-medium">
+              Chargement des lieux...
+            </p>
+          </div>
+        ) : error ? (
 
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : lieux.length === 0 ? (
           <div className="text-center py-8 text-gray-500">Aucun lieu trouvé</div>
         ) : (
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800">
-                <th className="px-6 py-3 text-sm font-semibold">Nom du lieu</th>
-                <th className="px-6 py-3 text-sm font-semibold">Ville</th>
-                <th className="px-6 py-3 text-sm font-semibold">Campagnes</th>
-                <th className="px-6 py-3 text-sm font-semibold">Créé le</th>
-                <th className="px-6 py-3 text-sm font-semibold text-center">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-              {lieux.map((lieu) => (
-                <tr key={lieu.id_lieu}>
-                  <td className="px-6 py-3">{lieu.nom}</td>
-                  <td className="px-6 py-3">{lieu.ville}</td>
-                  <td className="px-6 py-3 text-center">{lieu._count?.campagnes || 0}</td>
-                  <td className="px-6 py-3">
-                    {new Date(lieu.created_at).toLocaleDateString("fr-FR")}
-                  </td>
-
-                  <td className="px-6 py-3 text-center">
-                    <div className="flex justify-center gap-3">
-                      <button
-                        onClick={() => {
-                          setLieuToEdit(lieu);
-                          setIsEditModalOpen(true);
-                        }}
-                        className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setLieuToDelete(lieu);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+          <div>
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800">
+                  <th className="px-6 py-3 text-sm font-semibold">Nom du lieu</th>
+                  <th className="px-6 py-3 text-sm font-semibold">Ville</th>
+                  <th className="px-6 py-3 text-sm font-semibold">Campagnes</th>
+                  <th className="px-6 py-3 text-sm font-semibold">Créé le</th>
+                  <th className="px-6 py-3 text-sm font-semibold text-center">Actions</th>
                 </tr>
-              ))}
+              </thead>
 
-              {lieux.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="text-center py-6 text-gray-500">
-                    Aucun lieu trouvé.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-              )}
-        </div>
-  
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                {lieux.map((lieu) => (
+                  <tr key={lieu.id_lieu}>
+                    <td className="px-6 py-3">{lieu.nom}</td>
+                    <td className="px-6 py-3">{lieu.ville}</td>
+                    <td className="px-6 py-3 text-center">{lieu._count?.campagnes || 0}</td>
+                    <td className="px-6 py-3">
+                      {new Date(lieu.created_at).toLocaleDateString("fr-FR")}
+                    </td>
+
+                    <td className="px-6 py-3 text-center">
+                      <div className="flex justify-center gap-3">
+                        <button
+                          onClick={() => {
+                            setLieuToEdit(lieu);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setLieuToDelete(lieu);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {lieux.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center py-6 text-gray-500">
+                      Aucun lieu trouvé.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/lieux" />}
+          </div>
+        )}
+      </div>
+
 
       {/* MODALS */}
       <AddLieuModal
