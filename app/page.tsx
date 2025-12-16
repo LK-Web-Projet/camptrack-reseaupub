@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const { login } = useAuth()
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
   const searchParams = useSearchParams()
 
   // ✅ Afficher un toast si redirection avec authError=true
@@ -37,18 +38,22 @@ export default function LoginPage() {
         .required("Le mot de passe est obligatoire"),
     }),
     onSubmit: async (values) => {
-      try {
-        const success = await login(values.email, values.password)
-        if (success) {
-          toast.success("Connexion réussie !")
-          // tu peux router.push("/dashboard") ici si besoin
-        } else {
-          toast.error("Identifiants incorrects")
-        }
-      } catch {
-        toast.error("Erreur lors de la connexion")
-      }
-    },
+  setIsLoading(true)
+  try {
+    const success = await login(values.email, values.password)
+    if (success) {
+      toast.success("Connexion réussie !")
+      // router.push("/dashboard")
+    } else {
+      toast.error("Identifiants incorrects")
+    }
+  } catch {
+    toast.error("Erreur lors de la connexion")
+  } finally {
+    setIsLoading(false)
+  }
+},
+
   })
 
   return (
@@ -133,12 +138,20 @@ export default function LoginPage() {
           </div>
 
           {/* Bouton */}
-          <button
-            type="submit"
-            className="w-full bg-[#d61353] hover:bg-[#b01045] text-white font-semibold py-2 rounded-lg transition duration-200"
-          >
-            Se connecter
-          </button>
+         <button
+  type="submit"
+  disabled={isLoading}
+  className={`w-full flex justify-center items-center gap-2 bg-[#d61353] hover:bg-[#b01045] text-white font-semibold py-2 rounded-lg transition duration-200
+    ${isLoading ? "opacity-70 cursor-not-allowed" : ""}
+  `}
+>
+  {isLoading ? (
+    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+  ) : (
+    "Se connecter"
+  )}
+</button>
+
         </form>
       </div>
     </div>

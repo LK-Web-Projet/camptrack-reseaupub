@@ -98,7 +98,7 @@ export default function DetailPrestataire({ id }: { id: string }) {
     <div className="p-6 space-y-6">
       {/* HEADER */}
       <div className="flex items-center justify-between">
-        <Link href="/dashboard/prestataires">
+        <Link href="/prestataires">
           <Button variant="outline" className="flex items-center gap-2">
             <ArrowLeft className="w-5 h-5" />
             Retour
