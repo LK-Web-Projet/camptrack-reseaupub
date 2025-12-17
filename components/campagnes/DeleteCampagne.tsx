@@ -18,22 +18,20 @@ interface DeleteCampagneModalProps {
 }
 
 export default function DeleteCampagneModal({ isOpen, onClose, campagne, onCampagneUpdated }: DeleteCampagneModalProps) {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
-    if (!token || !campagne) {
-      toast.error("Vous devez être connecté pour supprimer une campagne")
+    if (!campagne) {
       return
     }
 
     setIsDeleting(true)
     try {
-      const res = await fetch(`/api/campagnes/${campagne.id_campagne}`, {
+      const res = await apiClient(`/api/campagnes/${campagne.id_campagne}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       })
 

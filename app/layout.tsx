@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import ToastProvider from "@/components/providers/ToastProvider";
+import { GlobalLinkLoader } from "@/components/ui/GlobalLinkLoader";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider />
+            <GlobalLinkLoader />
             {children}
           </AuthProvider>
         </ThemeProvider>

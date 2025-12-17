@@ -264,9 +264,9 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
                   )}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="id_lieu">Lieu</Label>
                   <Select
                     name="id_lieu"
@@ -404,15 +404,15 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
                 <Button type="button" variant="outline" onClick={onClose}>
                   Annuler
                 </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? "Création..." : "Créer la campagne"}
+                <Button type="submit" loading={submitting}>
+                  Créer la campagne
                 </Button>
               </div>
             </form>
           )}
         </div>
       </div>
-      
+
       {/* Add Client Modal */}
       {isAddClientOpen && (
         <AddClientModal

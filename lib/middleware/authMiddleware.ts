@@ -21,7 +21,7 @@ async function isTokenRevoked(jti: string): Promise<boolean> {
       }
     }
   });
-  
+
   return !!revokedToken;
 }
 
@@ -36,7 +36,7 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
     }
 
     const token = auth.replace(/^Bearer\s+/i, "");
-    
+
     let payload: TokenPayloadShape;
     try {
       payload = verifyAccessToken(token) as TokenPayloadShape;
@@ -93,7 +93,7 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
 
 export async function requireAdmin(req: Request): Promise<AuthResult> {
   const authResult = await requireAuth(req);
-  
+
   if (!authResult.ok) {
     return authResult;
   }
@@ -110,7 +110,7 @@ export async function requireAdmin(req: Request): Promise<AuthResult> {
 
 export async function requireRoles(req: Request, allowedRoles: string[]): Promise<AuthResult> {
   const authResult = await requireAuth(req);
-  
+
   if (!authResult.ok) {
     return authResult;
   }
@@ -118,9 +118,9 @@ export async function requireRoles(req: Request, allowedRoles: string[]): Promis
   if (!allowedRoles.includes(authResult.user?.type_user)) {
     return {
       ok: false,
-      response: NextResponse.json({ 
+      response: NextResponse.json({
         error: "Accès refusé - Rôle insuffisant",
-        requiredRoles: allowedRoles 
+        requiredRoles: allowedRoles
       }, { status: 403 })
     };
   }

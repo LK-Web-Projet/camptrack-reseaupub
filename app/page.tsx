@@ -19,8 +19,8 @@ export default function LoginPage() {
 
   // ✅ Afficher un toast si redirection avec authError=true
   useEffect(() => {
-    if (searchParams.get("authError") === "true") {
-      toast.error("Veuillez vous authentifier avant d'accéder à cette page!")
+    if (searchParams.get("authError")) {
+      toast.error("Session expirée. Veuillez vous reconnecter.");
     }
   }, [searchParams])
 
@@ -38,21 +38,20 @@ export default function LoginPage() {
         .required("Le mot de passe est obligatoire"),
     }),
     onSubmit: async (values) => {
-  setIsLoading(true)
-  try {
-    const success = await login(values.email, values.password)
-    if (success) {
-      toast.success("Connexion réussie !")
-      // router.push("/dashboard")
-    } else {
-      toast.error("Identifiants incorrects")
-    }
-  } catch {
-    toast.error("Erreur lors de la connexion")
-  } finally {
-    setIsLoading(false)
-  }
-},
+      setIsLoading(true)
+      try {
+        const success = await login(values.email, values.password)
+        if (success) {
+          toast.success("Connexion réussie !")
+        } else {
+          toast.error("Identifiants incorrects")
+        }
+      } catch {
+        toast.error("Erreur lors de la connexion")
+      } finally {
+        setIsLoading(false)
+      }
+    },
 
   })
 
@@ -138,19 +137,19 @@ export default function LoginPage() {
           </div>
 
           {/* Bouton */}
-         <button
-  type="submit"
-  disabled={isLoading}
-  className={`w-full flex justify-center items-center gap-2 bg-[#d61353] hover:bg-[#b01045] text-white font-semibold py-2 rounded-lg transition duration-200
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-full flex justify-center items-center gap-2 bg-[#d61353] hover:bg-[#b01045] text-white font-semibold py-2 rounded-lg transition duration-200
     ${isLoading ? "opacity-70 cursor-not-allowed" : ""}
   `}
->
-  {isLoading ? (
-    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-  ) : (
-    "Se connecter"
-  )}
-</button>
+          >
+            {isLoading ? (
+              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            ) : (
+              "Se connecter"
+            )}
+          </button>
 
         </form>
       </div>

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { useAuth } from "@/app/context/AuthContext";
+
 interface Props {
   campagneId: string;
   onClose: () => void;
@@ -11,6 +13,7 @@ export default function VerificationMaterielleModal({
   campagneId,
   onClose,
 }: Props) {
+  const { apiClient } = useAuth();
   const [loading, setLoading] = useState(true);
   const [materiels, setMateriels] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -19,7 +22,7 @@ export default function VerificationMaterielleModal({
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await fetch(`/api/campagnes/${campagneId}/materiels-cases`);
+        const res = await apiClient(`/api/campagnes/${campagneId}/materiels-cases`);
         const json = await res.json();
 
         if (!res.ok) {
@@ -38,7 +41,7 @@ export default function VerificationMaterielleModal({
     }
 
     loadData();
-  }, [campagneId]);
+  }, [campagneId, apiClient]);
 
   if (loading) {
     return (
@@ -53,7 +56,7 @@ export default function VerificationMaterielleModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-3xl p-6 rounded-xl relative">
-        
+
         {/* Bouton fermer */}
         <button
           onClick={onClose}

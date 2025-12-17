@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    if (loading) return; // on attend la fin du chargement
+    if (isLoading) return; // on attend la fin du chargement
 
     if (!user) {
       toast.info("Veuillez vous connecter avant d'accéder à cette page.");
@@ -24,10 +24,10 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
     // On valide après sécurisation du rendu
     setVerified(true);
-  }, [loading, user, router]);
+  }, [isLoading, user, router]);
 
   // En attente = on n'affiche rien (évite un rendu inutile)
-  if (loading || !verified) {
+  if (isLoading || !verified) {
     return null;
   }
 
