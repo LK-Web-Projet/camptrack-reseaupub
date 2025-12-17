@@ -1,8 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { jwtDecode, JwtPayload } from "jwt-decode";
+import { useRouter, usePathname } from "next/navigation"
 
 type User = {
   id_user: string
@@ -17,14 +16,13 @@ type User = {
   is_active?: boolean
 }
 
-// Étendre le type pour inclure la nouvelle fonction apiClient
 type AuthContextType = {
   user: User | null
-  token: string | null
-  refreshToken: string | null
+  isLoading: boolean
   login: (email: string, password: string) => Promise<boolean>
-  logout: () => void
-  apiClient: (url: string, options?: RequestInit) => Promise<Response>
+  logout: () => Promise<void>
+  checkSession: () => Promise<string | null> // Modified to return token or null
+  apiClient: (url: string, options?: RequestInit) => Promise<Response> // Added apiClient
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -32,30 +30,55 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
-  const [refreshToken, setRefreshToken] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const pathname = usePathname()
 
-  const logout = useCallback(() => {
-    setUser(null)
-    setToken(null)
-    setRefreshToken(null)
-    localStorage.removeItem("user")
-    localStorage.removeItem("accessToken")
-    localStorage.removeItem("refreshToken")
-    router.push("/")
-  }, [router])
+  // Fonction pour vérifier la session (Silent Refresh)
+  const checkSession = useCallback(async (): Promise<string | null> => {
+    try {
+      const res = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Pas de body nécessaire, le cookie est envoyé automatiquement
+      });
 
-  // Restaure l'état depuis le localStorage au chargement
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user")
-    const storedToken = localStorage.getItem("accessToken")
-    const storedRefresh = localStorage.getItem("refreshToken")
-    if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser))
-      setToken(storedToken)
-      setRefreshToken(storedRefresh || null)
+      if (res.ok) {
+        const data = await res.json();
+        // On stocke le token en mémoire pour les appels API
+        setToken(data.accessToken);
+
+        // On décode le token pour avoir les infos user minimales
+        const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+
+        setUser({
+          id_user: payload.userId,
+          email: payload.email,
+          type_user: payload.role,
+          nom: "", // Manquant dans le token
+          prenom: "", // Manquant dans le token
+          nom_utilisateur: "",
+          contact: ""
+        });
+        return data.accessToken; // Return the new token
+      } else {
+        setUser(null);
+        setToken(null);
+        return null;
+      }
+    } catch {
+      setUser(null);
+      setToken(null);
+      return null;
+    } finally {
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
+
+  // Initialisation : Tenter de restaurer la session au chargement
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -64,21 +87,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
+
       if (!res.ok) {
         return false
       }
+
       const data = await res.json()
+      // L'endpoint login renvoie { success, user, accessToken, refreshToken }
       setUser(data.user)
       setToken(data.accessToken)
-      setRefreshToken(data.refreshToken)
-      localStorage.setItem("user", JSON.stringify(data.user))
-      localStorage.setItem("accessToken", data.accessToken)
-      localStorage.setItem("refreshToken", data.refreshToken)
-      
+
+      // Redirection
       if (data.user.type_user === "ADMIN") {
         router.push("/dashboard/admin")
       } else {
-        router.push("/")
+        router.push("/") // Ou dashboard standard
       }
       return true
     } catch (e) {
@@ -86,73 +109,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const refreshAuthToken = useCallback(async (currentRefreshToken: string) => {
+  const logout = async () => {
     try {
-      const res = await fetch("/api/auth/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: currentRefreshToken }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Refresh failed");
-      }
-
-      const data = await res.json();
-      setToken(data.accessToken);
-      setRefreshToken(data.refreshToken);
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      return data.accessToken;
-    } catch (error) {
-      logout();
-      return null;
+      await fetch("/api/auth/logout", { method: "POST" })
+    } catch (e) {
+      console.error("Logout error", e)
+    } finally {
+      setUser(null)
+      setToken(null)
+      router.push("/")
     }
-  }, [logout]);
-  
+  }
+
+  // Client API qui injecte le token et gère le refresh automatique
   const apiClient = useCallback(async (url: string, options: RequestInit = {}) => {
     let currentToken = token;
-  
-    if (currentToken) {
-      const decodedToken = jwtDecode<JwtPayload>(currentToken);
-      // Refresh 60 seconds before expiry
-      const isExpired = decodedToken.exp! * 1000 < Date.now() + 60000;
-  
-      if (isExpired) {
-        if (refreshToken) {
-          const newAccessToken = await refreshAuthToken(refreshToken);
-          if (newAccessToken) {
-            currentToken = newAccessToken;
-          } else {
-            // Refresh failed, logout was called, stop the request
-            throw new Error("Session expired. Please log in again.");
-          }
-        } else {
-          logout();
-          throw new Error("Session expired. Please log in again.");
-        }
-      }
-    }
-  
+
     const headers = new Headers(options.headers || {});
     if (currentToken) {
       headers.set("Authorization", `Bearer ${currentToken}`);
     }
-  
-    const response = await fetch(url, { ...options, headers });
-  
+
+    let response = await fetch(url, { ...options, headers });
+
+    // Si 401 Unauthorized, on tente un refresh
     if (response.status === 401) {
-      // If we get a 401 even after a potential refresh, it's a definitive logout.
-      logout();
-      throw new Error("Unauthorized");
+      const newToken = await checkSession(); // checkSession now returns the new token or null
+      if (newToken) {
+        // Retry avec le nouveau token
+        headers.set("Authorization", `Bearer ${newToken}`);
+        response = await fetch(url, { ...options, headers });
+      } else {
+        // Refresh raté -> Logout
+        logout();
+        throw new Error("Session expirée ou rafraîchissement impossible.");
+      }
     }
-  
+
     return response;
-  }, [token, refreshToken, logout, refreshAuthToken]);
-  
+  }, [token, logout, checkSession]);
 
   return (
-    <AuthContext.Provider value={{ user, token, refreshToken, login, logout, apiClient }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, checkSession, apiClient }}>
       {children}
     </AuthContext.Provider>
   )

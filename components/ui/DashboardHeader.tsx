@@ -105,8 +105,14 @@ export default function DashboardHeader({
                 </li>
                 <li>
                   <button
-                    onClick={logoutUser}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500"
+                    onClick={async () => {
+                      setIsUserMenuOpen(false);
+                      const btn = document.getElementById("logout-btn");
+                      if (btn) btn.innerText = "Déconnexion...";
+                      await logoutUser();
+                    }}
+                    id="logout-btn"
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-red-500 disabled:opacity-50"
                   >
                     Déconnexion
                   </button>

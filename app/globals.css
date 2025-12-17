@@ -120,3 +120,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Global Link Loading Styles */
+a[data-loading="true"] {
+  position: relative;
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+}
+
+a[data-loading="true"]::after {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-left: 0.5em;
+  vertical-align: middle;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

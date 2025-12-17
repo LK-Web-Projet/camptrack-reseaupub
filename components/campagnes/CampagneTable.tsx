@@ -34,7 +34,7 @@ const getCampagneStatusColor = (status?: string) => {
 };
 
 export default function CampagneTable() {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [campagnes, setCampagnes] = useState<Campagne[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,9 +53,8 @@ export default function CampagneTable() {
     setLoading(true)
     try {
       const params = new URLSearchParams({ page: String(page), limit: '7' })
-      const res = await fetch(`/api/campagnes?${params.toString()}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      })
+      const res = await apiClient(`/api/campagnes?${params.toString()}`)
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as Record<string, string>
         throw new Error(body.error || `Erreur ${res.status}`)
@@ -70,7 +69,7 @@ export default function CampagneTable() {
     } finally {
       setLoading(false)
     }
-  }, [token, page])
+  }, [apiClient, page])
 
   useEffect(() => {
     fetchCampagnes()

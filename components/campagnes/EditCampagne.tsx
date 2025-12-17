@@ -6,6 +6,7 @@ import * as Yup from "yup"
 import { X } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
+import { Button } from "@/components/ui/button"
 
 interface Client {
   id_client: string
@@ -53,7 +54,7 @@ interface EditCampagneModalProps {
 }
 
 export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCampagne }: EditCampagneModalProps) {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const [clients, setClients] = useState<Client[]>([])
   const [lieux, setLieux] = useState<Lieu[]>([])
   const [services, setServices] = useState<Service[]>([])
@@ -65,9 +66,9 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
     setLoading(true)
     try {
       const [clientRes, lieuRes, serviceRes] = await Promise.all([
-        fetch("/api/clients?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
-        fetch("/api/lieux?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
-        fetch("/api/services?limit=500", { headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
+        apiClient("/api/clients?limit=500"),
+        apiClient("/api/lieux?limit=500"),
+        apiClient("/api/services?limit=500"),
       ])
 
       if (clientRes.ok) {
@@ -87,7 +88,7 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [apiClient])
 
   useEffect(() => {
     if (isOpen) {
@@ -128,11 +129,10 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
     onSubmit: async (values) => {
       setSubmitting(true)
       try {
-        const res = await fetch(`/api/campagnes/${campagne.id_campagne}`, {
+        const res = await apiClient(`/api/campagnes/${campagne.id_campagne}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             nom_campagne: values.nom_campagne,
@@ -409,13 +409,13 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
               >
                 Annuler
               </button>
-              <button
+              <Button
                 type="submit"
-                disabled={submitting}
+                loading={submitting}
                 className="px-4 py-2 rounded-md bg-[#d61353] text-white hover:bg-[#b01044] disabled:opacity-50 transition"
               >
-                {submitting ? "Modification..." : "Modifier la campagne"}
-              </button>
+                Modifier la campagne
+              </Button>
             </div>
           </form>
         )}

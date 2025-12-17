@@ -5,6 +5,7 @@ import * as Yup from "yup";
 import { X } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
+import { Button } from "@/components/ui/button";
 
 export type Client = {
   id_client: string;
@@ -61,7 +62,7 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
 
         const createdClient: Client = await res.json();
         toast.success("Client ajouté avec succès");
-        
+
         if (onAddClient) {
           // If used as a dialog, call the callback
           onAddClient(createdClient);
@@ -212,13 +213,13 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
             >
               Annuler
             </button>
-            <button
+            <Button
               type="submit"
-              disabled={formik.isSubmitting}
+              loading={formik.isSubmitting}
               className="px-4 py-2 rounded bg-[#d61353] text-white"
             >
-              {formik.isSubmitting ? "Ajout..." : "Ajouter"}
-            </button>
+              Ajouter
+            </Button>
           </div>
         </form>
       </div>
