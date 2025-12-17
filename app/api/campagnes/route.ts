@@ -99,24 +99,24 @@ export async function POST(request: NextRequest) {
     if (!authCheck.ok) return authCheck.response;
 
     const body = await request.json();
-    
+
     const validation = validateData(campagneCreateSchema, body);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
     }
 
-    const { 
-      id_client, 
-      id_lieu, 
-      id_service, 
-      nom_campagne, 
-      description, 
-      objectif, 
+    const {
+      id_client,
+      id_lieu,
+      id_service,
+      nom_campagne,
+      description,
+      objectif,
       quantite_service,
       nbr_prestataire,
-      type_campagne, 
-      date_debut, 
-      date_fin 
+      type_campagne,
+      date_debut,
+      date_fin
     } = validation.data;
 
     // Vérifier que le client existe
@@ -143,34 +143,13 @@ export async function POST(request: NextRequest) {
       throw new AppError("Service non trouvé", 404);
     }
 
-    // Vérifier les conflits de dates pour le même lieu
-    const conflitCampagne = await prisma.campagne.findFirst({
-      where: {
-        id_lieu,
-        OR: [
-          {
-            date_debut: { lte: new Date(date_fin) },
-            date_fin: { gte: new Date(date_debut) }
-          }
-        ],
-        status: { not: 'ANNULEE' }
-      }
-    });
-
-    if (conflitCampagne) {
-      throw new AppError(
-        `Une campagne existe déjà pour ce lieu pendant cette période: ${conflitCampagne.nom_campagne}`,
-        409
-      );
-    }
-
     // Créer la campagne
     const campagne = await prisma.campagne.create({
       data: {
         id_client,
         id_lieu,
         id_service,
-        id_gestionnaire: authCheck.user.id_user, 
+        id_gestionnaire: authCheck.user.id_user,
         nom_campagne,
         description: description || null,
         objectif: objectif || null,
@@ -213,9 +192,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Campagne créée avec succès",
-      campagne 
+      campagne
     }, { status: 201 });
 
   } catch (error) {
