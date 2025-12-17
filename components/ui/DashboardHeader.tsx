@@ -5,6 +5,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/common/NotificationDropdown";
 import Link from "next/link";
+import Image from "next/image";
 async function logoutUser() {
   try {
     await fetch("/api/auth/logout", {
@@ -67,12 +68,9 @@ export default function DashboardHeader({
             />
           </svg>
         </button>
-
-
       </div>
 
-      <div className="flex-1 flex justify-center">
-      </div>
+      <div className="flex-1 flex justify-center"></div>
 
       <div className="flex items-center gap-8 relative">
         <ThemeToggleButton />
@@ -84,10 +82,12 @@ export default function DashboardHeader({
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             className="flex items-center gap-2 cursor-pointer p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
           >
-            <img
-              src={user.avatar}
+            <Image
+              src="https://www.svgrepo.com/show/452030/avatar-default.svg"
               alt={user.name}
               className="w-9 h-9 rounded-full object-cover border border-gray-300 dark:border-gray-600"
+              width={36}
+              height={36}
             />
             <span className="font-medium hidden sm:block">{user.name}</span>
           </button>
