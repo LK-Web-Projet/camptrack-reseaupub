@@ -27,6 +27,13 @@ export async function GET(request: NextRequest) {
       penalite_appliquer: searchParams.get('penalite_appliquer') || undefined
     };
 
+    // Supprimer les clés avec des valeurs nulles (paramètres non fournis)
+    Object.keys(queryParams).forEach(key => {
+      if (queryParams[key] === null) {
+        delete queryParams[key];
+      }
+    });
+
     const validation = validateData(materielsCaseQuerySchema, queryParams);
     if (!validation.success) {
       throw new AppError(validation.error, 400);

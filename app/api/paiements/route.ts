@@ -26,6 +26,13 @@ export async function GET(request: NextRequest) {
       statut_paiement: searchParams.get("statut_paiement") || undefined,
     };
 
+    // Supprimer les clés avec des valeurs nulles (paramètres non fournis)
+    Object.keys(queryParams).forEach(key => {
+      if (queryParams[key] === null) {
+        delete queryParams[key];
+      }
+    });
+
     const validation = validateData(paiementQuerySchema, queryParams);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
