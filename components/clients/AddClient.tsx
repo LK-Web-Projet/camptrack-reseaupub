@@ -42,8 +42,9 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
       type_client: "EXTERNE",
     },
     validationSchema: Yup.object({
-      nom: Yup.string().required("Nom requis"),
-      prenom: Yup.string().required("Prénom requis"),
+      nom: Yup.string().nullable(),
+      prenom: Yup.string().nullable(),
+      entreprise: Yup.string().required("Entreprise requise"),
       mail: Yup.string().email("Email invalide").nullable(),
       contact: Yup.string().nullable(),
       type_client: Yup.string().required("Type requis"),

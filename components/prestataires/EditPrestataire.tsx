@@ -24,6 +24,8 @@ interface Prestataire {
   marque?: string
   plaque?: string
   id_verification?: string
+  contrat_valide?: boolean
+  equipe_gps?: boolean
   service?: { id_service?: string; nom?: string }
   disponible: boolean
 }
@@ -47,6 +49,8 @@ const validationSchema = Yup.object().shape({
   modele: Yup.string(),
   plaque: Yup.string(),
   id_verification: Yup.string(),
+  contrat_valide: Yup.boolean(),
+  equipe_gps: Yup.boolean(),
 })
 
 export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEditPrestataire }: EditPrestaireModalProps) {
@@ -88,6 +92,8 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
       modele: prestataire?.modele || "",
       plaque: prestataire?.plaque || "",
       id_verification: prestataire?.id_verification || "",
+      contrat_valide: prestataire?.contrat_valide ?? false,
+      equipe_gps: prestataire?.equipe_gps ?? false,
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -107,6 +113,8 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
           modele: values.modele || null,
           plaque: values.plaque || null,
           id_verification: values.id_verification || null,
+          contrat_valide: values.contrat_valide,
+          equipe_gps: values.equipe_gps,
         }
 
         const res = await apiClient(`/api/prestataires/${prestataire.id_prestataire}`, {
@@ -164,8 +172,8 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${formik.touched.nom && formik.errors.nom
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-600"
+                  ? "border-red-500"
+                  : "border-gray-300 dark:border-gray-600"
                   }`}
                 placeholder="Ex: Dupont"
               />
@@ -182,8 +190,8 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${formik.touched.prenom && formik.errors.prenom
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-600"
+                  ? "border-red-500"
+                  : "border-gray-300 dark:border-gray-600"
                   }`}
                 placeholder="Ex: Jean"
               />
@@ -202,8 +210,8 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${formik.touched.id_service && formik.errors.id_service
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-600"
+                  ? "border-red-500"
+                  : "border-gray-300 dark:border-gray-600"
                   }`}
               >
                 <option value="">-- Sélectionner un service --</option>
@@ -226,8 +234,8 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 className={`w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 ${formik.touched.contact && formik.errors.contact
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-600"
+                  ? "border-red-500"
+                  : "border-gray-300 dark:border-gray-600"
                   }`}
                 placeholder="Ex: 06 12 34 56 78"
               />
@@ -326,7 +334,7 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
           {/* === DISPONIBILITÉ === */}
           <h4 className="text-sm font-semibold text-[#d61353] mb-3 border-b pb-2">Statut</h4>
 
-          <div className="mb-6">
+          <div className="space-y-3 mb-6">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -336,6 +344,26 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
                 className="w-4 h-4 rounded"
               />
               <span className="text-sm font-medium">Disponible</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="contrat_valide"
+                checked={!!formik.values.contrat_valide}
+                onChange={(e) => formik.setFieldValue('contrat_valide', e.target.checked)}
+                className="w-4 h-4 rounded"
+              />
+              <span className="text-sm font-medium">Contrat Validé</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="equipe_gps"
+                checked={!!formik.values.equipe_gps}
+                onChange={(e) => formik.setFieldValue('equipe_gps', e.target.checked)}
+                className="w-4 h-4 rounded"
+              />
+              <span className="text-sm font-medium">Équipé GPS</span>
             </label>
           </div>
 

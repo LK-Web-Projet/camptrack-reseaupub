@@ -2,19 +2,16 @@ import Joi from 'joi'
 import { validateData } from './schemas'
 
 export const clientCreateSchema = Joi.object({
-  nom: Joi.string().min(2).trim().required().messages({
-    'string.min': 'Le nom doit contenir au moins 2 caractères',
-    'any.required': 'Nom requis'
+  nom: Joi.string().trim().allow('', null).optional(),
+  prenom: Joi.string().trim().allow('', null).optional(),
+  entreprise: Joi.string().trim().required().messages({
+    'any.required': 'Entreprise requise',
+    'string.empty': "Le nom de l'entreprise est requis"
   }),
-  prenom: Joi.string().min(2).trim().required().messages({
-    'string.min': 'Le prénom doit contenir au moins 2 caractères',
-    'any.required': 'Prénom requis'
-  }),
-  entreprise: Joi.string().trim().optional().allow(''),
   domaine_entreprise: Joi.string().trim().optional().allow(''),
   adresse: Joi.string().trim().optional().allow(''),
-  contact: Joi.string().pattern(/^[0-9+\s()-]{6,}$/).optional(),
-  mail: Joi.string().email().trim().optional().allow('').messages({
+  contact: Joi.string().pattern(/^[0-9+\s()-]{6,}$/).optional().allow('', null),
+  mail: Joi.string().email().trim().optional().allow('', null).messages({
     'string.email': 'Email invalide'
   }),
   type_client: Joi.string().valid('EXTERNE', 'INTERNE').required().messages({
@@ -24,17 +21,13 @@ export const clientCreateSchema = Joi.object({
 })
 
 export const clientUpdateSchema = Joi.object({
-  nom: Joi.string().min(2).trim().optional().messages({
-    'string.min': 'Le nom doit contenir au moins 2 caractères'
-  }),
-  prenom: Joi.string().min(2).trim().optional().messages({
-    'string.min': 'Le prénom doit contenir au moins 2 caractères'
-  }),
-  entreprise: Joi.string().trim().optional().allow(''),
-  domaine_entreprise: Joi.string().trim().optional().allow(''),
-  adresse: Joi.string().trim().optional().allow(''),
-  contact: Joi.string().pattern(/^[0-9+\s()-]{6,}$/).optional(),
-  mail: Joi.string().email().trim().optional().allow('').messages({
+  nom: Joi.string().trim().optional().allow('', null),
+  prenom: Joi.string().trim().optional().allow('', null),
+  entreprise: Joi.string().trim().optional().allow('', null),
+  domaine_entreprise: Joi.string().trim().optional().allow('', null),
+  adresse: Joi.string().trim().optional().allow('', null),
+  contact: Joi.string().pattern(/^[0-9+\s()-]{6,}$/).optional().allow('', null),
+  mail: Joi.string().email().trim().optional().allow('', null).messages({
     'string.email': 'Email invalide'
   }),
   type_client: Joi.string().valid('EXTERNE', 'INTERNE').optional().messages({

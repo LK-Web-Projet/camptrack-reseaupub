@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     if (!authCheck.ok) return authCheck.response;
 
     const body = await request.json();
-    
+
     const validation = validateData(clientCreateSchema, body);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       const existingClient = await prisma.client.findUnique({
         where: { mail }
       });
-      
+
       if (existingClient) {
         throw new AppError("Un client avec cet email existe déjà", 409);
       }
@@ -84,9 +84,9 @@ export async function POST(request: NextRequest) {
 
     const client = await prisma.client.create({
       data: {
-        nom,
-        prenom,
-        entreprise: entreprise || null,
+        nom: nom || null,
+        prenom: prenom || null,
+        entreprise,
         domaine_entreprise: domaine_entreprise || null,
         adresse: adresse || null,
         contact: contact || null,
@@ -107,9 +107,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Client créé avec succès",
-      client 
+      client
     }, { status: 201 });
 
   } catch (error) {

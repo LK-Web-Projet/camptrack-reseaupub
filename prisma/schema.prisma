@@ -99,9 +99,9 @@ model RevokedToken {
 
 model Client {
   id_client        String     @id @default(cuid())
-  nom              String
-  prenom           String
-  entreprise       String?
+  nom              String?
+  prenom           String?
+  entreprise       String
   domaine_entreprise String?
   adresse          String?
   contact          String?
@@ -150,7 +150,9 @@ model Prestataire {
   marque          String?
   modele          String?
   plaque          String?     @unique
-  id_verification String?  
+  id_verification String  
+  contrat_valide  Boolean?
+  equipe_gps      Boolean?
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
 

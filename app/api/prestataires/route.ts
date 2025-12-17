@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
         modele: true,
         plaque: true,
         id_verification: true,
+        contrat_valide: true,
+        equipe_gps: true,
         created_at: true,
         service: {
           select: {
@@ -78,13 +80,13 @@ export async function POST(request: NextRequest) {
     if (!authCheck.ok) return authCheck.response;
 
     const body = await request.json();
-    
+
     const validation = validateData(prestataireCreateSchema, body);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
     }
 
-    const { 
+    const {
       id_service,
       nom,
       prenom,
@@ -95,7 +97,9 @@ export async function POST(request: NextRequest) {
       marque,
       modele,
       plaque,
-      id_verification
+      id_verification,
+      contrat_valide,
+      equipe_gps
     } = validation.data;
 
     // Vérifier que le service existe
@@ -130,7 +134,9 @@ export async function POST(request: NextRequest) {
         marque: marque || null,
         modele: modele || null,
         plaque: plaque || null,
-        id_verification: id_verification || null
+        id_verification,
+        contrat_valide: contrat_valide !== undefined ? contrat_valide : null,
+        equipe_gps: equipe_gps !== undefined ? equipe_gps : null
       },
       select: {
         id_prestataire: true,
@@ -145,6 +151,8 @@ export async function POST(request: NextRequest) {
         marque: true,
         modele: true,
         id_verification: true,
+        contrat_valide: true,
+        equipe_gps: true,
         created_at: true,
         service: {
           select: {
@@ -154,9 +162,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Prestataire créé avec succès",
-      prestataire 
+      prestataire
     }, { status: 201 });
 
   } catch (error) {

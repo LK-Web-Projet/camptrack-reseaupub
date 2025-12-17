@@ -16,8 +16,9 @@ interface EditClientProps {
 }
 
 const Schema = Yup.object().shape({
-  nom: Yup.string().required("Nom requis"),
-  prenom: Yup.string().required("Prénom requis"),
+  nom: Yup.string().nullable(),
+  prenom: Yup.string().nullable(),
+  entreprise: Yup.string().required("Entreprise requise"),
   mail: Yup.string().email("Email invalide").nullable(),
   type_client: Yup.string().required("Type requis"),
 });
