@@ -10,6 +10,62 @@ export async function GET(request: NextRequest) {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
+    // ========================================================================
+    // AUTO-TERMINATION : Clôturer les campagnes expirées
+    // ========================================================================
+    const now = new Date();
+
+    // Identifier les campagnes expirées (date_fin passée et non terminées)
+    const expiredCampaigns = await prisma.campagne.findMany({
+      where: {
+        date_fin: { lt: now },
+        status: { notIn: ['TERMINEE', 'ANNULEE'] }
+      },
+      select: { id_campagne: true }
+    });
+
+    const expiredCampaignIds = expiredCampaigns.map(c => c.id_campagne);
+
+    if (expiredCampaignIds.length > 0) {
+      // Utiliser une transaction pour assurer la cohérence
+      await prisma.$transaction(async (tx) => {
+        // 1. Mettre à jour le statut des campagnes
+        await tx.campagne.updateMany({
+          where: { id_campagne: { in: expiredCampaignIds } },
+          data: { status: 'TERMINEE' }
+        });
+
+        // 2. Récupérer les prestataires avec affectations actives sur ces campagnes
+        const affectationsToClose = await tx.prestataireCampagne.findMany({
+          where: {
+            id_campagne: { in: expiredCampaignIds },
+            date_fin: null
+          },
+          select: { id_prestataire: true }
+        });
+
+        const prestataireIds = affectationsToClose.map(a => a.id_prestataire);
+
+        if (prestataireIds.length > 0) {
+          // 3. Clôturer les affectations (date_fin = now)
+          await tx.prestataireCampagne.updateMany({
+            where: {
+              id_campagne: { in: expiredCampaignIds },
+              date_fin: null
+            },
+            data: { date_fin: now }
+          });
+
+          // 4. Libérer les prestataires (disponible = true)
+          await tx.prestataire.updateMany({
+            where: { id_prestataire: { in: prestataireIds } },
+            data: { disponible: true }
+          });
+        }
+      });
+    }
+    // ========================================================================
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
