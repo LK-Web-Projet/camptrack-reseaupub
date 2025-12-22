@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
 
     // Construction du filtre
     const where: any = {};
-    if (disponible !== null) where.disponible = disponible === 'true';
+    if (disponible !== null) {
+      if (disponible === 'true') where.disponible = true;
+      if (disponible === 'false') where.disponible = false;
+    }
     if (serviceId) where.id_service = serviceId;
 
     const total = await prisma.prestataire.count({ where });

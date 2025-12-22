@@ -62,9 +62,9 @@ CREATE TABLE "revoked_tokens" (
 -- CreateTable
 CREATE TABLE "clients" (
     "id_client" TEXT NOT NULL,
-    "nom" TEXT NOT NULL,
-    "prenom" TEXT NOT NULL,
-    "entreprise" TEXT,
+    "nom" TEXT,
+    "prenom" TEXT,
+    "entreprise" TEXT NOT NULL,
     "domaine_entreprise" TEXT,
     "adresse" TEXT,
     "contact" TEXT,
@@ -109,7 +109,9 @@ CREATE TABLE "prestataires" (
     "marque" TEXT,
     "modele" TEXT,
     "plaque" TEXT,
-    "id_verification" TEXT,
+    "id_verification" TEXT NOT NULL,
+    "contrat_valide" BOOLEAN,
+    "equipe_gps" BOOLEAN,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 

@@ -148,7 +148,7 @@ export default function DetailCampagne({ id }: { id: string }) {
 
   const fetchPrestataires = useCallback(async () => {
     try {
-      const res = await apiClient(`/api/prestataires?limit=500`);
+      const res = await apiClient(`/api/prestataires?page=1&limit=50&disponible=false`);
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const data = await res.json();
       setPrestataires(data.prestataires || []);

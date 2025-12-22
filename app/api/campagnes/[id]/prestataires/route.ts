@@ -224,41 +224,46 @@ export async function POST(
     }
 
     // Créer l'affectation
-    const affectation = await prisma.prestataireCampagne.create({
-      data: {
-        id_campagne: campagneId,
-        id_prestataire,
-        status: "ACTIF"
-      },
-      select: {
-        prestataire: {
-          select: {
-            id_prestataire: true,
-            nom: true,
-            prenom: true,
-            contact: true,
-            service: {
-              select: {
-                nom: true
-              }
-            },
-            type_panneau: true,
-            plaque: true,
-            marque: true,
-            modele: true,
-            couleur: true
-          }
+    // Utiliser une transaction pour assurer la cohérence des données
+    const affectation = await prisma.$transaction(async (tx) => {
+      // 1. Créer l'affectation
+      const createdAffectation = await tx.prestataireCampagne.create({
+        data: {
+          id_campagne: campagneId,
+          id_prestataire,
+          status: "ACTIF"
         },
-        date_creation: true,
-        status: true
-      }
-    });
+        select: {
+          prestataire: {
+            select: {
+              id_prestataire: true,
+              nom: true,
+              prenom: true,
+              contact: true,
+              service: {
+                select: {
+                  nom: true
+                }
+              },
+              type_panneau: true,
+              plaque: true,
+              marque: true,
+              modele: true,
+              couleur: true
+            }
+          },
+          date_creation: true,
+          status: true
+        }
+      });
 
-    // Mettre à jour le statut de disponibilité du prestataire à false
-    // car il est maintenant affecté à une campagne active
-    await prisma.prestataire.update({
-      where: { id_prestataire },
-      data: { disponible: false }
+      // 2. Mettre à jour le statut de disponibilité du prestataire à false
+      await tx.prestataire.update({
+        where: { id_prestataire },
+        data: { disponible: false }
+      });
+
+      return createdAffectation;
     });
 
     // NOTE : Le paiement sera créé automatiquement lors de l'enregistrement 
