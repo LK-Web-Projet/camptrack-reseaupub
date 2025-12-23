@@ -74,7 +74,23 @@ interface Affectation {
   status?: string;
 }
 interface Fichier { id_fichier: string; nom_fichier?: string; url?: string; description?: string | null; type_fichier?: string | null; date_creation?: string; }
-interface PrestataireListItem { id_prestataire: string; nom?: string; prenom?: string; contact?: string | null; service?: { nom?: string } | null; }
+interface PrestataireListItem {
+  id_prestataire: string;
+  nom?: string;
+  prenom?: string;
+  contact?: string | null;
+  service?: { nom?: string } | null;
+  disponible?: boolean;
+  affectations?: Array<{
+    campagne: {
+      id_campagne: string;
+      nom_campagne?: string;
+      date_fin?: string;
+    }
+  }>;
+  lastCampDate?: string | null;
+  lastCampName?: string | null;
+}
 interface Campagne {
   id_campagne: string; nom_campagne?: string; description?: string | null; objectif?: string | null; quantite_service?: number | null; nbr_prestataire?: number | null; type_campagne?: string | null; date_debut?: string | null; date_fin?: string | null; status?: string | null; date_creation?: string | null; updated_at?: string | null; client?: Client | null; lieu?: Lieu | null; service?: Service | null; gestionnaire?: Gestionnaire | null; affectations?: Affectation[] | null; fichiers?: Fichier[] | null; _count?: { affectations?: number; fichiers?: number; dommages?: number };
 }
@@ -148,10 +164,34 @@ export default function DetailCampagne({ id }: { id: string }) {
 
   const fetchPrestataires = useCallback(async () => {
     try {
-      const res = await apiClient(`/api/prestataires?page=1&limit=50&disponible=false`);
+      const res = await apiClient(`/api/prestataires?page=1&limit=50&disponible=true`);
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const data = await res.json();
-      setPrestataires(data.prestataires || []);
+
+      // Récupérer la dernière campagne (la plus récente) pour chaque prestataire
+      const prestatairesWithLastCamp = data.prestataires.map((p: any) => {
+        // Trier les affectations par date de fin décroissante pour obtenir la plus récente
+        const sortedAffectations = p.affectations?.sort((a: any, b: any) =>
+          new Date(b.campagne.date_fin).getTime() - new Date(a.campagne.date_fin).getTime()
+        );
+        const lastCamp = sortedAffectations?.[0]; // Prendre la plus récente
+        return {
+          ...p,
+          lastCampDate: lastCamp?.campagne?.date_fin || null,
+          lastCampName: lastCamp?.campagne?.nom_campagne || null
+        };
+      });
+
+      // Trier les prestataires par date de fin de dernière campagne en ordre croissant (A-Z)
+      const sortedPrestataires = prestatairesWithLastCamp.sort((a: any, b: any) => {
+        // Les prestataires sans campagne viennent en premier
+        if (!a.lastCampDate && !b.lastCampDate) return 0;
+        if (!a.lastCampDate) return -1;
+        if (!b.lastCampDate) return 1;
+        return new Date(a.lastCampDate).getTime() - new Date(b.lastCampDate).getTime();
+      });
+
+      setPrestataires(sortedPrestataires);
     } catch (err) {
       console.error("Erreur fetch prestataires:", err);
       toast.error(err instanceof Error ? err.message : "Erreur lors du chargement des prestataires");
@@ -453,8 +493,10 @@ export default function DetailCampagne({ id }: { id: string }) {
                         key={p.id_prestataire}
                         value={p.id_prestataire}
                       >
-                        {p.nom} {p.prenom}{" "}
-                        {p.service?.nom ? `— ${p.service.nom}` : ""}
+                        {p.nom} {p.prenom}
+                        {p.service?.nom ? ` — ${p.service.nom}` : ""}
+                        {p.lastCampDate ? ` — Dernière campagne: ${new Date(p.lastCampDate).toLocaleDateString("fr-FR")}` : " — Aucune campagne"}
+                        {` — Disponible: ${p.disponible ? "Oui" : "Non"}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
