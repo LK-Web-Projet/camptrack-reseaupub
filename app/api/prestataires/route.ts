@@ -58,6 +58,8 @@ export async function GET(request: NextRequest) {
           select: {
             campagne: {
               select: {
+                id_campagne: true,
+                nom_campagne: true,
                 date_fin: true
               }
             }
