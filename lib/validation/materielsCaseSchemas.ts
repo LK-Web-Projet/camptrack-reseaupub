@@ -43,10 +43,10 @@ export const materielsCaseCreateSchema = Joi.object({
     'string.min': 'La description doit contenir au moins 5 caractères',
     'any.required': 'Description des dommages requise'
   }),
-  photo_url: Joi.string().uri().optional().allow('', null).messages({
+  photo_url: Joi.string().uri({ allowRelative: true }).optional().allow('', null).messages({
     'string.uri': 'L\'URL de la photo doit être une URL valide'
   }),
-  preuve_media: Joi.string().uri().optional().allow('', null).messages({
+  preuve_media: Joi.string().uri({ allowRelative: true }).optional().allow('', null).messages({
     'string.uri': 'L\'URL de la preuve média doit être une URL valide'
   })
 }).custom((value, helpers) => {
@@ -81,10 +81,10 @@ export const materielsCaseUpdateSchema = Joi.object({
     'number.min': 'Le montant de pénalité ne peut pas être négatif'
   }),
   penalite_appliquer: Joi.boolean().optional(),
-  photo_url: Joi.string().uri().optional().allow('', null).messages({
+  photo_url: Joi.string().uri({ allowRelative: true }).optional().allow('', null).messages({
     'string.uri': 'L\'URL de la photo doit être une URL valide'
   }),
-  preuve_media: Joi.string().uri().optional().allow('', null).messages({
+  preuve_media: Joi.string().uri({ allowRelative: true }).optional().allow('', null).messages({
     'string.uri': 'L\'URL de la preuve média doit être une URL valide'
   })
 }).min(1).messages({
