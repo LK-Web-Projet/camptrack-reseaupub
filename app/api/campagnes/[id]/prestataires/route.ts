@@ -83,7 +83,7 @@ export async function GET(
   }
 }
 
-// POST /api/campagnes/[id]/prestataires - Ajouter un prestataire à une campagne
+// POST /api/campagnes/[id]/prestataires - Ajouter un ou plusieurs prestataires à une campagne
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -97,19 +97,29 @@ export async function POST(
 
     const body = await request.json();
 
-    if (!body.id_prestataire) {
-      throw new AppError("ID prestataire requis", 400);
+    // Support single or multiple IDs
+    let prestataireIds: string[] = [];
+    if (body.id_prestataires && Array.isArray(body.id_prestataires)) {
+      prestataireIds = body.id_prestataires;
+    } else if (body.id_prestataire) {
+      prestataireIds = [body.id_prestataire];
     }
 
-    const { id_prestataire } = body;
+    if (prestataireIds.length === 0) {
+      throw new AppError("Aucun prestataire sélectionné", 400);
+    }
 
-    // Vérifier que la campagne existe AVEC nbr_prestataire et id_service
+    // Remove duplicates
+    prestataireIds = Array.from(new Set(prestataireIds));
+
+    // 1. Vérifier la campagne
     const campagne = await prisma.campagne.findUnique({
       where: { id_campagne: campagneId },
       select: {
         nbr_prestataire: true,
         id_campagne: true,
-        id_service: true
+        id_service: true,
+        nom_campagne: true
       }
     });
 
@@ -117,161 +127,123 @@ export async function POST(
       throw new AppError("Campagne non trouvée", 404);
     }
 
-    // Vérifier que le prestataire existe
-    const prestataire = await prisma.prestataire.findUnique({
-      where: { id_prestataire },
+    // 2. Récupérer tous les prestataires demandés
+    const prestataires = await prisma.prestataire.findMany({
+      where: {
+        id_prestataire: { in: prestataireIds }
+      },
       include: {
         service: true
       }
     });
 
-    if (!prestataire) {
-      throw new AppError("Prestataire non trouvé", 404);
+    // Vérifier que tous les IDs existent
+    if (prestataires.length !== prestataireIds.length) {
+      throw new AppError("Certains prestataires demandés sont introuvables", 404);
     }
 
-    // Vérifier que le prestataire est du même service que la campagne
-    if (prestataire.id_service !== campagne.id_service) {
-      throw new AppError("Ce prestataire n'appartient pas au même service que la campagne", 400);
+    // 3. Validations par prestataire
+    const errors: string[] = [];
+    const prestatairesToAssign: string[] = [];
+
+    for (const p of prestataires) {
+      // Service
+      if (p.id_service !== campagne.id_service) {
+        errors.push(`Prestataire ${p.nom} ${p.prenom}: Service différent de la campagne`);
+        continue;
+      }
+
+      // Disponibilité
+      if (!p.disponible) {
+        errors.push(`Prestataire ${p.nom} ${p.prenom}: Non disponible`);
+        continue;
+      }
+
+      prestatairesToAssign.push(p.id_prestataire);
     }
 
-    // Vérifier que le prestataire n'est pas déjà affecté (même terminé)
-    const existingAffectation = await prisma.prestataireCampagne.findUnique({
+    if (errors.length > 0) {
+      // Si on veut être strict (tout ou rien), on rejette. 
+      // Ici on rejette si UN SEUL est invalide pour garder la cohérence simple.
+      throw new AppError(`Validation échouée:\n${errors.join('\n')}`, 400);
+    }
+
+    // 4. Vérifier les affectations existantes (déjà dans CETTE campagne)
+    const existingInCampaign = await prisma.prestataireCampagne.findMany({
       where: {
-        id_campagne_id_prestataire: {
-          id_campagne: campagneId,
-          id_prestataire
-        }
+        id_campagne: campagneId,
+        id_prestataire: { in: prestatairesToAssign }
       }
     });
 
-    if (existingAffectation) {
-      throw new AppError("Ce prestataire est déjà affecté à cette campagne", 409);
+    if (existingInCampaign.length > 0) {
+      throw new AppError("Certains prestataires sont déjà affectés à cette campagne", 409);
     }
 
-    // Vérifier que le prestataire est disponible
-    if (!prestataire.disponible) {
-      throw new AppError("Ce prestataire n'est pas disponible", 400);
-    }
-
-    // ========================================================================
-    // VALIDATION MÉTIER : Vérifier les affectations actives
-    // ========================================================================
-    // Un prestataire ne peut être affecté à une nouvelle campagne que s'il
-    // n'est pas déjà affecté à une autre campagne active (non terminée).
-    // Les statuts de campagne considérés comme "terminés" : TERMINEE, ANNULEE
-    // ========================================================================
+    // 5. Vérifier les affectations actives ailleurs (Double check de sécurité, même si disponible=true)
+    // Un prestataire disponible=true ne devrait PAS avoir d'affectation active, mais on vérifie.
     const activeAssignments = await prisma.prestataireCampagne.findMany({
       where: {
-        id_prestataire,
-        // Exclure l'affectation à la campagne actuelle (si elle existe déjà)
+        id_prestataire: { in: prestatairesToAssign },
         id_campagne: { not: campagneId },
-        // Affectation encore active (pas de date de fin)
-        date_fin: null
+        date_fin: null,
+        campagne: {
+          status: { notIn: ['TERMINEE', 'ANNULEE'] }
+        }
       },
       include: {
-        campagne: {
-          select: {
-            id_campagne: true,
-            nom_campagne: true,
-            status: true
-          }
-        }
+        prestataire: true,
+        campagne: true
       }
     });
 
-    // Filtrer pour ne garder que les campagnes non terminées
-    const nonTerminatedAssignments = activeAssignments.filter(
-      assignment =>
-        assignment.campagne.status !== 'TERMINEE' &&
-        assignment.campagne.status !== 'ANNULEE'
-    );
-
-    if (nonTerminatedAssignments.length > 0) {
-      // Le prestataire a des affectations actives à des campagnes non terminées
-      const activeCampaigns = nonTerminatedAssignments
-        .map(a => a.campagne.nom_campagne)
-        .join(', ');
-
-      // Mettre à jour le statut de disponibilité du prestataire à false
-      await prisma.prestataire.update({
-        where: { id_prestataire },
-        data: { disponible: false }
-      });
-
-      throw new AppError(
-        `Ce prestataire est déjà affecté à une ou plusieurs campagnes actives (${activeCampaigns}). ` +
-        `Il doit d'abord terminer ses affectations en cours avant d'être assigné à une nouvelle campagne. ` +
-        `Son statut de disponibilité a été mis à jour.`,
-        409
-      );
+    if (activeAssignments.length > 0) {
+      const details = activeAssignments.map(a => `${a.prestataire.nom} (${a.campagne.nom_campagne})`).join(', ');
+      throw new AppError(`Certains prestataires sont déjà en mission active : ${details}`, 409);
     }
 
-    // Vérifier la contrainte de nbr_prestataire si définie
+    // 6. Vérifier la capacité de la campagne
     if (campagne.nbr_prestataire !== null) {
-      const affectationsActives = await prisma.prestataireCampagne.count({
+      const currentCount = await prisma.prestataireCampagne.count({
         where: {
           id_campagne: campagneId,
           date_fin: null
         }
       });
 
-      if (affectationsActives >= campagne.nbr_prestataire) {
+      if (currentCount + prestatairesToAssign.length > campagne.nbr_prestataire) {
         throw new AppError(
-          `Le nombre maximum de prestataires (${campagne.nbr_prestataire}) pour cette campagne est déjà atteint. Impossible d'ajouter un nouveau prestataire.`,
+          `Capacité insuffisante. Places restantes : ${campagne.nbr_prestataire - currentCount}. Demandées : ${prestatairesToAssign.length}`,
           400
         );
       }
     }
 
-    // Créer l'affectation
-    // Utiliser une transaction pour assurer la cohérence des données
-    const affectation = await prisma.$transaction(async (tx) => {
-      // 1. Créer l'affectation
-      const createdAffectation = await tx.prestataireCampagne.create({
-        data: {
+    // 7. Transaction d'insertion
+    const result = await prisma.$transaction(async (tx) => {
+      // Créer les affectations
+      // createMany n'est pas supporté par SQLite standard facilement avec RETURNING, mais PostgreSQL oui.
+      // Prisma createMany retourne le count.
+      const created = await tx.prestataireCampagne.createMany({
+        data: prestatairesToAssign.map(pid => ({
           id_campagne: campagneId,
-          id_prestataire,
+          id_prestataire: pid,
           status: "ACTIF"
-        },
-        select: {
-          prestataire: {
-            select: {
-              id_prestataire: true,
-              nom: true,
-              prenom: true,
-              contact: true,
-              service: {
-                select: {
-                  nom: true
-                }
-              },
-              type_panneau: true,
-              plaque: true,
-              marque: true,
-              modele: true,
-              couleur: true
-            }
-          },
-          date_creation: true,
-          status: true
-        }
+        }))
       });
 
-      // 2. Mettre à jour le statut de disponibilité du prestataire à false
-      await tx.prestataire.update({
-        where: { id_prestataire },
+      // Mettre à jour les status
+      await tx.prestataire.updateMany({
+        where: { id_prestataire: { in: prestatairesToAssign } },
         data: { disponible: false }
       });
 
-      return createdAffectation;
+      return created;
     });
 
-    // NOTE : Le paiement sera créé automatiquement lors de l'enregistrement 
-    // du premier matériel casé pour cette affectation (route /api/materiels-cases)
-
     return NextResponse.json({
-      message: "Prestataire affecté à la campagne avec succès",
-      affectation
+      message: `${result.count} prestataire(s) affecté(s) avec succès`,
+      count: result.count
     }, { status: 201 });
 
   } catch (error) {
