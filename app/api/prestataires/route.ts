@@ -49,6 +49,20 @@ export async function GET(request: NextRequest) {
             nom: true
           }
         },
+        // Ajout de la date de fin de la dernière campagne
+        affectations: {
+          take: 1,
+          orderBy: {
+            date_creation: 'desc'
+          },
+          select: {
+            campagne: {
+              select: {
+                date_fin: true
+              }
+            }
+          }
+        },
         _count: {
           select: {
             affectations: true,

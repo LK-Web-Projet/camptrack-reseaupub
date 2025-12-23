@@ -220,7 +220,7 @@ export async function POST(request: NextRequest) {
         campagne: {
           select: {
             id_campagne: true,
-            nom_campagne: true
+            nom_campagne: true,
           }
         },
         prestataire: {
