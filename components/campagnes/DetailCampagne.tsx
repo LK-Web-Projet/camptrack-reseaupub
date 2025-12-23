@@ -44,7 +44,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PrestataireCampagne, PaiementPrestataire } from '../../app/generated/prisma/index';
 import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
 import VerificationMaterielleModal from "./VerificationMaterielleModal";
-
+import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 
 // Interfaces (gardées telles quelles)
 interface Client {
@@ -126,6 +126,12 @@ export default function DetailCampagne({ id }: { id: string }) {
   // Verification Materielle states
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [selectedPrestataireForVerification, setSelectedPrestataireForVerification] = useState<string | undefined>(undefined);
+
+
+
+  /* State: Update Campaign Photo */
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [selectedPrestataireForPhoto, setSelectedPrestataireForPhoto] = useState<{ id: string, photo_url: string | null } | null>(null);
 
   const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
 
@@ -536,7 +542,22 @@ export default function DetailCampagne({ id }: { id: string }) {
                         <Button variant="outline" size="sm">
                           Voir
                         </Button>
+
                       </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedPrestataireForPhoto({
+                            id: a.prestataire.id_prestataire,
+                            photo_url: a.image_affiche || null
+                          });
+                          setIsPhotoModalOpen(true);
+                        }}
+                      >
+                        Photo Affiche
+                      </Button>
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -565,31 +586,48 @@ export default function DetailCampagne({ id }: { id: string }) {
       </Card>
 
       {/* Modal d'incident */}
-      {selectedPrestataireForIncident && (
-        <AddIncidentModal
-          isOpen={isIncidentModalOpen}
-          onClose={() => {
-            setIsIncidentModalOpen(false);
-            setSelectedPrestataireForIncident(null);
-          }}
-          prestataireId={selectedPrestataireForIncident.id}
-          affectations={[
-            {
-              campagne: {
-                id_campagne: campagne?.id_campagne || "",
-                nom_campagne: campagne?.nom_campagne || ""
+      {
+        selectedPrestataireForIncident && (
+          <AddIncidentModal
+            isOpen={isIncidentModalOpen}
+            onClose={() => {
+              setIsIncidentModalOpen(false);
+              setSelectedPrestataireForIncident(null);
+            }}
+            prestataireId={selectedPrestataireForIncident.id}
+            affectations={[
+              {
+                campagne: {
+                  id_campagne: campagne?.id_campagne || "",
+                  nom_campagne: campagne?.nom_campagne || ""
+                }
               }
-            }
-          ]}
-          onIncidentAdded={() => {
-            // Recharger les données de la campagne pour mettre à jour les paiements
+            ]}
+            onIncidentAdded={() => {
+              // Recharger les données de la campagne pour mettre à jour les paiements
+              fetchCampagne();
+              toast.success("Incident enregistré avec succès");
+            }}
+          />
+        )
+
+      }
+
+      {/* Campaign Photo Modal */}
+      {selectedPrestataireForPhoto && (
+        <UpdateCampaignPhotoModal
+          isOpen={isPhotoModalOpen}
+          onClose={() => setIsPhotoModalOpen(false)}
+          campagneId={id}
+          prestataireId={selectedPrestataireForPhoto.id}
+          initialPhotoUrl={selectedPrestataireForPhoto.photo_url}
+          onPhotoUpdated={() => {
             fetchCampagne();
-            toast.success("Incident enregistré avec succès");
           }}
         />
       )}
 
 
-    </div>
+    </div >
   );
 }

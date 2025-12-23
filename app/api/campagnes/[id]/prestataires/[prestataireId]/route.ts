@@ -6,13 +6,13 @@ import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 // DELETE /api/campagnes/[id]/prestataires/[prestataireId] - Retirer un prestataire
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; prestataireId: string }> } 
+  { params }: { params: Promise<{ id: string; prestataireId: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id, prestataireId } = await params; 
+    const { id, prestataireId } = await params;
 
     // Vérifier que l'affectation existe
     const affectation = await prisma.prestataireCampagne.findUnique({
@@ -29,7 +29,7 @@ export async function DELETE(
             dommages: {
               where: {
                 id_campagne: id,
-                penalite_appliquer: false 
+                penalite_appliquer: false
               }
             }
           }
@@ -59,7 +59,7 @@ export async function DELETE(
       const dommagesNonResolus = affectation.prestataire.dommages.filter(
         d => !d.penalite_appliquer
       );
-      
+
       if (dommagesNonResolus.length > 0) {
         throw new AppError(
           "Impossible de retirer ce prestataire car des dommages non résolus sont associés à cette campagne",
@@ -94,7 +94,7 @@ export async function DELETE(
 // PUT /api/campagnes/[id]/prestataires/[prestataireId] - Mettre à jour une affectation de prestataire
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; prestataireId: string }> } 
+  { params }: { params: Promise<{ id: string; prestataireId: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
@@ -119,7 +119,7 @@ export async function PUT(
 
     // Vérifier les champs à mettre à jour
     const updateData: any = {};
-    
+
     if (body.status !== undefined) {
       // Valider les statuts possibles
       const statutsValides = ["ACTIF", "INACTIF", "TERMINE", "ANNULE"];
@@ -127,17 +127,16 @@ export async function PUT(
         throw new AppError(`Statut invalide. Statuts valides: ${statutsValides.join(", ")}`, 400);
       }
       updateData.status = body.status;
-      
+
       // Si on termine l'affectation, mettre la date de fin
       if (body.status === "TERMINE" || body.status === "ANNULE") {
         updateData.date_fin = new Date();
       }
     }
-    
-    //if (body.image_affiche !== undefined) {
-      // Valider le format de l'URL si nécessaire
-     // updateData.image_affiche = body.image_affiche;
-    //}
+
+    if (body.image_affiche !== undefined) {
+      updateData.image_affiche = body.image_affiche;
+    }
 
     //  S'assurer qu'au moins un champ est fourni
     if (Object.keys(updateData).length === 0) {
@@ -152,7 +151,7 @@ export async function PUT(
           id_prestataire: prestataireId
         }
       },
-      data: updateData, 
+      data: updateData,
       include: {
         prestataire: {
           select: {
