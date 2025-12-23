@@ -43,6 +43,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PrestataireCampagne, PaiementPrestataire } from '../../app/generated/prisma/index';
 import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
+import VerificationMaterielleModal from "./VerificationMaterielleModal";
 
 
 // Interfaces (gardées telles quelles)
@@ -72,6 +73,7 @@ interface Affectation {
   } | null;
   date_creation?: string;
   status?: string;
+  image_affiche?: string | null;
 }
 interface Fichier { id_fichier: string; nom_fichier?: string; url?: string; description?: string | null; type_fichier?: string | null; date_creation?: string; }
 interface PrestataireListItem {
@@ -136,6 +138,10 @@ export default function DetailCampagne({ id }: { id: string }) {
     nom: string;
     prenom: string;
   } | null>(null);
+
+  // Verification Materielle states
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [selectedPrestataireForVerification, setSelectedPrestataireForVerification] = useState<string | undefined>(undefined);
 
   const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
 
@@ -520,6 +526,7 @@ export default function DetailCampagne({ id }: { id: string }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Prestataire</TableHead>
+                  <TableHead>Image</TableHead>
                   <TableHead>Date d'assignation</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Montant Initial</TableHead>
@@ -533,6 +540,21 @@ export default function DetailCampagne({ id }: { id: string }) {
                   <TableRow key={idx}>
                     <TableCell className="font-medium">
                       {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
+                    </TableCell>
+                    <TableCell>
+                      {a.image_affiche ? (
+                        <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
+                          <img
+                            src={a.image_affiche}
+                            alt="Affiche"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
+                          <span className="text-[10px]">N/A</span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       {a.date_creation
@@ -569,7 +591,7 @@ export default function DetailCampagne({ id }: { id: string }) {
                           setIsIncidentModalOpen(true);
                         }}
                       >
-                        Verification Materiels
+                        Verification / Incident
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -608,6 +630,8 @@ export default function DetailCampagne({ id }: { id: string }) {
           }}
         />
       )}
+
+
     </div>
   );
 }

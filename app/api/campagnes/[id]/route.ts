@@ -93,7 +93,8 @@ export async function GET(
               }
             },
             date_creation: true,
-            status: true
+            status: true,
+            image_affiche: true
           }
         },
         fichiers: {
