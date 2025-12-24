@@ -241,15 +241,10 @@ export default function DetailCampagne({ id }: { id: string }) {
       if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
 
       toast.success(body.message || "Prestataire affecté avec succès");
-      setCampagne(prev => {
-        if (!prev) return prev;
-        const updatedAffectations = [body.affectation, ...(prev.affectations || [])];
-        return {
-          ...prev,
-          affectations: updatedAffectations,
-          _count: { ...prev._count, affectations: updatedAffectations.length }
-        };
-      });
+      
+      // Recharger les données de la campagne pour afficher le prestataire assigné
+      await fetchCampagne();
+      
       setSelectedPrestataire(null);
       setIsAssignDialogOpen(false);
     } catch (err) {
@@ -483,39 +478,106 @@ export default function DetailCampagne({ id }: { id: string }) {
                 <PlusCircle className="mr-2 h-4 w-4" /> Assigner
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Assigner un nouveau prestataire</DialogTitle>
               </DialogHeader>
               <div className="py-4">
-                <Label htmlFor="prestataire">Choisir un prestataire</Label>
-                <Select onValueChange={setSelectedPrestataire}>
-                  <SelectTrigger id="prestataire">
-                    <SelectValue placeholder="-- Sélectionner --" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <Label className="mb-4 block">Sélectionner un prestataire disponible</Label>
+                {prestataires.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">Aucun prestataire disponible</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
                     {prestataires.map((p) => (
-                      <SelectItem
+                      <div
                         key={p.id_prestataire}
-                        value={p.id_prestataire}
+                        onClick={() => setSelectedPrestataire(
+                          selectedPrestataire === p.id_prestataire ? null : p.id_prestataire
+                        )}
+                        className={`relative border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${selectedPrestataire === p.id_prestataire
+                          ? "border-[#d61353] bg-[#d61353]/5 shadow-md"
+                          : "border-gray-200 hover:border-[#d61353]/50"
+                          }`}
                       >
-                        {p.nom} {p.prenom}
-                        {p.service?.nom ? ` — ${p.service.nom}` : ""}
-                        {p.lastCampDate ? ` — Dernière campagne: ${new Date(p.lastCampDate).toLocaleDateString("fr-FR")}` : " — Aucune campagne"}
-                        {` — Disponible: ${p.disponible ? "Oui" : "Non"}`}
-                      </SelectItem>
+                        {/* Checkbox */}
+                        <div className="absolute top-3 right-3">
+                          <div
+                            className={`w-5 h-5 border-2 rounded flex items-center justify-center transition-colors ${selectedPrestataire === p.id_prestataire
+                              ? "border-[#d61353] bg-[#d61353]"
+                              : "border-gray-300"
+                              }`}
+                          >
+                            {selectedPrestataire === p.id_prestataire && (
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Contenu de la carte */}
+                        <div className="pr-8">
+                          <h3 className="font-semibold text-lg mb-2">
+                            {p.nom} {p.prenom}
+                          </h3>
+
+                          <div className="space-y-1.5 text-sm">
+                            {/* Service */}
+                            <div className="flex items-center gap-2">
+                              <Building className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-600">
+                                {p.service?.nom || "Service non défini"}
+                              </span>
+                            </div>
+
+                            {/* Dernière campagne */}
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-600">
+                                {p.lastCampDate
+                                  ? `Dernière campagne: ${new Date(p.lastCampDate).toLocaleDateString("fr-FR")}`
+                                  : "Aucune campagne"}
+                              </span>
+                            </div>
+
+                            {/* Disponibilité */}
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${p.disponible ? "bg-green-500" : "bg-red-500"}`} />
+                              <span className="text-gray-600">
+                                {p.disponible ? "Disponible" : "Non disponible"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button
                   variant="outline"
-                  onClick={() => setIsAssignDialogOpen(false)}
+                  onClick={() => {
+                    setIsAssignDialogOpen(false);
+                    setSelectedPrestataire(null);
+                  }}
                 >
                   Annuler
                 </Button>
-                <Button onClick={handleAssign}>Assigner</Button>
+                <Button
+                  onClick={handleAssign}
+                  disabled={!selectedPrestataire}
+                >
+                  Assigner
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -573,9 +635,13 @@ export default function DetailCampagne({ id }: { id: string }) {
                     </TableCell>
                     <TableCell>
                       <Link
-                        href={`/prestataires/${a.prestataire?.id_prestataire}`}
+                        href={`/prestataires/${a.prestataire?.id_prestataire || ''}`}
                       >
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!a.prestataire}
+                        >
                           Voir
                         </Button>
                       </Link>
@@ -583,13 +649,16 @@ export default function DetailCampagne({ id }: { id: string }) {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setSelectedPrestataireForIncident({
-                            id: a.prestataire.id_prestataire,
-                            nom: a.prestataire.nom || "",
-                            prenom: a.prestataire.prenom || ""
-                          });
-                          setIsIncidentModalOpen(true);
+                          if (a.prestataire) {
+                            setSelectedPrestataireForIncident({
+                              id: a.prestataire.id_prestataire,
+                              nom: a.prestataire.nom || "",
+                              prenom: a.prestataire.prenom || ""
+                            });
+                            setIsIncidentModalOpen(true);
+                          }
                         }}
+                        disabled={!a.prestataire}
                       >
                         Verification / Incident
                       </Button>
