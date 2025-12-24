@@ -656,6 +656,20 @@ export default function DetailCampagne({ id }: { id: string }) {
                         variant="outline"
                         size="sm"
                         onClick={() => {
+                          setSelectedPrestataireForPhoto({
+                            id: a.prestataire.id_prestataire,
+                            photo_url: a.image_affiche || null
+                          });
+                          setIsPhotoModalOpen(true);
+                        }}
+                      >
+                        Photo Affiche
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
                           if (a.prestataire) {
                             setSelectedPrestataireForIncident({
                               id: a.prestataire.id_prestataire,
