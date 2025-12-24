@@ -15,7 +15,7 @@ interface AddUserModalProps {
 }
 
 export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModalProps) {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const formik = useFormik({
     initialValues: {
       nom: "",
@@ -35,24 +35,28 @@ export default function AddUserModal({ isOpen, onClose, onAddUser }: AddUserModa
     }),
     onSubmit: async (values, { resetForm, setSubmitting }) => {
       try {
-        const res = await fetch("/api/users", {
+        const res = await apiClient("/api/users", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(values),
         })
-        if (!res.ok) throw new Error("Erreur lors de l'ajout")
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || "Erreur lors de l'ajout");
+        }
+
         const created = await res.json()
-        onAddUser(created)
+        onAddUser(created) // Callback pour mettre à jour la liste sans recharger
         toast.success("Utilisateur ajouté avec succès")
-        window.location.href = "/dashboard/admin";
 
         resetForm()
         onClose()
-      } catch {
-        toast.error("Erreur lors de l'ajout de l'utilisateur")
+      } catch (err) {
+        console.error(err)
+        toast.error(err instanceof Error ? err.message : "Erreur lors de l'ajout de l'utilisateur")
       } finally {
         setSubmitting(false)
       }

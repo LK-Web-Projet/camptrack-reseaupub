@@ -133,6 +133,7 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
         toast.success(data.message || "Prestataire créé")
         onAddPrestataire(created)
         formik.resetForm()
+        onClose() // Added explicit onClose call
       } catch (err: unknown) {
         console.error(err)
         const msg = err instanceof Error ? err.message : "Erreur lors de la création"

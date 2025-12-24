@@ -18,14 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import AddClientModal from "../clients/AddClient"
-
-interface Client {
-  id_client: string
-  nom: string
-  prenom: string
-  entreprise?: string
-}
+import AddClientModal, { Client } from "../clients/AddClient"
 
 interface Lieu {
   id_lieu: string
