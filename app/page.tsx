@@ -42,7 +42,7 @@ export default function LoginPage() {
       try {
         const success = await login(values.email, values.password)
         if (success) {
-          toast.success("Connexion réussie !")
+          toast.success("Connexion réussie.Bienvenue sur CampTrack !")
         } else {
           toast.error("Identifiants incorrects")
         }

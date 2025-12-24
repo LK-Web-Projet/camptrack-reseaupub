@@ -44,6 +44,11 @@ const data = {
       items: [{ title: "Tableau de bord", url: "/dashboard/admin" }],
     },
     {
+      title: "Gestion des utilisateurs",
+      icon: LayoutDashboard,
+      items: [{ title: "Gestion des utilisateurs", url: "/dashboard/users" }],
+    },
+    {
       title: "Clients",
       icon: UserRound,
       items: [{ title: "Liste des clients", url: "/dashboard/clients" }],
