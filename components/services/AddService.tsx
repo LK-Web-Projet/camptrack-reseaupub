@@ -43,7 +43,10 @@ export default function AddService({ isOpen, onClose, onServiceUpdated }: AddSer
           body: JSON.stringify(values),
         });
 
-        if (!res.ok) throw new Error("Erreur lors de l'ajout");
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || "Erreur lors de l'ajout");
+        }
 
         const data = await res.json();
         toast.success(data.message || "Service ajouté avec succès");
@@ -52,7 +55,7 @@ export default function AddService({ isOpen, onClose, onServiceUpdated }: AddSer
         onClose();
       } catch (err) {
         console.error(err);
-        toast.error("Erreur lors de l'ajout du service");
+        toast.error(err instanceof Error ? err.message : "Erreur lors de l'ajout du service");
       } finally {
         setSubmitting(false);
       }

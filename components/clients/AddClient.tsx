@@ -59,24 +59,23 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
           body: JSON.stringify(values),
         });
 
-        if (!res.ok) throw new Error("Erreur lors de l'ajout");
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || "Erreur lors de l'ajout");
+        }
 
         const createdClient: Client = await res.json();
         toast.success("Client ajouté avec succès");
 
         if (onAddClient) {
-          // If used as a dialog, call the callback
           onAddClient(createdClient);
-        } else {
-          // Default behavior: redirect
-          window.location.href = "/dashboard/clients";
         }
 
         resetForm();
-        onClose(); // Close the modal in both cases
+        onClose();
       } catch (err) {
         console.error(err);
-        toast.error("Erreur lors de l'ajout du client");
+        toast.error(err instanceof Error ? err.message : "Erreur lors de l'ajout du client");
       }
     },
   });
