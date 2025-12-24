@@ -224,7 +224,7 @@ export default function TableUser() {
               </tbody>
             </table>
             {totalPages === 1 ? ''
-              : <Paginate pages={totalPages} currentPage={page} path="/dashboard/admin" />
+              : <Paginate pages={totalPages} currentPage={page} />
             }
           </div>
 

@@ -149,7 +149,7 @@ export default function LieuTable() {
                 )}
               </tbody>
             </table>
-            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/lieux" />}
+            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} />}
           </div>
         )}
       </div>

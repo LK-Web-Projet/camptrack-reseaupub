@@ -141,42 +141,42 @@ export default function ServiceTable() {
                 )}
               </tbody>
             </table>
-            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/services" />}
-            </div>
-        )}
+            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} />}
           </div>
+        )}
+      </div>
 
 
       {/* MODALS */}
-        <AddService
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
+      <AddService
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onServiceUpdated={fetchServices}
+      />
+
+      {serviceToEdit && (
+        <EditService
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setServiceToEdit(null);
+          }}
+          service={serviceToEdit}
           onServiceUpdated={fetchServices}
         />
+      )}
 
-        {serviceToEdit && (
-          <EditService
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setServiceToEdit(null);
-            }}
-            service={serviceToEdit}
-            onServiceUpdated={fetchServices}
-          />
-        )}
-
-        {serviceToDelete && (
-          <DeleteService
-            isOpen={isDeleteModalOpen}
-            onClose={() => {
-              setIsDeleteModalOpen(false);
-              setServiceToDelete(null);
-            }}
-            service={serviceToDelete}
-            onServiceUpdated={fetchServices}
-          />
-        )}
-      </div>
-      );
+      {serviceToDelete && (
+        <DeleteService
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setServiceToDelete(null);
+          }}
+          service={serviceToDelete}
+          onServiceUpdated={fetchServices}
+        />
+      )}
+    </div>
+  );
 }
