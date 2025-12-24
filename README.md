@@ -11,6 +11,7 @@
 - [Gestion des Campagnes](#gestion-des-campagnes)
 - [API Reference](#api-reference)
 - [Sécurité](#sécurité--gestion-des-accès)
+- [Technique](#technique)
 - [Documentation](#documentation)
 
 ## Description
@@ -445,7 +446,11 @@ JWT_SECRET="super-secret-jwt-key-123456789-change-in-prod"
 npx prisma migrate dev --name init-camptrack-full-schema
 
 # Pour chaque modification du schéma
+# Pour chaque modification du schéma (Recommandé en dev)
 npx prisma migrate dev --name <nom-changement>
+
+# Pour prototyper rapidement sans historique (Attention aux données)
+npx prisma db push
 
 4️⃣ Générer les types Prisma
 npx prisma generate
@@ -729,6 +734,14 @@ curl -X POST http://localhost:3000/api/auth/logout -H "Content-Type: application
 - Restreindre l'endpoint `register` au rôle ADMIN (déjà fait via `requireAdmin`).
 - Ajouter tests E2E pour login/refresh/logout.
 
+## Technique
+
+### Scripts Spécifiques
+- **Import Prestataires** : `npx tsx prisma/import-prestataires.ts`
+  - Utilise un fichier Excel dans `data/prestataires.xlsx`.
+  - Crée les services manquants et génère les IDs.
+
+
 ## Scripts & Commandes
 
 ### Scripts NPM
@@ -743,6 +756,7 @@ pnpm prisma:studio      # Interface DB
 pnpm prisma:generate    # Génère types
 pnpm prisma:migrate     # Migrations
 pnpm prisma:seed        # Crée admin
+pnpm prisma:import      # MIGRATION: Import prestataires (Excel)
 
 # Tests
 pnpm test              # Tests unitaires

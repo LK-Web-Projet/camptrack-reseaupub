@@ -263,21 +263,6 @@ export async function POST(request: NextRequest) {
             select: { client: { select: { type_client: true } } }
           });
 
-          // UPDATE IMAGE AFFICHE
-          if (photo_url) {
-            await prisma.prestataireCampagne.update({
-              where: {
-                id_campagne_id_prestataire: {
-                  id_campagne,
-                  id_prestataire
-                }
-              },
-              data: {
-                image_affiche: photo_url
-              }
-            });
-          }
-
           const typeClient = campagne?.client?.type_client ?? 'EXTERNE';
           const paiementBase = typeClient === 'EXTERNE' ? 5000 : 3000;
 

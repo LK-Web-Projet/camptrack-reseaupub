@@ -237,7 +237,7 @@ export default function ClientTable() {
                 ))}
               </tbody>
             </table>
-            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/clients" />}
+            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} />}
           </div>
         )}
       </div>

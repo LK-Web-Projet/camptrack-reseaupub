@@ -328,7 +328,7 @@ export default function PaiementTable() {
                                 ))}
                             </tbody>
                         </table>
-                        {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/paiements" />}
+                        {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} />}
                     </div>
                 )}
             </div>

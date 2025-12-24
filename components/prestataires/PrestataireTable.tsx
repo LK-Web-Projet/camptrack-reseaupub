@@ -121,87 +121,87 @@ export default function PrestataireTable() {
           <div className="text-center py-8 text-gray-500">Aucun prestataire  trouvé</div>
         ) : (
           <div>
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800">
-                <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Nom</th>
-                <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Prénom</th>
-                <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Contact</th>
-                <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Service</th>
-                <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Modèle</th>
-                <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Disponibilité</th>
-                <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-              {loading && (
-                <tr>
-                  <td colSpan={7} className="p-4 text-center text-sm text-gray-500">Chargement...</td>
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800">
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Nom</th>
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Prénom</th>
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Contact</th>
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Service</th>
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Modèle</th>
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Disponibilité</th>
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold text-center">Actions</th>
                 </tr>
-              )}
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                {loading && (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-sm text-gray-500">Chargement...</td>
+                  </tr>
+                )}
 
-              {!loading && error && (
-                <tr>
-                  <td colSpan={7} className="p-4 text-center text-sm text-red-500">{error}</td>
-                </tr>
-              )}
+                {!loading && error && (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-sm text-red-500">{error}</td>
+                  </tr>
+                )}
 
-              {!loading && prestataires.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-4 text-center text-sm text-gray-500">Aucun prestataire trouvé</td>
-                </tr>
-              )}
+                {!loading && prestataires.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-sm text-gray-500">Aucun prestataire trouvé</td>
+                  </tr>
+                )}
 
-              {prestataires.map((prestataire) => (
-                <tr key={prestataire.id_prestataire} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.nom}</td>
-                  <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.prenom}</td>
-                  <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.contact ?? "-"}</td>
-                  <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.service?.nom ?? "-"}</td>
-                  <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.modele ?? "-"}</td>
-                  <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${prestataire.disponible
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                    >
-                      {prestataire.disponible ? "Oui" : "Non"}
-                    </span>
-                  </td>
-                  <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm text-center">
-                    <div className="flex justify-center gap-3">
-                      <Link href={`/prestataires/${prestataire.id_prestataire}`}>
-                        <button className="p-2 rounded-lg cursor-pointer bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 transition">
-                          <Eye className="w-4 h-4" />
+                {prestataires.map((prestataire) => (
+                  <tr key={prestataire.id_prestataire} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.nom}</td>
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.prenom}</td>
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.contact ?? "-"}</td>
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.service?.nom ?? "-"}</td>
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.modele ?? "-"}</td>
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${prestataire.disponible
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
+                      >
+                        {prestataire.disponible ? "Oui" : "Non"}
+                      </span>
+                    </td>
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm text-center">
+                      <div className="flex justify-center gap-3">
+                        <Link href={`/prestataires/${prestataire.id_prestataire}`}>
+                          <button className="p-2 rounded-lg cursor-pointer bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 transition">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setPrestaireToEdit(prestataire)
+                            setIsEditModalOpen(true)
+                          }}
+                          className="p-2 rounded-lg bg-blue-50 cursor-pointer dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </button>
-                      </Link>
-                      <button
-                        onClick={() => {
-                          setPrestaireToEdit(prestataire)
-                          setIsEditModalOpen(true)
-                        }}
-                        className="p-2 rounded-lg bg-blue-50 cursor-pointer dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
 
-                      <button
-                        onClick={() => {
-                          setPrestaireToDelete(prestataire)
-                          setIsDeleteOpen(true)
-                        }}
-                        className="p-2 rounded-lg cursor-pointer bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/prestataires" />}
+                        <button
+                          onClick={() => {
+                            setPrestaireToDelete(prestataire)
+                            setIsDeleteOpen(true)
+                          }}
+                          className="p-2 rounded-lg cursor-pointer bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} />}
           </div>
         )}
       </div>

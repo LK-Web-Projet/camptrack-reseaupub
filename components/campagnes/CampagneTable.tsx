@@ -178,7 +178,7 @@ export default function CampagneTable() {
                 ))}
               </tbody>
             </table>
-            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} path="/dashboard/campagnes" />}
+            {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} />}
           </div>
         )}
       </div>
