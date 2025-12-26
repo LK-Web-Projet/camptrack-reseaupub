@@ -120,10 +120,12 @@ export default function DetailCampagne({ id }: { id: string }) {
   const { apiClient } = useAuth();
   const [campagne, setCampagne] = useState<Campagne | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAssigning, setIsAssigning] = useState(false);
+
 
   // Assign prestataire states
   const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
-  const [selectedPrestataire, setSelectedPrestataire] = useState<string | null>(null);
+  const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>([]);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
   // Upload fichier states
@@ -227,34 +229,52 @@ export default function DetailCampagne({ id }: { id: string }) {
   };
 
   const handleAssign = async () => {
-    if (!selectedPrestataire) {
-      toast.error("Veuillez sélectionner un prestataire");
+    if (selectedPrestataires.length === 0) {
+      toast.error("Veuillez sélectionner au moins un prestataire");
       return;
     }
+
+
+    setIsAssigning(true);
+
     try {
       const res = await apiClient(`/api/campagnes/${id}/prestataires`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_prestataire: selectedPrestataire }),
+        body: JSON.stringify({
+          id_prestataires: selectedPrestataires  // ⚠️ clé attendue par le backend
+        })
       });
+
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
 
       toast.success(body.message || "Prestataire affecté avec succès");
+
       setCampagne(prev => {
         if (!prev) return prev;
-        const updatedAffectations = [body.affectation, ...(prev.affectations || [])];
+
+        // body.affectation peut être undefined => ne l'ajoute que si défini
+        const updatedAffectations = body.affectation
+          ? [body.affectation, ...(prev.affectations || [])]
+          : [...(prev.affectations || [])];
+
         return {
           ...prev,
           affectations: updatedAffectations,
           _count: { ...prev._count, affectations: updatedAffectations.length }
         };
       });
-      setSelectedPrestataire(null);
+
+      setSelectedPrestataires([]);
       setIsAssignDialogOpen(false);
+
+
     } catch (err) {
       console.error("Erreur assign prestataire:", err);
       toast.error(err instanceof Error ? err.message : "Erreur lors de l'affectation");
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -496,23 +516,31 @@ export default function DetailCampagne({ id }: { id: string }) {
                     {prestataires.map((p) => (
                       <div
                         key={p.id_prestataire}
-                        onClick={() => setSelectedPrestataire(
-                          selectedPrestataire === p.id_prestataire ? null : p.id_prestataire
-                        )}
-                        className={`relative border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${selectedPrestataire === p.id_prestataire
-                          ? "border-[#d61353] bg-[#d61353]/5 shadow-md"
-                          : "border-gray-200 hover:border-[#d61353]/50"
+                        onClick={() => {
+                          setSelectedPrestataires(prev =>
+                            prev.includes(p.id_prestataire)
+                              ? prev.filter(id => id !== p.id_prestataire)
+                              : [...prev, p.id_prestataire]
+                          );
+                        }}
+
+                        className={`relative border rounded-lg p-4 cursor-pointer transition-all
+${selectedPrestataires.includes(p.id_prestataire)
+                            ? "border-[#d61353] bg-[#d61353]/5 shadow-md"
+                            : "border-gray-200 hover:border-[#d61353]/50"
                           }`}
+
                       >
                         {/* Checkbox */}
                         <div className="absolute top-3 right-3">
                           <div
-                            className={`w-5 h-5 border-2 rounded flex items-center justify-center transition-colors ${selectedPrestataire === p.id_prestataire
+                            className={`w-5 h-5 border-2 rounded flex items-center justify-center transition-colors ${selectedPrestataires.includes(p.id_prestataire)
+
                               ? "border-[#d61353] bg-[#d61353]"
                               : "border-gray-300"
                               }`}
                           >
-                            {selectedPrestataire === p.id_prestataire && (
+                            {selectedPrestataires.includes(p.id_prestataire) && (
                               <svg
                                 className="w-3 h-3 text-white"
                                 fill="none"
@@ -571,18 +599,24 @@ export default function DetailCampagne({ id }: { id: string }) {
                 <Button
                   variant="outline"
                   onClick={() => {
+                    setSelectedPrestataires([]);
                     setIsAssignDialogOpen(false);
-                    setSelectedPrestataire(null);
+
                   }}
                 >
                   Annuler
                 </Button>
                 <Button
                   onClick={handleAssign}
-                  disabled={!selectedPrestataire}
+                  disabled={selectedPrestataires.length === 0 || isAssigning}
+                  className="flex items-center gap-2"
                 >
-                  Assigner
+                  {isAssigning && (
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  )}
+                  {isAssigning ? "Assignation..." : "Assigner"}
                 </Button>
+
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -599,16 +633,50 @@ export default function DetailCampagne({ id }: { id: string }) {
                   <TableHead>Montant Initial</TableHead>
                   <TableHead>Pénalité</TableHead>
                   <TableHead>Montant payé</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="hidden md:table-cell">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {campagne.affectations.map((a, idx) => (
                   <TableRow key={idx}>
                     <TableCell className="font-medium">
-                      {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
+                      <div className="flex flex-col gap-2">
+                        <span>
+                          {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
+                        </span>
+
+                        {/* Actions MOBILE */}
+                        <div className="flex gap-2 md:hidden">
+                          {a.prestataire && (
+                            <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                              <Button variant="outline" size="sm">
+                                Voir
+                              </Button>
+                            </Link>
+                          )}
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (a.prestataire) {
+                                setSelectedPrestataireForIncident({
+                                  id: a.prestataire.id_prestataire,
+                                  nom: a.prestataire.nom || "",
+                                  prenom: a.prestataire.prenom || ""
+                                });
+                                setIsIncidentModalOpen(true);
+                              }
+                            }}
+                            disabled={!a.prestataire}
+                          >
+                            Vérification
+                          </Button>
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell>
+
+                    <TableCell >
                       {a.image_affiche ? (
                         <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
                           <img
@@ -638,7 +706,7 @@ export default function DetailCampagne({ id }: { id: string }) {
                     <TableCell>
                       {a.paiement?.paiement_final ?? "-"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Link
                         href={`/prestataires/${a.prestataire?.id_prestataire || ''}`}
                       >
