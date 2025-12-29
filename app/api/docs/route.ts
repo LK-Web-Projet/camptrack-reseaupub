@@ -7605,6 +7605,113 @@ const openApi = {
         }
       }
     },
+
+    // ==================== STATISTIQUES ====================
+    "/statistiques": {
+      get: {
+        tags: ["Statistiques"],
+        summary: "Obtenir les statistiques globales (ADMIN seulement)",
+        description: "Récupère les statistiques globales de l'application incluant les compteurs, les répartitions par statut et type de campagne, et la disponibilité des prestataires",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Statistiques récupérées avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    counts: {
+                      type: "object",
+                      properties: {
+                        users: { type: "integer", description: "Nombre total d'utilisateurs" },
+                        clients: { type: "integer", description: "Nombre total de clients" },
+                        campagnes: { type: "integer", description: "Nombre total de campagnes" },
+                        prestataires: { type: "integer", description: "Nombre total de prestataires" },
+                        lieux: { type: "integer", description: "Nombre total de lieux" },
+                        services: { type: "integer", description: "Nombre total de services" }
+                      }
+                    },
+                    campagnes: {
+                      type: "object",
+                      properties: {
+                        parStatus: {
+                          type: "object",
+                          description: "Répartition des campagnes par statut",
+                          additionalProperties: { type: "integer" }
+                        },
+                        parType: {
+                          type: "object",
+                          description: "Répartition des campagnes par type",
+                          additionalProperties: { type: "integer" }
+                        }
+                      }
+                    },
+                    prestataires: {
+                      type: "object",
+                      properties: {
+                        total: { type: "integer", description: "Nombre total de prestataires" },
+                        disponibles: { type: "integer", description: "Nombre de prestataires disponibles" },
+                        indisponibles: { type: "integer", description: "Nombre de prestataires indisponibles" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  counts: {
+                    users: 15,
+                    clients: 8,
+                    campagnes: 25,
+                    prestataires: 120,
+                    lieux: 5,
+                    services: 4
+                  },
+                  campagnes: {
+                    parStatus: {
+                      PLANIFIEE: 5,
+                      EN_COURS: 12,
+                      TERMINEE: 7,
+                      ANNULEE: 1
+                    },
+                    parType: {
+                      MASSE: 18,
+                      PROXIMITE: 7
+                    }
+                  },
+                  prestataires: {
+                    total: 120,
+                    disponibles: 95,
+                    indisponibles: 25
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Token manquant ou invalide"
+                }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Accès refusé - Admin requis"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
   }
 }
 
