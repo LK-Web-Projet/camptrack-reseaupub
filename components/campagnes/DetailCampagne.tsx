@@ -44,6 +44,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PrestataireCampagne, PaiementPrestataire } from '../../app/generated/prisma/index';
 import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
 import VerificationMaterielleModal from "./VerificationMaterielleModal";
+import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
+
 
 
 // Interfaces (gardées telles quelles)
@@ -127,6 +129,12 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
   const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>([]);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+
+
+  /* State: Update Campaign Photo */
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [selectedPrestataireForPhoto, setSelectedPrestataireForPhoto] = useState<{ id: string, photo_url: string | null } | null>(null);
+
 
   // Upload fichier states
   const [fileType, setFileType] = useState("");
@@ -251,21 +259,17 @@ export default function DetailCampagne({ id }: { id: string }) {
 
       toast.success(body.message || "Prestataire affecté avec succès");
 
+      // Recharger les données de la campagne pour afficher les prestataires assignés
+      await fetchCampagne();
       setCampagne(prev => {
         if (!prev) return prev;
-
-        // body.affectation peut être undefined => ne l'ajoute que si défini
-        const updatedAffectations = body.affectation
-          ? [body.affectation, ...(prev.affectations || [])]
-          : [...(prev.affectations || [])];
-
+        const updatedAffectations = [body.affectation, ...(prev.affectations || [])];
         return {
           ...prev,
           affectations: updatedAffectations,
           _count: { ...prev._count, affectations: updatedAffectations.length }
         };
       });
-
       setSelectedPrestataires([]);
       setIsAssignDialogOpen(false);
 
@@ -638,6 +642,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
               </TableHeader>
               <TableBody>
                 {campagne.affectations.map((a, idx) => (
+
                   <TableRow key={idx}>
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-2">
@@ -649,9 +654,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                         <div className="flex gap-2 md:hidden">
                           {a.prestataire && (
                             <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
-                              <Button variant="outline" size="sm">
-                                Voir
-                              </Button>
+                              <Button variant="outline" size="sm">Voir</Button>
                             </Link>
                           )}
 
@@ -676,14 +679,10 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       </div>
                     </TableCell>
 
-                    <TableCell >
+                    <TableCell>
                       {a.image_affiche ? (
                         <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
-                          <img
-                            src={a.image_affiche}
-                            alt="Affiche"
-                            className="h-full w-full object-cover"
-                          />
+                          <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover" />
                         </div>
                       ) : (
                         <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
@@ -691,52 +690,50 @@ ${selectedPrestataires.includes(p.id_prestataire)
                         </div>
                       )}
                     </TableCell>
+
                     <TableCell>
-                      {a.date_creation
-                        ? new Date(a.date_creation).toLocaleDateString("fr-FR")
-                        : "-"}
+                      {a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : "-"}
                     </TableCell>
+
                     <TableCell>{a.status ?? "-"}</TableCell>
-                    <TableCell>
-                      {a.paiement?.paiement_base ?? "-"}
-                    </TableCell>
-                    <TableCell>
-                      {a.paiement?.sanction_montant ?? "-"}
-                    </TableCell>
-                    <TableCell>
-                      {a.paiement?.paiement_final ?? "-"}
-                    </TableCell>
+                    <TableCell>{a.paiement?.paiement_base ?? "-"}</TableCell>
+                    <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
+                    <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
+
                     <TableCell className="hidden md:table-cell">
-                      <Link
-                        href={`/prestataires/${a.prestataire?.id_prestataire || ''}`}
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={!a.prestataire}
-                        >
-                          Voir
-                        </Button>
-                      </Link>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          if (a.prestataire) {
+                          setSelectedPrestataireForPhoto({
+                            id: a.prestataire.id_prestataire,
+                            photo_url: a.image_affiche || null
+                          });
+                          setIsPhotoModalOpen(true);
+                        }}
+                      >
+                        Photo
+                      </Button>
+
+                      {a.prestataire && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
                             setSelectedPrestataireForIncident({
                               id: a.prestataire.id_prestataire,
                               nom: a.prestataire.nom || "",
                               prenom: a.prestataire.prenom || ""
                             });
                             setIsIncidentModalOpen(true);
-                          }
-                        }}
-                        disabled={!a.prestataire}
-                      >
-                        Verification / Incident
-                      </Button>
+                          }}
+                        >
+                          Verification / Incident
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
+
                 ))}
               </TableBody>
             </Table>
@@ -749,6 +746,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
       </Card>
 
       {/* Modal d'incident */}
+
       {selectedPrestataireForIncident && (
         <AddIncidentModal
           isOpen={isIncidentModalOpen}
@@ -773,6 +771,22 @@ ${selectedPrestataires.includes(p.id_prestataire)
         />
       )}
 
+
+
+      {/* Campaign Photo Modal */}
+      {selectedPrestataireForPhoto && (
+        <UpdateCampaignPhotoModal
+          isOpen={isPhotoModalOpen}
+          onClose={() => setIsPhotoModalOpen(false)}
+          campagneId={id}
+          prestataireId={selectedPrestataireForPhoto.id}
+          initialPhotoUrl={selectedPrestataireForPhoto.photo_url}
+          onPhotoUpdated={() => {
+            fetchCampagne();
+            toast.success("Photo de la campagne mise à jour avec succès");
+          }}
+        />
+      )}
 
     </div>
   );

@@ -1,8 +1,9 @@
+import DashboardPage from "../page";
+
 export default function AdminPage() {
     return (
-        <div>
-            <h1>Dashboard Admin à faire ici</h1>
-            {/* Ton contenu ici */}
+        <div className=" text-black dark:text-white bg-white dark:bg-gray-900">
+            <DashboardPage />
         </div>
     );
 }
