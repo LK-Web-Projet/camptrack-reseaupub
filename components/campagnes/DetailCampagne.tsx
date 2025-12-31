@@ -645,39 +645,54 @@ ${selectedPrestataires.includes(p.id_prestataire)
 
                   <TableRow key={idx}>
                     <TableCell className="font-medium">
-                      <div className="flex flex-col gap-2">
-                        <span>
+                      <div className="flex items-center justify-between gap-2">
+                        {/* Nom du prestataire */}
+                        <span className="truncate">
                           {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
                         </span>
 
                         {/* Actions MOBILE */}
-                        <div className="flex gap-2 md:hidden">
-                          {a.prestataire && (
-                            <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
-                              <Button variant="outline" size="sm">Voir</Button>
-                            </Link>
-                          )}
+                        {a.prestataire && (
+                          <div className="flex gap-1 md:hidden">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedPrestataireForPhoto({
+                                  id: a.prestataire.id_prestataire,
+                                  photo_url: a.image_affiche || null
+                                });
+                                setIsPhotoModalOpen(true);
+                              }}
+                            >
+                              📷
+                            </Button>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (a.prestataire) {
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => {
                                 setSelectedPrestataireForIncident({
                                   id: a.prestataire.id_prestataire,
                                   nom: a.prestataire.nom || "",
                                   prenom: a.prestataire.prenom || ""
                                 });
                                 setIsIncidentModalOpen(true);
-                              }
-                            }}
-                            disabled={!a.prestataire}
-                          >
-                            Vérification
-                          </Button>
-                        </div>
+                              }}
+                            >
+                              ⚠️
+                            </Button>
+
+                            <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                              <Button variant="outline" size="icon">
+                                👁
+                              </Button>
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     </TableCell>
+
 
                     <TableCell>
                       {a.image_affiche ? (
@@ -700,7 +715,8 @@ ${selectedPrestataires.includes(p.id_prestataire)
                     <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
                     <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
 
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell className="max-md:hidden block"
+                    >
                       <Button
                         variant="outline"
                         size="sm"
@@ -730,6 +746,11 @@ ${selectedPrestataires.includes(p.id_prestataire)
                         >
                           Verification / Incident
                         </Button>
+                      )}
+                      {a.prestataire && (
+                        <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                          <Button variant="outline" size="sm">Voir</Button>
+                        </Link>
                       )}
                     </TableCell>
                   </TableRow>
