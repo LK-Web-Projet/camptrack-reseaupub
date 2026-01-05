@@ -14,6 +14,7 @@ import {
   Users,
   Paperclip,
   PlusCircle,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
@@ -129,6 +130,7 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
   const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>([]);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   /* State: Update Campaign Photo */
@@ -261,17 +263,9 @@ export default function DetailCampagne({ id }: { id: string }) {
 
       // Recharger les données de la campagne pour afficher les prestataires assignés
       await fetchCampagne();
-      setCampagne(prev => {
-        if (!prev) return prev;
-        const updatedAffectations = [body.affectation, ...(prev.affectations || [])];
-        return {
-          ...prev,
-          affectations: updatedAffectations,
-          _count: { ...prev._count, affectations: updatedAffectations.length }
-        };
-      });
       setSelectedPrestataires([]);
       setIsAssignDialogOpen(false);
+      setSearchQuery("");
 
 
     } catch (err) {
@@ -299,6 +293,12 @@ export default function DetailCampagne({ id }: { id: string }) {
   );
 
   const currentStatus = statusMap[campagne.status || ""] || { label: campagne.status, color: "default" };
+
+  const filteredPrestataires = prestataires.filter(p =>
+    (p.nom?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+    (p.prenom?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+    (p.service?.nom?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -507,17 +507,30 @@ export default function DetailCampagne({ id }: { id: string }) {
                 <PlusCircle className="mr-2 h-4 w-4" /> Assigner
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle>Assigner un nouveau prestataire</DialogTitle>
               </DialogHeader>
-              <div className="py-4">
+              <div className="flex-1 overflow-y-auto min-h-0 py-4 pr-1">
                 <Label className="mb-4 block">Sélectionner un prestataire disponible</Label>
+
+                <div className="relative mb-4">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="Rechercher un prestataire (nom, service)..."
+                    className="pl-9"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
                 {prestataires.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">Aucun prestataire disponible</p>
+                ) : filteredPrestataires.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">Aucun résultat trouvé pour "{searchQuery}"</p>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
-                    {prestataires.map((p) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredPrestataires.map((p) => (
                       <div
                         key={p.id_prestataire}
                         onClick={() => {
@@ -605,7 +618,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                   onClick={() => {
                     setSelectedPrestataires([]);
                     setIsAssignDialogOpen(false);
-
+                    setSearchQuery("");
                   }}
                 >
                   Annuler
@@ -641,121 +654,122 @@ ${selectedPrestataires.includes(p.id_prestataire)
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {campagne.affectations.map((a, idx) => (
+                {campagne.affectations.map((a, idx) => {
+                  if (!a) return null;
+                  return (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center justify-between gap-2">
+                          {/* Nom du prestataire */}
+                          <span className="truncate">
+                            {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
+                          </span>
 
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center justify-between gap-2">
-                        {/* Nom du prestataire */}
-                        <span className="truncate">
-                          {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
-                        </span>
-
-                        {/* Actions MOBILE */}
-                        {a.prestataire && (
-                          <div className="flex gap-1 md:hidden">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedPrestataireForPhoto({
-                                  id: a.prestataire.id_prestataire,
-                                  photo_url: a.image_affiche || null
-                                });
-                                setIsPhotoModalOpen(true);
-                              }}
-                            >
-                              📷
-                            </Button>
-
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedPrestataireForIncident({
-                                  id: a.prestataire.id_prestataire,
-                                  nom: a.prestataire.nom || "",
-                                  prenom: a.prestataire.prenom || ""
-                                });
-                                setIsIncidentModalOpen(true);
-                              }}
-                            >
-                              ⚠️
-                            </Button>
-
-                            <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
-                              <Button variant="outline" size="icon">
-                                👁
+                          {/* Actions MOBILE */}
+                          {a.prestataire && (
+                            <div className="flex gap-1 md:hidden">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPrestataireForPhoto({
+                                    id: a.prestataire.id_prestataire,
+                                    photo_url: a.image_affiche || null
+                                  });
+                                  setIsPhotoModalOpen(true);
+                                }}
+                              >
+                                📷
                               </Button>
-                            </Link>
+
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPrestataireForIncident({
+                                    id: a.prestataire.id_prestataire,
+                                    nom: a.prestataire.nom || "",
+                                    prenom: a.prestataire.prenom || ""
+                                  });
+                                  setIsIncidentModalOpen(true);
+                                }}
+                              >
+                                ⚠️
+                              </Button>
+
+                              <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                                <Button variant="outline" size="icon">
+                                  👁
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+
+
+                      <TableCell>
+                        {a.image_affiche ? (
+                          <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
+                            <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
+                            <span className="text-[10px]">N/A</span>
                           </div>
                         )}
-                      </div>
-                    </TableCell>
+                      </TableCell>
 
+                      <TableCell>
+                        {a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : "-"}
+                      </TableCell>
 
-                    <TableCell>
-                      {a.image_affiche ? (
-                        <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
-                          <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
-                          <span className="text-[10px]">N/A</span>
-                        </div>
-                      )}
-                    </TableCell>
+                      <TableCell>{a.status ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.paiement_base ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
 
-                    <TableCell>
-                      {a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : "-"}
-                    </TableCell>
-
-                    <TableCell>{a.status ?? "-"}</TableCell>
-                    <TableCell>{a.paiement?.paiement_base ?? "-"}</TableCell>
-                    <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
-                    <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
-
-                    <TableCell className="max-md:hidden block"
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedPrestataireForPhoto({
-                            id: a.prestataire.id_prestataire,
-                            photo_url: a.image_affiche || null
-                          });
-                          setIsPhotoModalOpen(true);
-                        }}
+                      <TableCell className="max-md:hidden block"
                       >
-                        Photo
-                      </Button>
-
-                      {a.prestataire && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setSelectedPrestataireForIncident({
+                            setSelectedPrestataireForPhoto({
                               id: a.prestataire.id_prestataire,
-                              nom: a.prestataire.nom || "",
-                              prenom: a.prestataire.prenom || ""
+                              photo_url: a.image_affiche || null
                             });
-                            setIsIncidentModalOpen(true);
+                            setIsPhotoModalOpen(true);
                           }}
                         >
-                          Verification / Incident
+                          Photo
                         </Button>
-                      )}
-                      {a.prestataire && (
-                        <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
-                          <Button variant="outline" size="sm">Voir</Button>
-                        </Link>
-                      )}
-                    </TableCell>
-                  </TableRow>
 
-                ))}
+                        {a.prestataire && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPrestataireForIncident({
+                                id: a.prestataire.id_prestataire,
+                                nom: a.prestataire.nom || "",
+                                prenom: a.prestataire.prenom || ""
+                              });
+                              setIsIncidentModalOpen(true);
+                            }}
+                          >
+                            Verification / Incident
+                          </Button>
+                        )}
+                        {a.prestataire && (
+                          <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                            <Button variant="outline" size="sm">Voir</Button>
+                          </Link>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           ) : (
