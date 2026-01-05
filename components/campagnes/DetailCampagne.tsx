@@ -46,6 +46,7 @@ import { PrestataireCampagne, PaiementPrestataire } from '../../app/generated/pr
 import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
 import VerificationMaterielleModal from "./VerificationMaterielleModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
+import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
 
 
 
@@ -87,6 +88,7 @@ interface PrestataireListItem {
   service?: { nom?: string } | null;
   disponible?: boolean;
   plaque?: string | null;
+  id_verification?: string | null;
   affectations?: Array<{
     campagne: {
       id_campagne: string;
@@ -113,10 +115,10 @@ const InfoItem = ({ icon, label, value }: { icon: React.ReactNode; label: string
 );
 
 // Mapping des status et couleurs de badge
-const statusMap: { [key: string]: { label: string; color: "default" | "destructive" | "outline" | "secondary" | "warning" | "success" } } = {
+const statusMap: { [key: string]: { label: string; color: "default" | "destructive" | "outline" | "secondary" } } = {
   PLANIFIEE: { label: "Planifiée", color: "secondary" },
-  EN_COURS: { label: "En cours", color: "warning" },
-  TERMINEE: { label: "Terminée", color: "success" },
+  EN_COURS: { label: "En cours", color: "secondary" }, // Modifié pour correspondre aux types valides
+  TERMINEE: { label: "Terminée", color: "default" },    // Modifié pour correspondre aux types valides
   ANNULEE: { label: "Annulée", color: "destructive" },
 };
 
@@ -131,6 +133,7 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
   const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>([]);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [assignmentsSearchQuery, setAssignmentsSearchQuery] = useState("");
 
@@ -197,6 +200,7 @@ export default function DetailCampagne({ id }: { id: string }) {
         const lastCamp = sortedAffectations?.[0]; // Prendre la plus récente
         return {
           ...p,
+          id_verification: p.id_verification,
           lastCampDate: lastCamp?.campagne?.date_fin || null,
           lastCampName: lastCamp?.campagne?.nom_campagne || null
         };
@@ -278,6 +282,29 @@ export default function DetailCampagne({ id }: { id: string }) {
     }
   };
 
+  const handleQuickAddSuccess = (newPrestataire: any) => {
+    // 1. Add to local list (prepend)
+    const newPrestItem: PrestataireListItem = {
+      id_prestataire: newPrestataire.id_prestataire,
+      nom: newPrestataire.nom,
+      prenom: newPrestataire.prenom,
+      contact: newPrestataire.contact,
+      service: newPrestataire.service ? { nom: newPrestataire.service.nom } : null,
+      disponible: true, // Newly created is available
+      plaque: newPrestataire.plaque,
+      id_verification: newPrestataire.id_verification,
+      lastCampDate: null,
+      lastCampName: null,
+    };
+    setPrestataires([newPrestItem, ...prestataires]);
+
+    // 2. Auto-select it
+    setSelectedPrestataires((prev) => [...prev, newPrestItem.id_prestataire]);
+
+    // 3. Close modal
+    setIsQuickAddOpen(false);
+  };
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-10">
       <div className="w-10 h-10 border-4 border-[#d61353]/30 border-t-[#d61353] rounded-full animate-spin"></div>
@@ -311,8 +338,12 @@ export default function DetailCampagne({ id }: { id: string }) {
     // Recherche intelligente sur la plaque : on compare les versions "nettoyées" (sans tirets/espaces)
     const matchPlaque = p.plaque && normalizePlaque(p.plaque).includes(searchPlaque);
 
-    return matchName || matchPrenom || matchService || matchPlaque;
-    return matchName || matchPrenom || matchService || matchPlaque;
+    const valVerif = String(p.id_verification || "");
+    const matchVerification =
+      normalizeString(valVerif).includes(search) ||
+      normalizePlaque(valVerif).includes(searchPlaque);
+
+    return matchName || matchPrenom || matchService || matchPlaque || matchVerification;
   });
 
   const filteredAssignments = campagne.affectations?.filter(a => {
@@ -531,9 +562,25 @@ export default function DetailCampagne({ id }: { id: string }) {
                 <PlusCircle className="mr-2 h-4 w-4" /> Assigner
               </Button>
             </DialogTrigger>
+
             <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+              <QuickAddPrestataireModal
+                isOpen={isQuickAddOpen}
+                onClose={() => setIsQuickAddOpen(false)}
+                onSuccess={handleQuickAddSuccess}
+              />
               <DialogHeader>
-                <DialogTitle>Assigner un nouveau prestataire</DialogTitle>
+                <DialogTitle className="flex justify-between items-center">
+                  <span>Assigner un nouveau prestataire</span>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="text-xs bg-[#d61353]/10 text-[#d61353] hover:bg-[#d61353]/20"
+                    onClick={() => setIsQuickAddOpen(true)}
+                  >
+                    <PlusCircle className="mr-1 h-3 w-3" /> Nouveau Prestataire
+                  </Button>
+                </DialogTitle>
               </DialogHeader>
               <div className="flex-1 overflow-y-auto min-h-0 py-4 pr-1">
                 <Label className="mb-4 block">Sélectionner un prestataire disponible</Label>
@@ -541,7 +588,7 @@ export default function DetailCampagne({ id }: { id: string }) {
                 <div className="relative mb-4">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
-                    placeholder="Rechercher par nom, service ou plaque..."
+                    placeholder="Rechercher par nom, service, plaque ou verification..."
                     className="pl-9"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -829,47 +876,51 @@ ${selectedPrestataires.includes(p.id_prestataire)
 
       {/* Modal d'incident */}
 
-      {selectedPrestataireForIncident && (
-        <AddIncidentModal
-          isOpen={isIncidentModalOpen}
-          onClose={() => {
-            setIsIncidentModalOpen(false);
-            setSelectedPrestataireForIncident(null);
-          }}
-          prestataireId={selectedPrestataireForIncident.id}
-          affectations={[
-            {
-              campagne: {
-                id_campagne: campagne?.id_campagne || "",
-                nom_campagne: campagne?.nom_campagne || ""
+      {
+        selectedPrestataireForIncident && (
+          <AddIncidentModal
+            isOpen={isIncidentModalOpen}
+            onClose={() => {
+              setIsIncidentModalOpen(false);
+              setSelectedPrestataireForIncident(null);
+            }}
+            prestataireId={selectedPrestataireForIncident.id}
+            affectations={[
+              {
+                campagne: {
+                  id_campagne: campagne?.id_campagne || "",
+                  nom_campagne: campagne?.nom_campagne || ""
+                }
               }
-            }
-          ]}
-          onIncidentAdded={() => {
-            // Recharger les données de la campagne pour mettre à jour les paiements
-            fetchCampagne();
-            toast.success("Incident enregistré avec succès");
-          }}
-        />
-      )}
+            ]}
+            onIncidentAdded={() => {
+              // Recharger les données de la campagne pour mettre à jour les paiements
+              fetchCampagne();
+              toast.success("Incident enregistré avec succès");
+            }}
+          />
+        )
+      }
 
 
 
       {/* Campaign Photo Modal */}
-      {selectedPrestataireForPhoto && (
-        <UpdateCampaignPhotoModal
-          isOpen={isPhotoModalOpen}
-          onClose={() => setIsPhotoModalOpen(false)}
-          campagneId={id}
-          prestataireId={selectedPrestataireForPhoto.id}
-          initialPhotoUrl={selectedPrestataireForPhoto.photo_url}
-          onPhotoUpdated={() => {
-            fetchCampagne();
-            toast.success("Photo de la campagne mise à jour avec succès");
-          }}
-        />
-      )}
+      {
+        selectedPrestataireForPhoto && (
+          <UpdateCampaignPhotoModal
+            isOpen={isPhotoModalOpen}
+            onClose={() => setIsPhotoModalOpen(false)}
+            campagneId={id}
+            prestataireId={selectedPrestataireForPhoto.id}
+            initialPhotoUrl={selectedPrestataireForPhoto.photo_url}
+            onPhotoUpdated={() => {
+              fetchCampagne();
+              toast.success("Photo de la campagne mise à jour avec succès");
+            }}
+          />
+        )
+      }
 
-    </div>
+    </div >
   );
 }
