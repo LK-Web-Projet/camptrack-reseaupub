@@ -109,7 +109,7 @@ CREATE TABLE "prestataires" (
     "marque" TEXT,
     "modele" TEXT,
     "plaque" TEXT,
-    "id_verification" TEXT NOT NULL,
+    "id_verification" TEXT,
     "contrat_valide" BOOLEAN,
     "equipe_gps" BOOLEAN,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

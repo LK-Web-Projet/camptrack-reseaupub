@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pencil, Trash2, Plus, MapPin } from "lucide-react";
+import { Pencil, Trash2, Plus, MapPin, Search } from "lucide-react";
 import AddLieuModal from "./AddLieu";
 import EditLieuModal from "./EditLieu";
 import DeleteLieuModal from "./DeleteLieu";
@@ -9,6 +9,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
 import { Paginate } from "../Paginate";
 import { useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input"
 
 export type Lieu = {
   id_lieu: string;
@@ -35,6 +36,7 @@ export default function LieuTable() {
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("")
 
   // ✅ Recharger les lieux
   const fetchLieux = async () => {
@@ -60,6 +62,14 @@ export default function LieuTable() {
     fetchLieux();
   }, [apiClient, page]);
 
+  const filteredLieux = lieux.filter((l) => {
+    const search = searchQuery.toLowerCase()
+    return (
+      l.nom.toLowerCase().includes(search) ||
+      l.ville.toLowerCase().includes(search)
+    )
+  })
+
   return (
     <div className="p-6 text-gray-900 dark:text-white">
       {/* HEADER */}
@@ -76,6 +86,18 @@ export default function LieuTable() {
           <Plus className="w-5 h-5" />
           Ajouter un lieu
         </button>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-white dark:bg-gray-800"
+          />
+        </div>
       </div>
 
       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
@@ -105,7 +127,14 @@ export default function LieuTable() {
               </thead>
 
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {lieux.map((lieu) => (
+                {!loading && filteredLieux.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center py-6 text-gray-500">
+                      Aucun lieu trouvé.
+                    </td>
+                  </tr>
+                )}
+                {filteredLieux.map((lieu) => (
                   <tr key={lieu.id_lieu}>
                     <td className="px-6 py-3">{lieu.nom}</td>
                     <td className="px-6 py-3">{lieu.ville}</td>
@@ -140,13 +169,7 @@ export default function LieuTable() {
                   </tr>
                 ))}
 
-                {lieux.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="text-center py-6 text-gray-500">
-                      Aucun lieu trouvé.
-                    </td>
-                  </tr>
-                )}
+
               </tbody>
             </table>
             {totalPages > 1 && <Paginate pages={totalPages} currentPage={page} />}

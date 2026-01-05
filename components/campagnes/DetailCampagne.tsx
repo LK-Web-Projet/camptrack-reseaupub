@@ -14,6 +14,7 @@ import {
   Users,
   Paperclip,
   PlusCircle,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
@@ -45,6 +46,7 @@ import { PrestataireCampagne, PaiementPrestataire } from '../../app/generated/pr
 import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
 import VerificationMaterielleModal from "./VerificationMaterielleModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
+import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
 
 
 
@@ -85,6 +87,8 @@ interface PrestataireListItem {
   contact?: string | null;
   service?: { nom?: string } | null;
   disponible?: boolean;
+  plaque?: string | null;
+  id_verification?: string | null;
   affectations?: Array<{
     campagne: {
       id_campagne: string;
@@ -111,10 +115,10 @@ const InfoItem = ({ icon, label, value }: { icon: React.ReactNode; label: string
 );
 
 // Mapping des status et couleurs de badge
-const statusMap: { [key: string]: { label: string; color: "default" | "destructive" | "outline" | "secondary" | "warning" | "success" } } = {
+const statusMap: { [key: string]: { label: string; color: "default" | "destructive" | "outline" | "secondary" } } = {
   PLANIFIEE: { label: "Planifiée", color: "secondary" },
-  EN_COURS: { label: "En cours", color: "warning" },
-  TERMINEE: { label: "Terminée", color: "success" },
+  EN_COURS: { label: "En cours", color: "secondary" }, // Modifié pour correspondre aux types valides
+  TERMINEE: { label: "Terminée", color: "default" },    // Modifié pour correspondre aux types valides
   ANNULEE: { label: "Annulée", color: "destructive" },
 };
 
@@ -129,6 +133,9 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [prestataires, setPrestataires] = useState<PrestataireListItem[]>([]);
   const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>([]);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [assignmentsSearchQuery, setAssignmentsSearchQuery] = useState("");
 
 
   /* State: Update Campaign Photo */
@@ -193,6 +200,7 @@ export default function DetailCampagne({ id }: { id: string }) {
         const lastCamp = sortedAffectations?.[0]; // Prendre la plus récente
         return {
           ...p,
+          id_verification: p.id_verification,
           lastCampDate: lastCamp?.campagne?.date_fin || null,
           lastCampName: lastCamp?.campagne?.nom_campagne || null
         };
@@ -261,17 +269,9 @@ export default function DetailCampagne({ id }: { id: string }) {
 
       // Recharger les données de la campagne pour afficher les prestataires assignés
       await fetchCampagne();
-      setCampagne(prev => {
-        if (!prev) return prev;
-        const updatedAffectations = [body.affectation, ...(prev.affectations || [])];
-        return {
-          ...prev,
-          affectations: updatedAffectations,
-          _count: { ...prev._count, affectations: updatedAffectations.length }
-        };
-      });
       setSelectedPrestataires([]);
       setIsAssignDialogOpen(false);
+      setSearchQuery("");
 
 
     } catch (err) {
@@ -280,6 +280,29 @@ export default function DetailCampagne({ id }: { id: string }) {
     } finally {
       setIsAssigning(false);
     }
+  };
+
+  const handleQuickAddSuccess = (newPrestataire: any) => {
+    // 1. Add to local list (prepend)
+    const newPrestItem: PrestataireListItem = {
+      id_prestataire: newPrestataire.id_prestataire,
+      nom: newPrestataire.nom,
+      prenom: newPrestataire.prenom,
+      contact: newPrestataire.contact,
+      service: newPrestataire.service ? { nom: newPrestataire.service.nom } : null,
+      disponible: true, // Newly created is available
+      plaque: newPrestataire.plaque,
+      id_verification: newPrestataire.id_verification,
+      lastCampDate: null,
+      lastCampName: null,
+    };
+    setPrestataires([newPrestItem, ...prestataires]);
+
+    // 2. Auto-select it
+    setSelectedPrestataires((prev) => [...prev, newPrestItem.id_prestataire]);
+
+    // 3. Close modal
+    setIsQuickAddOpen(false);
   };
 
   if (loading) return (
@@ -299,6 +322,38 @@ export default function DetailCampagne({ id }: { id: string }) {
   );
 
   const currentStatus = statusMap[campagne.status || ""] || { label: campagne.status, color: "default" };
+
+  // --- Search Logic ---
+  const normalizeString = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizePlaque = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  const filteredPrestataires = prestataires.filter(p => {
+    const search = normalizeString(searchQuery);
+    const searchPlaque = normalizePlaque(searchQuery);
+
+    const matchName = normalizeString(p.nom || "").includes(search);
+    const matchPrenom = normalizeString(p.prenom || "").includes(search);
+    const matchService = normalizeString(p.service?.nom || "").includes(search);
+
+    // Recherche intelligente sur la plaque : on compare les versions "nettoyées" (sans tirets/espaces)
+    const matchPlaque = p.plaque && normalizePlaque(p.plaque).includes(searchPlaque);
+
+    const valVerif = String(p.id_verification || "");
+    const matchVerification =
+      normalizeString(valVerif).includes(search) ||
+      normalizePlaque(valVerif).includes(searchPlaque);
+
+    return matchName || matchPrenom || matchService || matchPlaque || matchVerification;
+  });
+
+  const filteredAssignments = campagne.affectations?.filter(a => {
+    if (!a.prestataire) return false;
+    const search = normalizeString(assignmentsSearchQuery);
+    return (
+      normalizeString(a.prestataire.nom || "").includes(search) ||
+      normalizeString(a.prestataire.prenom || "").includes(search)
+    );
+  }) || [];
 
   return (
     <div className="p-6 space-y-6">
@@ -507,17 +562,46 @@ export default function DetailCampagne({ id }: { id: string }) {
                 <PlusCircle className="mr-2 h-4 w-4" /> Assigner
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+
+            <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+              <QuickAddPrestataireModal
+                isOpen={isQuickAddOpen}
+                onClose={() => setIsQuickAddOpen(false)}
+                onSuccess={handleQuickAddSuccess}
+              />
               <DialogHeader>
-                <DialogTitle>Assigner un nouveau prestataire</DialogTitle>
+                <DialogTitle className="flex justify-between items-center">
+                  <span>Assigner un nouveau prestataire</span>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="text-xs bg-[#d61353]/10 text-[#d61353] hover:bg-[#d61353]/20"
+                    onClick={() => setIsQuickAddOpen(true)}
+                  >
+                    <PlusCircle className="mr-1 h-3 w-3" /> Nouveau Prestataire
+                  </Button>
+                </DialogTitle>
               </DialogHeader>
-              <div className="py-4">
+              <div className="flex-1 overflow-y-auto min-h-0 py-4 pr-1">
                 <Label className="mb-4 block">Sélectionner un prestataire disponible</Label>
+
+                <div className="relative mb-4">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="Rechercher par nom, service, plaque ou verification..."
+                    className="pl-9"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
                 {prestataires.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">Aucun prestataire disponible</p>
+                ) : filteredPrestataires.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">Aucun résultat trouvé pour "{searchQuery}"</p>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
-                    {prestataires.map((p) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredPrestataires.map((p) => (
                       <div
                         key={p.id_prestataire}
                         onClick={() => {
@@ -585,6 +669,18 @@ ${selectedPrestataires.includes(p.id_prestataire)
                               </span>
                             </div>
 
+                            {/* Plaque (si présente) */}
+                            {p.plaque && (
+                              <div className="flex items-center gap-2">
+                                <div className="text-gray-400 font-mono text-xs border px-1 rounded bg-gray-50">
+                                  {p.plaque}
+                                </div>
+                                {normalizePlaque(searchQuery).length > 2 && normalizePlaque(p.plaque).includes(normalizePlaque(searchQuery)) && (
+                                  <span className="text-xs text-green-600 font-medium">✨ Correspondance plaque</span>
+                                )}
+                              </div>
+                            )}
+
                             {/* Disponibilité */}
                             <div className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${p.disponible ? "bg-green-500" : "bg-red-500"}`} />
@@ -605,7 +701,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                   onClick={() => {
                     setSelectedPrestataires([]);
                     setIsAssignDialogOpen(false);
-
+                    setSearchQuery("");
                   }}
                 >
                   Annuler
@@ -626,7 +722,18 @@ ${selectedPrestataires.includes(p.id_prestataire)
           </Dialog>
         </CardHeader>
         <CardContent>
-          {campagne.affectations && campagne.affectations.length > 0 ? (
+          <div className="flex justify-end mb-4">
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder="Rechercher affectation..."
+                value={assignmentsSearchQuery}
+                onChange={(e) => setAssignmentsSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          {filteredAssignments.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -641,121 +748,122 @@ ${selectedPrestataires.includes(p.id_prestataire)
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {campagne.affectations.map((a, idx) => (
+                {filteredAssignments.map((a, idx) => {
+                  if (!a) return null;
+                  return (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center justify-between gap-2">
+                          {/* Nom du prestataire */}
+                          <span className="truncate">
+                            {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
+                          </span>
 
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center justify-between gap-2">
-                        {/* Nom du prestataire */}
-                        <span className="truncate">
-                          {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
-                        </span>
-
-                        {/* Actions MOBILE */}
-                        {a.prestataire && (
-                          <div className="flex gap-1 md:hidden">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedPrestataireForPhoto({
-                                  id: a.prestataire.id_prestataire,
-                                  photo_url: a.image_affiche || null
-                                });
-                                setIsPhotoModalOpen(true);
-                              }}
-                            >
-                              📷
-                            </Button>
-
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedPrestataireForIncident({
-                                  id: a.prestataire.id_prestataire,
-                                  nom: a.prestataire.nom || "",
-                                  prenom: a.prestataire.prenom || ""
-                                });
-                                setIsIncidentModalOpen(true);
-                              }}
-                            >
-                              ⚠️
-                            </Button>
-
-                            <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
-                              <Button variant="outline" size="icon">
-                                👁
+                          {/* Actions MOBILE */}
+                          {a.prestataire && (
+                            <div className="flex gap-1 md:hidden">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPrestataireForPhoto({
+                                    id: a.prestataire.id_prestataire,
+                                    photo_url: a.image_affiche || null
+                                  });
+                                  setIsPhotoModalOpen(true);
+                                }}
+                              >
+                                📷
                               </Button>
-                            </Link>
+
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPrestataireForIncident({
+                                    id: a.prestataire.id_prestataire,
+                                    nom: a.prestataire.nom || "",
+                                    prenom: a.prestataire.prenom || ""
+                                  });
+                                  setIsIncidentModalOpen(true);
+                                }}
+                              >
+                                ⚠️
+                              </Button>
+
+                              <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                                <Button variant="outline" size="icon">
+                                  👁
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+
+
+                      <TableCell>
+                        {a.image_affiche ? (
+                          <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
+                            <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
+                            <span className="text-[10px]">N/A</span>
                           </div>
                         )}
-                      </div>
-                    </TableCell>
+                      </TableCell>
 
+                      <TableCell>
+                        {a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : "-"}
+                      </TableCell>
 
-                    <TableCell>
-                      {a.image_affiche ? (
-                        <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
-                          <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
-                          <span className="text-[10px]">N/A</span>
-                        </div>
-                      )}
-                    </TableCell>
+                      <TableCell>{a.status ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.paiement_base ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
 
-                    <TableCell>
-                      {a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : "-"}
-                    </TableCell>
-
-                    <TableCell>{a.status ?? "-"}</TableCell>
-                    <TableCell>{a.paiement?.paiement_base ?? "-"}</TableCell>
-                    <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
-                    <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
-
-                    <TableCell className="max-md:hidden block"
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedPrestataireForPhoto({
-                            id: a.prestataire.id_prestataire,
-                            photo_url: a.image_affiche || null
-                          });
-                          setIsPhotoModalOpen(true);
-                        }}
+                      <TableCell className="max-md:hidden block"
                       >
-                        Photo
-                      </Button>
-
-                      {a.prestataire && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setSelectedPrestataireForIncident({
+                            setSelectedPrestataireForPhoto({
                               id: a.prestataire.id_prestataire,
-                              nom: a.prestataire.nom || "",
-                              prenom: a.prestataire.prenom || ""
+                              photo_url: a.image_affiche || null
                             });
-                            setIsIncidentModalOpen(true);
+                            setIsPhotoModalOpen(true);
                           }}
                         >
-                          Verification / Incident
+                          Photo
                         </Button>
-                      )}
-                      {a.prestataire && (
-                        <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
-                          <Button variant="outline" size="sm">Voir</Button>
-                        </Link>
-                      )}
-                    </TableCell>
-                  </TableRow>
 
-                ))}
+                        {a.prestataire && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPrestataireForIncident({
+                                id: a.prestataire.id_prestataire,
+                                nom: a.prestataire.nom || "",
+                                prenom: a.prestataire.prenom || ""
+                              });
+                              setIsIncidentModalOpen(true);
+                            }}
+                          >
+                            Verification / Incident
+                          </Button>
+                        )}
+                        {a.prestataire && (
+                          <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                            <Button variant="outline" size="sm">Voir</Button>
+                          </Link>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           ) : (
@@ -768,47 +876,51 @@ ${selectedPrestataires.includes(p.id_prestataire)
 
       {/* Modal d'incident */}
 
-      {selectedPrestataireForIncident && (
-        <AddIncidentModal
-          isOpen={isIncidentModalOpen}
-          onClose={() => {
-            setIsIncidentModalOpen(false);
-            setSelectedPrestataireForIncident(null);
-          }}
-          prestataireId={selectedPrestataireForIncident.id}
-          affectations={[
-            {
-              campagne: {
-                id_campagne: campagne?.id_campagne || "",
-                nom_campagne: campagne?.nom_campagne || ""
+      {
+        selectedPrestataireForIncident && (
+          <AddIncidentModal
+            isOpen={isIncidentModalOpen}
+            onClose={() => {
+              setIsIncidentModalOpen(false);
+              setSelectedPrestataireForIncident(null);
+            }}
+            prestataireId={selectedPrestataireForIncident.id}
+            affectations={[
+              {
+                campagne: {
+                  id_campagne: campagne?.id_campagne || "",
+                  nom_campagne: campagne?.nom_campagne || ""
+                }
               }
-            }
-          ]}
-          onIncidentAdded={() => {
-            // Recharger les données de la campagne pour mettre à jour les paiements
-            fetchCampagne();
-            toast.success("Incident enregistré avec succès");
-          }}
-        />
-      )}
+            ]}
+            onIncidentAdded={() => {
+              // Recharger les données de la campagne pour mettre à jour les paiements
+              fetchCampagne();
+              toast.success("Incident enregistré avec succès");
+            }}
+          />
+        )
+      }
 
 
 
       {/* Campaign Photo Modal */}
-      {selectedPrestataireForPhoto && (
-        <UpdateCampaignPhotoModal
-          isOpen={isPhotoModalOpen}
-          onClose={() => setIsPhotoModalOpen(false)}
-          campagneId={id}
-          prestataireId={selectedPrestataireForPhoto.id}
-          initialPhotoUrl={selectedPrestataireForPhoto.photo_url}
-          onPhotoUpdated={() => {
-            fetchCampagne();
-            toast.success("Photo de la campagne mise à jour avec succès");
-          }}
-        />
-      )}
+      {
+        selectedPrestataireForPhoto && (
+          <UpdateCampaignPhotoModal
+            isOpen={isPhotoModalOpen}
+            onClose={() => setIsPhotoModalOpen(false)}
+            campagneId={id}
+            prestataireId={selectedPrestataireForPhoto.id}
+            initialPhotoUrl={selectedPrestataireForPhoto.photo_url}
+            onPhotoUpdated={() => {
+              fetchCampagne();
+              toast.success("Photo de la campagne mise à jour avec succès");
+            }}
+          />
+        )
+      }
 
-    </div>
+    </div >
   );
 }

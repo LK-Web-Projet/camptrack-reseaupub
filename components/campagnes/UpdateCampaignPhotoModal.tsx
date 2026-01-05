@@ -46,6 +46,7 @@ export default function UpdateCampaignPhotoModal({
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const nativeCameraInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -60,6 +61,13 @@ export default function UpdateCampaignPhotoModal({
 
     // --- Camera Logic ---
     const startCamera = async () => {
+        // Fallback immédiat si pas de support mediaDevices (ex: HTTP sur mobile)
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.warn("Camera API not available, falling back to native input");
+            nativeCameraInputRef.current?.click();
+            return;
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: "environment" }
@@ -70,8 +78,10 @@ export default function UpdateCampaignPhotoModal({
             }
             setIsCameraActive(true);
         } catch (err) {
-            console.error("Camera error:", err);
-            toast.error("Impossible d'accéder à la caméra.");
+            console.error("Camera error or permission denied:", err);
+            // Fallback automatique vers l'input natif en cas d'erreur
+            toast.info("Caméra inapprochable, ouverture de l'appareil photo natif...");
+            nativeCameraInputRef.current?.click();
         }
     };
 
@@ -202,6 +212,14 @@ export default function UpdateCampaignPhotoModal({
                                         id="campagne-photo-upload"
                                         type="file"
                                         accept="image/*"
+                                        className="hidden"
+                                        onChange={handleFileChange}
+                                    />
+                                    <input
+                                        ref={nativeCameraInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
                                         className="hidden"
                                         onChange={handleFileChange}
                                     />

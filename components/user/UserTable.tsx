@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast, ToastContainer } from "react-toastify"
-import { Pencil, Trash2, Plus, User } from "lucide-react"
+import { Pencil, Trash2, Plus, User, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import AddUserModal from "@/components/user/AddUser"
 import EditUserModal from "@/components/user/EditUser"
 import DeleteUserModal from "@/components/user/DeleteUser"
@@ -47,6 +48,7 @@ export default function TableUser() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [userToEdit, setUserToEdit] = useState<User | null>(null)
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("")
 
 
   const searchParam = useSearchParams();
@@ -70,6 +72,16 @@ export default function TableUser() {
     }
     fetchUsers()
   }, [apiClient, page])
+
+  const filteredUsers = users.filter((user) => {
+    const search = searchQuery.toLowerCase()
+    return (
+      user.nom.toLowerCase().includes(search) ||
+      user.prenom.toLowerCase().includes(search) ||
+      user.email.toLowerCase().includes(search) ||
+      user.contact.toLowerCase().includes(search)
+    )
+  })
 
   const handleAddUser = async (newUser: User) => {
     try {
@@ -142,6 +154,18 @@ export default function TableUser() {
         </button>
       </div>
 
+      <div className="flex justify-end mb-4">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-white dark:bg-gray-800"
+          />
+        </div>
+      </div>
+
       <ToastContainer />
 
       {/* TABLE */}
@@ -171,7 +195,14 @@ export default function TableUser() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {users.map((user, index) => (
+                {!loading && filteredUsers.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center py-6 text-gray-500">
+                      Aucun utilisateur trouvé.
+                    </td>
+                  </tr>
+                )}
+                {filteredUsers.map((user, index) => (
                   <tr
                     key={user.id_user}
                     className={`transition hover:bg-gray-100 dark:hover:bg-gray-800 ${index % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-950"
