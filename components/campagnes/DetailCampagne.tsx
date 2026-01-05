@@ -250,7 +250,7 @@ export default function DetailCampagne({ id }: { id: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id_prestataires: selectedPrestataires  // ⚠️ clé attendue par le backend
+          id_prestataires: selectedPrestataires
         })
       });
 
