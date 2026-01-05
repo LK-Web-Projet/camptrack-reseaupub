@@ -15,6 +15,7 @@ import {
     Save,
     Edit2
 } from "lucide-react";
+import { Input } from "@/components/ui/input"
 import Link from "next/link";
 import { Paginate } from "../Paginate";
 import { useSearchParams } from "next/navigation";
@@ -59,6 +60,7 @@ export default function PaiementTable() {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [materiels, setMateriels] = useState<any[]>([]);
     const [loadingMateriels, setLoadingMateriels] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("")
 
     // États d'édition
     const [isEditing, setIsEditing] = useState(false);
@@ -196,6 +198,16 @@ export default function PaiementTable() {
         }
     };
 
+    const filteredPaiements = paiements.filter((p) => {
+        const search = searchQuery.toLowerCase()
+        return (
+            p.affectation.prestataire.nom.toLowerCase().includes(search) ||
+            p.affectation.prestataire.prenom.toLowerCase().includes(search) ||
+            p.affectation.campagne.nom_campagne.toLowerCase().includes(search) ||
+            p.affectation.campagne.client.nom.toLowerCase().includes(search)
+        )
+    })
+
     return (
         <div className="p-6 text-gray-900 dark:text-white space-y-6">
             {/* HEADER */}
@@ -228,6 +240,18 @@ export default function PaiementTable() {
                         <option value="pending">En attente</option>
                         <option value="paid">Payés</option>
                     </select>
+                </div>
+
+                <div className="flex-1 flex justify-end">
+                    <div className="relative w-full md:w-72">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                        <Input
+                            placeholder="Rechercher..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 bg-white dark:bg-gray-800"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -263,7 +287,7 @@ export default function PaiementTable() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {paiements.map((paiement) => (
+                                {filteredPaiements.map((paiement) => (
                                     <tr key={paiement.id_paiement} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center">

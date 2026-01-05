@@ -86,6 +86,7 @@ interface PrestataireListItem {
   contact?: string | null;
   service?: { nom?: string } | null;
   disponible?: boolean;
+  plaque?: string | null;
   affectations?: Array<{
     campagne: {
       id_campagne: string;
@@ -131,6 +132,7 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>([]);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [assignmentsSearchQuery, setAssignmentsSearchQuery] = useState("");
 
 
   /* State: Update Campaign Photo */
@@ -294,11 +296,33 @@ export default function DetailCampagne({ id }: { id: string }) {
 
   const currentStatus = statusMap[campagne.status || ""] || { label: campagne.status, color: "default" };
 
-  const filteredPrestataires = prestataires.filter(p =>
-    (p.nom?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-    (p.prenom?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-    (p.service?.nom?.toLowerCase() || "").includes(searchQuery.toLowerCase())
-  );
+  // --- Search Logic ---
+  const normalizeString = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizePlaque = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  const filteredPrestataires = prestataires.filter(p => {
+    const search = normalizeString(searchQuery);
+    const searchPlaque = normalizePlaque(searchQuery);
+
+    const matchName = normalizeString(p.nom || "").includes(search);
+    const matchPrenom = normalizeString(p.prenom || "").includes(search);
+    const matchService = normalizeString(p.service?.nom || "").includes(search);
+
+    // Recherche intelligente sur la plaque : on compare les versions "nettoyées" (sans tirets/espaces)
+    const matchPlaque = p.plaque && normalizePlaque(p.plaque).includes(searchPlaque);
+
+    return matchName || matchPrenom || matchService || matchPlaque;
+    return matchName || matchPrenom || matchService || matchPlaque;
+  });
+
+  const filteredAssignments = campagne.affectations?.filter(a => {
+    if (!a.prestataire) return false;
+    const search = normalizeString(assignmentsSearchQuery);
+    return (
+      normalizeString(a.prestataire.nom || "").includes(search) ||
+      normalizeString(a.prestataire.prenom || "").includes(search)
+    );
+  }) || [];
 
   return (
     <div className="p-6 space-y-6">
@@ -517,7 +541,7 @@ export default function DetailCampagne({ id }: { id: string }) {
                 <div className="relative mb-4">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
-                    placeholder="Rechercher un prestataire (nom, service)..."
+                    placeholder="Rechercher par nom, service ou plaque..."
                     className="pl-9"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -598,6 +622,18 @@ ${selectedPrestataires.includes(p.id_prestataire)
                               </span>
                             </div>
 
+                            {/* Plaque (si présente) */}
+                            {p.plaque && (
+                              <div className="flex items-center gap-2">
+                                <div className="text-gray-400 font-mono text-xs border px-1 rounded bg-gray-50">
+                                  {p.plaque}
+                                </div>
+                                {normalizePlaque(searchQuery).length > 2 && normalizePlaque(p.plaque).includes(normalizePlaque(searchQuery)) && (
+                                  <span className="text-xs text-green-600 font-medium">✨ Correspondance plaque</span>
+                                )}
+                              </div>
+                            )}
+
                             {/* Disponibilité */}
                             <div className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${p.disponible ? "bg-green-500" : "bg-red-500"}`} />
@@ -639,7 +675,18 @@ ${selectedPrestataires.includes(p.id_prestataire)
           </Dialog>
         </CardHeader>
         <CardContent>
-          {campagne.affectations && campagne.affectations.length > 0 ? (
+          <div className="flex justify-end mb-4">
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder="Rechercher affectation..."
+                value={assignmentsSearchQuery}
+                onChange={(e) => setAssignmentsSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          {filteredAssignments.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -654,7 +701,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {campagne.affectations.map((a, idx) => {
+                {filteredAssignments.map((a, idx) => {
                   if (!a) return null;
                   return (
                     <TableRow key={idx}>

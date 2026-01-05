@@ -1,13 +1,14 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Pencil, Trash2, Plus, Megaphone, Eye } from "lucide-react"
+import { Pencil, Trash2, Plus, Megaphone, Eye, Search } from "lucide-react"
 import AddCampagneModal from "@/components/campagnes/AddCampagne"
 import EditCampagneModal from "@/components/campagnes/EditCampagne"
 import DeleteCampagneModal from "@/components/campagnes/DeleteCampagne"
 import Link from "next/link"
 import { Paginate } from "../Paginate"
 import { useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input"
 
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
@@ -38,6 +39,7 @@ export default function CampagneTable() {
   const [campagnes, setCampagnes] = useState<Campagne[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -79,6 +81,16 @@ export default function CampagneTable() {
   const handleAddCampagne = () => fetchCampagnes()
   const handleEditCampagne = () => fetchCampagnes()
 
+  const filteredCampagnes = campagnes.filter((c) => {
+    const search = searchQuery.toLowerCase()
+    return (
+      c.nom_campagne.toLowerCase().includes(search) ||
+      (c.type_campagne || "").toLowerCase().includes(search) ||
+      (c.status || "").toLowerCase().includes(search) ||
+      (c.service?.nom || "").toLowerCase().includes(search)
+    )
+  })
+
   return (
     <div className="p-6 text-gray-900 dark:text-white">
       {/* HEADER */}
@@ -96,6 +108,17 @@ export default function CampagneTable() {
         </button>
       </div>
 
+      <div className="flex justify-end mb-4">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-white dark:bg-gray-800"
+          />
+        </div>
+      </div>
 
       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
         {loading ? (
@@ -132,13 +155,13 @@ export default function CampagneTable() {
                   </tr>
                 )}
 
-                {!loading && campagnes.length === 0 && (
+                {!loading && filteredCampagnes.length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-4 text-center text-sm text-gray-500">Aucune campagne trouvée</td>
                   </tr>
                 )}
 
-                {campagnes.map((campagne) => (
+                {filteredCampagnes.map((campagne) => (
                   <tr key={campagne.id_campagne} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{campagne.nom_campagne}</td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{campagne.type_campagne ?? '-'}</td>

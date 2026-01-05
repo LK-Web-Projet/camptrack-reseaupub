@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Pencil, Trash2, Plus, Users, Eye } from "lucide-react"
+import { Pencil, Trash2, Plus, Users, Eye, Search } from "lucide-react"
 import AddPrestaireModal from "@/components/prestataires/AddPrestataire"
 import EditPrestaireModal from "@/components/prestataires/EditPrestataire"
 import DeletePrestaireModal from "@/components/prestataires/DeletePrestataire"
@@ -10,6 +10,7 @@ import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
 import { Paginate } from "../Paginate";
 import { useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input"
 
 interface Prestataire {
   id_prestataire: string
@@ -31,6 +32,7 @@ export default function PrestataireTable() {
   const [prestataires, setPrestataires] = useState<Prestataire[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
@@ -89,6 +91,19 @@ export default function PrestataireTable() {
     }
   }
 
+  const filteredPrestataires = prestataires.filter((p) => {
+    const search = searchQuery.toLowerCase()
+    return (
+      p.nom.toLowerCase().includes(search) ||
+      p.prenom.toLowerCase().includes(search) ||
+      (p.service?.nom || "").toLowerCase().includes(search) ||
+      (p.type_panneau || "").toLowerCase().includes(search) ||
+      (p.modele || "").toLowerCase().includes(search) ||
+      (p.marque || "").toLowerCase().includes(search) ||
+      (p.plaque || "").toLowerCase().includes(search)
+    )
+  })
+
   return (
     <div className="p-6 text-gray-900 dark:text-white">
       {/* HEADER */}
@@ -104,6 +119,18 @@ export default function PrestataireTable() {
           <Plus className="w-4 h-4 md:w-5 md:h-5 cursor-pointer" />
           <span>Ajouter un prestataire</span>
         </button>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-white dark:bg-gray-800"
+          />
+        </div>
       </div>
 
       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
@@ -146,13 +173,13 @@ export default function PrestataireTable() {
                   </tr>
                 )}
 
-                {!loading && prestataires.length === 0 && (
+                {!loading && filteredPrestataires.length === 0 && (
                   <tr>
                     <td colSpan={7} className="p-4 text-center text-sm text-gray-500">Aucun prestataire trouvé</td>
                   </tr>
                 )}
 
-                {prestataires.map((prestataire) => (
+                {filteredPrestataires.map((prestataire) => (
                   <tr key={prestataire.id_prestataire} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.nom}</td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.prenom}</td>

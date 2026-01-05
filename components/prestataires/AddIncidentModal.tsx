@@ -63,6 +63,7 @@ export default function AddIncidentModal({
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const nativeCameraInputRef = useRef<HTMLInputElement>(null);
 
     // Reset form when opening
     useEffect(() => {
@@ -81,6 +82,12 @@ export default function AddIncidentModal({
 
     // --- Camera Logic ---
     const startCamera = async () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.warn("Camera API not available, falling back to native input");
+            nativeCameraInputRef.current?.click();
+            return;
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: "environment" }
@@ -92,7 +99,8 @@ export default function AddIncidentModal({
             setIsCameraActive(true);
         } catch (err) {
             console.error("Impossible d'accéder à la caméra", err);
-            toast.error("Impossible d'accéder à la caméra.");
+            toast.info("Caméra inapprochable, ouverture de l'appareil photo natif...");
+            nativeCameraInputRef.current?.click();
         }
     };
 
@@ -319,6 +327,14 @@ export default function AddIncidentModal({
                                                 id="incident-file-upload"
                                                 type="file"
                                                 accept="image/*"
+                                                className="hidden"
+                                                onChange={handleFileChange}
+                                            />
+                                            <input
+                                                ref={nativeCameraInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
                                                 className="hidden"
                                                 onChange={handleFileChange}
                                             />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pencil, Trash2, Plus, Briefcase } from "lucide-react";
+import { Pencil, Trash2, Plus, Briefcase, Search } from "lucide-react";
 import AddService from "@/components/services/AddService";
 import EditService from "@/components/services/EditService";
 import DeleteService from "@/components/services/DeleteService";
@@ -9,6 +9,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
 import { Paginate } from "../Paginate";
 import { useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input"
 
 interface Service {
   id_service: string;
@@ -22,6 +23,7 @@ export default function ServiceTable() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("")
 
   const { apiClient } = useAuth()
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -56,6 +58,14 @@ export default function ServiceTable() {
     fetchServices();
   }, [apiClient, page]);
 
+  const filteredServices = services.filter((s) => {
+    const search = searchQuery.toLowerCase()
+    return (
+      s.nom.toLowerCase().includes(search) ||
+      (s.description || "").toLowerCase().includes(search)
+    )
+  })
+
   return (
     <div className="p-6 text-gray-900 dark:text-white">
       {/* HEADER */}
@@ -73,7 +83,17 @@ export default function ServiceTable() {
         </button>
       </div>
 
-
+      <div className="flex justify-end mb-4">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-white dark:bg-gray-800"
+          />
+        </div>
+      </div>
       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-10">
@@ -99,14 +119,14 @@ export default function ServiceTable() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {services.length === 0 ? (
+                {filteredServices.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center py-6 text-gray-500">
                       Aucun service trouvé.
                     </td>
                   </tr>
                 ) : (
-                  services.map((service) => (
+                  filteredServices.map((service) => (
                     <tr key={service.id_service} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm font-medium">{service.nom}</td>
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm">{service.description || "-"}</td>

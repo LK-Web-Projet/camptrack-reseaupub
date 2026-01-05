@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, User } from "lucide-react";
+import { Plus, Pencil, Trash2, User, Search } from "lucide-react";
 import AddClientModal from "@/components/clients/AddClient";
 import EditClientModal from "@/components/clients/EditClient";
 import DeleteClientModal from "@/components/clients/DeleteClient";
@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "@/app/context/AuthContext";
 import { Paginate } from "../Paginate";
 import { useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input"
 
 type Client = {
   id_client: string;
@@ -37,6 +38,7 @@ export default function ClientTable() {
   const [error, setError] = useState<string | null>(null);
   const { apiClient } = useAuth()
   const [clients, setClients] = useState<Client[]>([]);
+  const [searchQuery, setSearchQuery] = useState("")
 
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
@@ -128,6 +130,16 @@ export default function ClientTable() {
     }
   }
 
+  const filteredClients = clients.filter((c) => {
+    const search = searchQuery.toLowerCase()
+    return (
+      c.nom.toLowerCase().includes(search) ||
+      c.prenom.toLowerCase().includes(search) ||
+      (c.entreprise || "").toLowerCase().includes(search) ||
+      (c.mail || "").toLowerCase().includes(search)
+    )
+  })
+
   return (
     <div className="p-6 text-gray-900 dark:text-white">
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800">
@@ -143,6 +155,18 @@ export default function ClientTable() {
           <Plus className="w-5 h-5" />
           <span>Ajouter un client</span>
         </button>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-white dark:bg-gray-800"
+          />
+        </div>
       </div>
 
       <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
@@ -173,7 +197,12 @@ export default function ClientTable() {
               </thead>
 
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {clients.map((c, i) => (
+                {!loading && filteredClients.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-4 text-center text-sm text-gray-500">Aucun client trouvé</td>
+                  </tr>
+                )}
+                {filteredClients.map((c, i) => (
                   <tr
                     key={c.id_client}
                     className={`transition hover:bg-gray-50 dark:hover:bg-gray-800 ${i % 2 === 0

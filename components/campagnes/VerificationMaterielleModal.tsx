@@ -44,6 +44,7 @@ export default function VerificationMaterielleModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const nativeCameraInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadData();
@@ -89,6 +90,12 @@ export default function VerificationMaterielleModal({
 
   // --- Camera Logic ---
   const startCamera = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.warn("Camera API not available, falling back to native input");
+      nativeCameraInputRef.current?.click();
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" }
@@ -100,7 +107,8 @@ export default function VerificationMaterielleModal({
       setIsCameraActive(true);
     } catch (err) {
       console.error("Impossible d'accéder à la caméra", err);
-      alert("Impossible d'accéder à la caméra. Veuillez vérifier les autorisations.");
+      // Fallback
+      nativeCameraInputRef.current?.click();
     }
   };
 
@@ -431,6 +439,14 @@ export default function VerificationMaterielleModal({
                             id="file-upload"
                             type="file"
                             accept="image/*"
+                            className="hidden"
+                            onChange={handleFileChange}
+                          />
+                          <input
+                            ref={nativeCameraInputRef}
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
                             className="hidden"
                             onChange={handleFileChange}
                           />
