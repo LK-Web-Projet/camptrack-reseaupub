@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input"
 
 type Client = {
   id_client: string;
-  nom: string;
-  prenom: string;
+  nom?: string | null;
+  prenom?: string | null;
   entreprise?: string | null;
   domaine_entreprise?: string | null;
   adresse?: string | null;
@@ -133,8 +133,8 @@ export default function ClientTable() {
   const filteredClients = clients.filter((c) => {
     const search = searchQuery.toLowerCase()
     return (
-      c.nom.toLowerCase().includes(search) ||
-      c.prenom.toLowerCase().includes(search) ||
+      (c.nom || "").toLowerCase().includes(search) ||
+      (c.prenom || "").toLowerCase().includes(search) ||
       (c.entreprise || "").toLowerCase().includes(search) ||
       (c.mail || "").toLowerCase().includes(search)
     )

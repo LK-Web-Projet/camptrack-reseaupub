@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import path from 'path';
 const prisma = new PrismaClient();
 // Chemin vers votre fichier Excel - MODIFIEZ CECI
-const EXCEL_FILE_PATH = path.join(__dirname, '../data/prestataires.xlsx'); 
+const EXCEL_FILE_PATH = path.join(__dirname, '../data/prestataires.xlsx');
 // Fonction utilitaire pour mapper les booléens
 function parseBoolean(value: any): boolean {
   if (typeof value === 'boolean') return value;
@@ -32,7 +32,7 @@ async function main() {
   const workbook = XLSX.readFile(EXCEL_FILE_PATH);
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
-  
+
   // Conversion en JSON
   const data = XLSX.utils.sheet_to_json(sheet);
   console.log(`📄 ${data.length} lignes trouvées dans le fichier.`);
@@ -42,41 +42,60 @@ async function main() {
     const rowNum = index + 2; // +1 pour 0-index, +1 pour le header
     const r = row as any;
     try {
-      // Mapping des données
+      // Préparation de l'ID de vérification
+      const idVerificationBase = r['Verification ID'] ? String(r['Verification ID']) : null;
+
+      // Si un ID de vérification est fourni, on vérifie s'il existe déjà
+      if (idVerificationBase) {
+        const existingPrestataire = await prisma.prestataire.findFirst({
+          where: { id_verification: idVerificationBase },
+        });
+
+        if (existingPrestataire) {
+          console.warn(`⚠️ Doublon détecté ligne ${rowNum} (${r['Last Name']} ${r['First Name']}) : ID ${idVerificationBase} existe déjà. -> Ignoré.`);
+          // On passe au suivant sans erreur (ou compte comme ignoré ?)
+          continue;
+        }
+      }
+
+      // Génération de l'ID final (ou utilisation de celui fourni)
+      const finalIdVerification = idVerificationBase || `GEN-${Date.now()}-${index}`;
+
+      // Création
       await prisma.prestataire.create({
         data: {
           // Mapping des colonnes Excel -> Champs DB
           nom: r['Last Name'] || 'Inconnu',
           prenom: r['First Name'] || 'Inconnu',
           plaque: r['REGISTRATION NUMBER'] ? String(r['REGISTRATION NUMBER']) : null,
-          id_verification: r['Verification ID'] ? String(r['Verification ID']) : `GEN-${Date.now()}-${index}`, // Fallback si manquant
+          id_verification: finalIdVerification,
           contact: r['CONTACTS'] ? String(r['CONTACTS']) : '',
-          
+
           type_panneau: parsePanelType(r['panel_type']),
           marque: r['tricycle_brand'],
           couleur: r['VEHICLE_COLORS'],
-          
+
           equipe_gps: parseBoolean(r['GPS_equipped']),
           contrat_valide: parseBoolean(r['VALID_CONTRACT']),
-          
+
           // Gestion de la date
           created_at: r['Creation_Date'] ? new Date(r['Creation_Date']) : new Date(),
-          
+
           // Relation Service - Assurez-vous que ce Service ID existe !
           service: {
             connect: { id_service: String(r['service_id']) }
           }
         }
       });
-      
+
       process.stdout.write('.'); // Indicateur de progrès
       successCount++;
-      
+
     } catch (error) {
       console.error(`\n❌ Erreur ligne ${rowNum} (${r['Last Name']} ${r['First Name']}):`);
-      // Gestion spécifique des erreurs Prisma (ex: Unicité)
+      // Gestion spécifique des erreurs Prisma
       if ((error as any).code === 'P2002') {
-        console.error('   -> Doublon détecté (probablement plaque ou ID déjà existant).');
+        console.error('   -> Doublon détecté sur une contrainte unique (ex: Plaque ou ID).');
       } else if ((error as any).code === 'P2025') {
         console.error('   -> Service ID introuvable.');
       } else {

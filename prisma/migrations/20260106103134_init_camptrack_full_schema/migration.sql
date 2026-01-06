@@ -223,7 +223,7 @@ CREATE UNIQUE INDEX "revoked_tokens_jti_key" ON "revoked_tokens"("jti");
 CREATE UNIQUE INDEX "clients_mail_key" ON "clients"("mail");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "prestataires_plaque_key" ON "prestataires"("plaque");
+CREATE UNIQUE INDEX "prestataires_id_verification_key" ON "prestataires"("id_verification");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "paiements_prestataire_id_campagne_id_prestataire_key" ON "paiements_prestataire"("id_campagne", "id_prestataire");
