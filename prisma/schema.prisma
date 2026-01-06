@@ -149,8 +149,8 @@ model Prestataire {
   couleur         String?
   marque          String?
   modele          String?
-  plaque          String?     @unique
-  id_verification String?  
+  plaque          String?     
+  id_verification String?     @unique
   contrat_valide  Boolean?
   equipe_gps      Boolean?
   created_at      DateTime    @default(now())
