@@ -11,23 +11,31 @@ export async function GET(request: NextRequest) {
     if (!authCheck.ok) return authCheck.response;
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const skip = (page - 1) * limit;
-    const disponible = searchParams.get('disponible');
-    const serviceId = searchParams.get('serviceId');
 
+    const pageParam = searchParams.get("page");
+    const limitParam = searchParams.get("limit");
+
+    const disponible = searchParams.get("disponible");
+    const serviceId = searchParams.get("serviceId");
+
+    // -----------------------------
     // Construction du filtre
+    // -----------------------------
     const where: any = {};
+
     if (disponible !== null) {
-      if (disponible === 'true') where.disponible = true;
-      if (disponible === 'false') where.disponible = false;
+      if (disponible === "true") where.disponible = true;
+      if (disponible === "false") where.disponible = false;
     }
-    if (serviceId) where.id_service = serviceId;
 
-    const total = await prisma.prestataire.count({ where });
+    if (serviceId) {
+      where.id_service = serviceId;
+    }
 
-    const prestataires = await prisma.prestataire.findMany({
+    // -----------------------------
+    // Options Prisma dynamiques
+    // -----------------------------
+    const prismaOptions: any = {
       where,
       select: {
         id_prestataire: true,
@@ -46,51 +54,72 @@ export async function GET(request: NextRequest) {
         created_at: true,
         service: {
           select: {
-            nom: true
-          }
+            nom: true,
+          },
         },
-        // Ajout de la date de fin de la dernière campagne
         affectations: {
           take: 1,
           orderBy: {
-            date_creation: 'desc'
+            date_creation: "desc",
           },
           select: {
             campagne: {
               select: {
                 id_campagne: true,
                 nom_campagne: true,
-                date_fin: true
-              }
-            }
-          }
+                date_fin: true,
+              },
+            },
+          },
         },
         _count: {
           select: {
             affectations: true,
-            dommages: true
-          }
-        }
+            dommages: true,
+          },
+        },
       },
-      orderBy: { nom: 'asc' },
-      skip,
-      take: limit
-    });
+      orderBy: { nom: "asc" },
+    };
 
-    return NextResponse.json({
-      prestataires,
-      pagination: {
+    // -----------------------------
+    // Pagination OPTIONNELLE
+    // -----------------------------
+    let pagination = null;
+
+    if (pageParam && limitParam) {
+      const page = parseInt(pageParam);
+      const limit = parseInt(limitParam);
+      const skip = (page - 1) * limit;
+
+      prismaOptions.skip = skip;
+      prismaOptions.take = limit;
+
+      const total = await prisma.prestataire.count({ where });
+
+      pagination = {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      };
+    }
+
+    // -----------------------------
+    // Requête finale
+    // -----------------------------
+    const prestataires = await prisma.prestataire.findMany(prismaOptions);
+
+    return NextResponse.json({
+      prestataires,
+      ...(pagination && { pagination }),
     });
 
   } catch (error) {
     return handleApiError(error);
   }
 }
+
 
 // POST /api/prestataires - Créer un nouveau prestataire
 export async function POST(request: NextRequest) {
