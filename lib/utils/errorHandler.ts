@@ -1,6 +1,6 @@
 // lib/utils/errorHandler.ts - AVEC SUPPORT JOI
 import { NextResponse } from 'next/server'
-import { Prisma } from '@/app/generated/prisma'
+import { Prisma } from '@prisma/client'
 
 export class AppError extends Error {
   constructor(
@@ -52,7 +52,7 @@ export function handleApiError(error: unknown): NextResponse {
   // Erreurs métier personnalisées
   if (error instanceof AppError) {
     return NextResponse.json(
-      { 
+      {
         error: error.message,
         ...(error.details && { details: error.details })
       },

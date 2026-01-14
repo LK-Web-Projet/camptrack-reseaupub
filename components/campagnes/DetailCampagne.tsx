@@ -42,7 +42,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PrestataireCampagne, PaiementPrestataire } from '../../app/generated/prisma/index';
+import { PrestataireCampagne, PaiementPrestataire } from '@prisma/client';
 import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
 import VerificationMaterielleModal from "./VerificationMaterielleModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
