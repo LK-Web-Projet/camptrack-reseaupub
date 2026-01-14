@@ -1,0 +1,12 @@
+{
+  "buildCommand": "prisma generate && pnpm run build",
+  "installCommand": "pnpm install",
+  "outputDirectory": ".next",
+  "devCommand": "next dev",
+  "framework": "nextjs",
+  "build": {
+    "env": {
+      "PRISMA_GENERATE_DATAPROXY": "false"
+    }
+  }
+}
