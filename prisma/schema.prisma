@@ -1,15 +1,273 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// === ENUMS ===
+enum UserType {
+  ADMIN
+  SUPERVISEUR_CAMPAGNE
+  CONTROLEUR
+  OPERATIONNEL
+  EQUIPE
+}
+
+enum ClientType {
+  EXTERNE
+  INTERNE
+}
+
+enum TypeCampagne {
+  MASSE
+  PROXIMITE
+}
+
+enum CampagneStatus {
+  PLANIFIEE
+  EN_COURS
+  TERMINEE
+  ANNULEE
+}
+
+enum TypePanneau {
+  PETIT
+  GRAND
+}
+
+enum EtatMateriel {
+  BON
+  MOYEN
+  MAUVAIS
+}
+
+enum TypeFichier {
+  RAPPORT_JOURNALIER
+  RAPPORT_FINAL
+  PIGE
+}
+
+// === MODÈLES ===
+
+model User {
+  id_user         String    @id @default(cuid())
+  nom             String
+  prenom          String
+  nom_utilisateur String?   @unique
+  type_user       UserType
+  email           String    @unique
+  password        String
+  contact         String?
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  campagnes       Campagne[]
+  refreshTokens   RefreshToken[]
+  revokedTokens   RevokedToken[]  // RELATION AJOUTÉE
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  token_hash String
+  user       User     @relation(fields: [userId], references: [id_user])
+  userId     String
+  expires_at DateTime
+  revoked    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model RevokedToken {
+  id         String   @id @default(cuid())
+  jti        String   @unique  // JWT ID (unique identifier)
+  user_id    String
+  expires_at DateTime
+  revoked_at DateTime @default(now())
+  
+  user       User     @relation(fields: [user_id], references: [id_user])
+  
+  @@map("revoked_tokens")
+}
+
+model Client {
+  id_client        String     @id @default(cuid())
+  nom              String?
+  prenom           String?
+  entreprise       String
+  domaine_entreprise String?
+  adresse          String?
+  contact          String?
+  mail             String?    @unique
+  type_client      ClientType
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+
+  campagnes        Campagne[]
+
+  @@map("clients")
+}
+
+model Lieu {
+  id_lieu    String    @id @default(cuid())
+  nom        String
+  ville      String
+  created_at DateTime  @default(now())
+
+  campagnes  Campagne[]
+
+  @@map("lieux")
+}
+
+model Service {
+  id_service  String    @id @default(cuid())
+  nom         String
+  description String?
+  created_at  DateTime  @default(now())
+
+  prestataires Prestataire[]
+  campagnes    Campagne[]
+
+  @@map("services")
+}
+
+model Prestataire {
+  id_prestataire  String      @id @default(cuid())
+  id_service      String
+  nom             String
+  prenom          String
+  contact         String
+  disponible      Boolean     @default(true)
+  type_panneau    TypePanneau?
+  couleur         String?
+  marque          String?
+  modele          String?
+  plaque          String?     
+  id_verification String?     @unique
+  contrat_valide  Boolean?
+  equipe_gps      Boolean?
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+
+  // Relations
+  service         Service               @relation(fields: [id_service], references: [id_service])
+  affectations    PrestataireCampagne[]
+  dommages        MaterielsCase[]       
+
+  @@map("prestataires")
+}
+
+model Campagne {
+  id_campagne     String    @id @default(cuid())
+  id_client       String
+  id_lieu         String
+  id_gestionnaire String
+  id_service      String 
+  nom_campagne    String
+  description     String?
+  objectif        String?
+  quantite_service Int?
+  nbr_prestataire Int?
+  type_campagne   TypeCampagne? 
+  date_debut      DateTime
+  date_fin        DateTime
+  date_creation   DateTime  @default(now())
+  status          CampagneStatus @default(PLANIFIEE)
+  updated_at      DateTime  @updatedAt
+
+  client          Client            @relation(fields: [id_client], references: [id_client])
+  lieu            Lieu              @relation(fields: [id_lieu], references: [id_lieu])
+  gestionnaire    User              @relation(fields: [id_gestionnaire], references: [id_user])
+  service         Service           @relation(fields: [id_service], references: [id_service])
+
+  affectations    PrestataireCampagne[]
+  fichiers        FichierCampagne[]
+  dommages        MaterielsCase[]
+
+  @@map("campagnes")
+}
+
+model PrestataireCampagne {
+  id_campagne   String
+  id_prestataire String
+  date_creation DateTime  @default(now())
+  date_fin      DateTime?
+  status        String?
+  image_affiche String?
+
+  campagne      Campagne          @relation(fields: [id_campagne], references: [id_campagne])
+  prestataire   Prestataire       @relation(fields: [id_prestataire], references: [id_prestataire])
+  paiement      PaiementPrestataire?
+
+  @@id([id_campagne, id_prestataire])
+  @@map("prestataires_campagne")
+}
+
+model PaiementPrestataire {
+  id_paiement      String   @id @default(cuid())
+  id_campagne      String
+  id_prestataire   String
+  paiement_base    Float
+  paiement_final   Float
+  date_paiement    DateTime?
+  statut_paiement  Boolean  @default(false)
+  sanction_montant Float    @default(0)
+  created_at       DateTime @default(now())
+
+  affectation      PrestataireCampagne @relation(fields: [id_campagne, id_prestataire], references: [id_campagne, id_prestataire])
+
+  @@unique([id_campagne, id_prestataire])
+  @@map("paiements_prestataire")
+}
+
+model MaterielsCase {
+  id_materiels_case String      @id @default(cuid())
+  id_campagne       String?
+  id_prestataire    String?     
+  nom_materiel      String
+  etat              EtatMateriel
+  description       String
+  montant_penalite  Float
+  penalite_appliquer Boolean     @default(false)
+  photo_url         String?
+  date_creation     DateTime    @default(now())
+  preuve_media      String?
+
+  campagne          Campagne?    @relation(fields: [id_campagne], references: [id_campagne])
+  prestataire       Prestataire? @relation(fields: [id_prestataire], references: [id_prestataire]) 
+
+  @@map("materiels_case")
+}
+
+model FichierCampagne {
+  id_fichier       String      @id @default(cuid())
+  id_campagne      String
+  nom_fichier      String
+  description      String?
+  lien_canva_drive String
+  type_fichier     TypeFichier
+  date_creation    DateTime    @default(now())
+
+  campagne         Campagne    @relation(fields: [id_campagne], references: [id_campagne])
+
+  @@map("fichiers_campagne")
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  user_id    String
+  action     String
+  ressource  String
+  details    Json?
+  ip_address String?
+  timestamp  DateTime  @default(now())
+
+  @@map("audit_logs")
 }
