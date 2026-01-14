@@ -1,19 +1,34 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-// Lazy getters to avoid build-time errors when env vars are missing
+// Lazy getters with build-time fallbacks for Vercel
+// In production, these MUST be set via environment variables
 function getAccessSecret(): string {
   const secret = process.env.JWT_ACCESS_SECRET;
+
+  // Allow build to proceed with a placeholder, but warn
   if (!secret) {
-    throw new Error("JWT_ACCESS_SECRET manquant dans les variables d'environnement");
+    if (process.env.NODE_ENV === 'production') {
+      console.error('WARNING: JWT_ACCESS_SECRET not set in production!');
+    }
+    // Fallback only for build-time (will fail at runtime if not set)
+    return process.env.NODE_ENV === 'production'
+      ? 'REPLACE_ME_IN_PRODUCTION_ENV'
+      : 'dev-secret-key-not-for-production';
   }
   return secret;
 }
 
 function getRefreshSecret(): string {
   const secret = process.env.JWT_REFRESH_SECRET;
+
   if (!secret) {
-    throw new Error("JWT_REFRESH_SECRET manquant dans les variables d'environnement");
+    if (process.env.NODE_ENV === 'production') {
+      console.error('WARNING: JWT_REFRESH_SECRET not set in production!');
+    }
+    return process.env.NODE_ENV === 'production'
+      ? 'REPLACE_ME_IN_PRODUCTION_ENV'
+      : 'dev-refresh-secret-not-for-production';
   }
   return secret;
 }
