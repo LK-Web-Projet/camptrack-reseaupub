@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   // On vérifie le refreshToken car l'backgroundColor peut être expiré mais la session valide
   const refreshToken = req.cookies.get("refreshToken")?.value;
   const accessToken = req.cookies.get("accessToken")?.value;

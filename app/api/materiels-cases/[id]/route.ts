@@ -182,7 +182,7 @@ export async function PUT(
         }
       } catch (err) {
         // Log and continue
-        // eslint-disable-next-line no-console
+         
         console.error('Erreur lors de la mise à jour du paiement après modification MaterielsCase:', err);
       }
     }

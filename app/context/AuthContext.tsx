@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Client API qui injecte le token et gère le refresh automatique
   const apiClient = useCallback(async (url: string, options: RequestInit = {}) => {
-    let currentToken = token;
+    const currentToken = token;
 
     const headers = new Headers(options.headers || {});
     if (currentToken) {

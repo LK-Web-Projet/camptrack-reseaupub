@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import ToastProvider from "@/components/providers/ToastProvider";
@@ -14,7 +15,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider />
-            <GlobalLinkLoader />
+            <Suspense fallback={null}>
+              <GlobalLinkLoader />
+            </Suspense>
             {children}
           </AuthProvider>
         </ThemeProvider>

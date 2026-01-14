@@ -317,7 +317,7 @@ export async function POST(request: NextRequest) {
         }
       } catch (err) {
         // Log l'erreur mais ne pas empêcher la réponse de succès pour la création du matériel
-        // eslint-disable-next-line no-console
+         
         console.error('Erreur lors de la gestion du paiement après création MaterielsCase:', err);
       }
     }

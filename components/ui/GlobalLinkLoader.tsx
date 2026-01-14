@@ -1,18 +1,18 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export function GlobalLinkLoader() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const [loadingLink, setLoadingLink] = useState<Element | null>(null);
+    const loadingLinkRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
         // Reset loading state when the URL changes (navigation complete)
-        if (loadingLink) {
-            loadingLink.removeAttribute("data-loading");
-            setLoadingLink(null);
+        if (loadingLinkRef.current) {
+            loadingLinkRef.current.removeAttribute("data-loading");
+            loadingLinkRef.current = null;
         }
     }, [pathname, searchParams]);
 
@@ -41,7 +41,7 @@ export function GlobalLinkLoader() {
 
             // Set loading state
             target.setAttribute("data-loading", "true");
-            setLoadingLink(target);
+            loadingLinkRef.current = target;
         };
 
         document.addEventListener("click", handleClick);
