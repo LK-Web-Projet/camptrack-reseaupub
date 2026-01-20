@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash } from "lucide-react"
+import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/app/context/AuthContext"
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import AddMaterielCaseModal from "./AddMaterielCaseModal"
 import AddIncidentModal from "./AddIncidentModal"
 
 // Interfaces (gardées telles quelles)
@@ -51,7 +52,8 @@ export default function DetailPrestataire({ id }: { id: string }) {
   const { apiClient } = useAuth()
   const [prestataire, setPrestataire] = useState<Prestataire | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false)
+  const [isMaterielCaseModalOpen, setIsMaterielCaseModalOpen] = useState(false) // Renamed state for materiel case modal
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false) // New state for incident modal
 
   const fetchPrestataire = useCallback(async () => {
     if (!id) return;
@@ -174,10 +176,16 @@ export default function DetailPrestataire({ id }: { id: string }) {
             <CardTitle>Dommages et Cas Matériels ({prestataire._count?.dommages ?? 0})</CardTitle>
             <CardDescription>Historique des dommages matériels enregistrés pour ce prestataire.</CardDescription>
           </div>
-          <Button onClick={() => setIsIncidentModalOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
-            <Wrench className="w-4 h-4 mr-2" />
-            Signaler un problème
-          </Button>
+          <div className="flex gap-2"> {/* Added a div to group buttons */}
+            <Button onClick={() => setIsIncidentModalOpen(true)} className="bg-[#d61353] hover:bg-[#b01044] text-white">
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Déclarer un Incident
+            </Button>
+            <Button onClick={() => setIsMaterielCaseModalOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Wrench className="w-4 h-4 mr-2" />
+              Matériel cassé verification pour campagnes
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {prestataire.dommages && prestataire.dommages.length > 0 ? (
@@ -203,10 +211,18 @@ export default function DetailPrestataire({ id }: { id: string }) {
         </CardContent>
       </Card>
 
-
+      {/* New Incident Modal */}
       <AddIncidentModal
         isOpen={isIncidentModalOpen}
         onClose={() => setIsIncidentModalOpen(false)}
+        prestataireId={id}
+        onIncidentAdded={fetchPrestataire}
+      />
+
+      {/* Materiel Case Modal (renamed) */}
+      <AddMaterielCaseModal
+        isOpen={isMaterielCaseModalOpen}
+        onClose={() => setIsMaterielCaseModalOpen(false)}
         prestataireId={id}
         affectations={prestataire.affectations || []}
         onIncidentAdded={fetchPrestataire}
