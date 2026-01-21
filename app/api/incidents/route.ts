@@ -46,7 +46,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: validation.error }, { status: 400 });
     }
 
-    const { id_prestataire, id_type_incident, date_incident, commentaire, photos } = validation.data;
+    const { id_prestataire, id_type_incident, date_incident, commentaire, photos } = validation.data as {
+      id_prestataire: string;
+      id_type_incident: string;
+      date_incident: string;
+      commentaire: string;
+      photos?: string[];
+    };
 
     const newIncident = await prisma.incident.create({
       data: {

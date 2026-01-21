@@ -226,7 +226,7 @@ export default function AddMaterielCaseModal({
                 <DialogHeader className="p-4 border-b bg-gray-50 flex flex-row items-center justify-between space-y-0">
                     <DialogTitle className="flex items-center gap-2 text-xl font-bold text-gray-800">
                         <AlertTriangle className="w-5 h-5 text-[#d61353]" />
-                        Déclarer un Incident / Vérification
+                        Déclaration Matériel Endommagé
                     </DialogTitle>
                 </DialogHeader>
 

@@ -155,32 +155,7 @@ export async function PUT(
       throw new AppError("Campagne non trouvée", 404);
     }
 
-    // Vérifier les conflits de dates si les dates sont modifiées
-    if ((validation.data.date_debut || validation.data.date_fin) && existingCampagne.status !== 'ANNULEE') {
-      const dateDebut = validation.data.date_debut ? new Date(validation.data.date_debut) : existingCampagne.date_debut;
-      const dateFin = validation.data.date_fin ? new Date(validation.data.date_fin) : existingCampagne.date_fin;
 
-      const conflitCampagne = await prisma.campagne.findFirst({
-        where: {
-          id_lieu: existingCampagne.id_lieu,
-          id_campagne: { not: campagneId },
-          OR: [
-            {
-              date_debut: { lte: dateFin },
-              date_fin: { gte: dateDebut }
-            }
-          ],
-          status: { not: 'ANNULEE' }
-        }
-      });
-
-      if (conflitCampagne) {
-        throw new AppError(
-          `Une autre campagne existe déjà pour ce lieu pendant cette période: ${conflitCampagne.nom_campagne}`,
-          409
-        );
-      }
-    }
 
     const updatedCampagne = await prisma.campagne.update({
       where: { id_campagne: campagneId },

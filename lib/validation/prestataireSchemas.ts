@@ -38,13 +38,13 @@ export const prestataireUpdateSchema = Joi.object({
   disponible: Joi.boolean().optional(),
   id_service: Joi.string().optional(),
 
-  // CHAMPS VÉHICULE INTÉGRÉS
-  type_panneau: Joi.string().valid('PETIT', 'GRAND').optional(),
-  couleur: Joi.string().trim().optional().allow(''),
-  marque: Joi.string().trim().optional().allow(''),
-  modele: Joi.string().trim().optional().allow(''),
-  plaque: Joi.string().trim().optional().allow(''),
-  id_verification: Joi.string().trim().optional(),
+  // CHAMPS VÉHICULE INTÉGRÉS - accepter null ou string vide
+  type_panneau: Joi.string().valid('PETIT', 'GRAND').optional().allow(null, ''),
+  couleur: Joi.string().trim().optional().allow(null, ''),
+  marque: Joi.string().trim().optional().allow(null, ''),
+  modele: Joi.string().trim().optional().allow(null, ''),
+  plaque: Joi.string().trim().optional().allow(null, ''),
+  id_verification: Joi.string().trim().optional().allow(null, ''),
   contrat_valide: Joi.boolean().optional().allow(null),
   equipe_gps: Joi.boolean().optional().allow(null)
 }).min(1).messages({
