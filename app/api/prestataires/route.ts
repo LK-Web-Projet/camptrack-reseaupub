@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { prestataireCreateSchema, validateData } from "@/lib/validation/prestataireSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 
-// GET /api/prestataires - Lister tous les prestataires
+// GET /api/prestataires - Lister tous les prestataires avec filtres avancés
 export async function GET(request: NextRequest) {
   try {
     const authCheck = await requireAdmin(request);
@@ -14,15 +14,17 @@ export async function GET(request: NextRequest) {
 
     const pageParam = searchParams.get("page");
     const limitParam = searchParams.get("limit");
-
+    const search = searchParams.get("search");
     const disponible = searchParams.get("disponible");
     const serviceId = searchParams.get("serviceId");
+    const campagne = searchParams.get("campagne");
+    const dateDebut = searchParams.get("dateDebut");
+    const dateFin = searchParams.get("dateFin");
 
-    // -----------------------------
     // Construction du filtre
-    // -----------------------------
     const where: any = {};
 
+    // Filtres simples
     if (disponible !== null) {
       if (disponible === "true") where.disponible = true;
       if (disponible === "false") where.disponible = false;
@@ -32,9 +34,42 @@ export async function GET(request: NextRequest) {
       where.id_service = serviceId;
     }
 
-    // -----------------------------
+    // Recherche textuelle améliorée
+    if (search) {
+      where.OR = [
+        { nom: { contains: search, mode: "insensitive" } },
+        { prenom: { contains: search, mode: "insensitive" } },
+        { contact: { contains: search, mode: "insensitive" } },
+        { marque: { contains: search, mode: "insensitive" } },
+        { couleur: { contains: search, mode: "insensitive" } },
+        { modele: { contains: search, mode: "insensitive" } },
+        { plaque: { contains: search, mode: "insensitive" } },
+        { id_verification: { contains: search, mode: "insensitive" } },
+        { service: { nom: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    // Filtrer par campagne spécifique
+    if (campagne) {
+      where.affectations = {
+        some: {
+          id_campagne: campagne,
+        },
+      };
+    }
+
+    // Filtrer par période de campagne
+    if (dateDebut || dateFin) {
+      where.affectations = where.affectations || { some: {} };
+      where.affectations.some.campagne = {
+        AND: [
+          dateDebut ? { date_debut: { gte: new Date(dateDebut) } } : {},
+          dateFin ? { date_fin: { lte: new Date(dateFin) } } : {},
+        ].filter(obj => Object.keys(obj).length > 0),
+      };
+    }
+
     // Options Prisma dynamiques
-    // -----------------------------
     const prismaOptions: any = {
       where,
       select: {
@@ -82,9 +117,7 @@ export async function GET(request: NextRequest) {
       orderBy: { nom: "asc" },
     };
 
-    // -----------------------------
     // Pagination OPTIONNELLE
-    // -----------------------------
     let pagination = null;
 
     if (pageParam && limitParam) {
@@ -105,9 +138,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // -----------------------------
     // Requête finale
-    // -----------------------------
     const prestataires = await prisma.prestataire.findMany(prismaOptions);
 
     return NextResponse.json({
