@@ -166,30 +166,28 @@ export default function PrestataireTable() {
           <span>Ajouter un prestataire</span>
         </button>
       </div>
-      <div className="w-full  flex flex-row justify-between lg:items-center lg:justify-end gap-4 mb-4">
-      <div className="flex justify-end mb-4">
-        <div className="relative w-full md:w-1/2">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 w-[200px] bg-white dark:bg-gray-800"
-          />
-        </div>
-      </div>
+     <div className="w-full flex flex-wrap items-center justify-between gap-4 mb-4">
+  {/* Recherche */}
+  <div className="relative">
+    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+    <Input
+      placeholder="Rechercher..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="pl-9 w-[200px] bg-white dark:bg-gray-800"
+    />
+  </div>
 
-      {/* Bouton Afficher/Masquer les filtres */}
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition"
-        >
-          <Filter className="w-4 h-4" />
-          <span>{showFilters ? "Masquer les filtres" : "Afficher les filtres"}</span>
-        </button>
-      </div>
-      </div>
+  {/* Bouton filtres */}
+  <button
+    onClick={() => setShowFilters(!showFilters)}
+    className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition whitespace-nowrap"
+  >
+    <Filter className="w-4 h-4" />
+    <span>{showFilters ? "Masquer les filtres" : "Afficher les filtres"}</span>
+  </button>
+</div>
+
 
       {/* Section Filtres */}
       {showFilters && (

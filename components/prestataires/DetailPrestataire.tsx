@@ -173,14 +173,48 @@ export default function DetailPrestataire({ id }: { id: string }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Dommages et Cas Matériels ({prestataire._count?.dommages ?? 0})</CardTitle>
-            <CardDescription>Historique des dommages matériels enregistrés pour ce prestataire.</CardDescription>
+            <CardTitle>Déclarations d'incidents ({prestataire._count?.dommages ?? 0})</CardTitle>
+            <CardDescription>Historique des incidents enregistrés pour ce prestataire.</CardDescription>
           </div>
           <div className="flex gap-2"> {/* Added a div to group buttons */}
             <Button onClick={() => setIsIncidentModalOpen(true)} className="bg-[#d61353] hover:bg-[#b01044] text-white">
               <AlertTriangle className="w-4 h-4 mr-2" />
               Déclarer un Incident
             </Button>
+           
+          </div>
+        </CardHeader>
+        <CardContent>
+          {prestataire.dommages && prestataire.dommages.length > 0 ? (
+            <div className="space-y-4">
+              {prestataire.dommages.map((dmg) => (
+                <div key={dmg.id_materiels_case} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold">{dmg.campagne?.nom_campagne ?? "Campagne non spécifiée"}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{dmg.description ?? "Pas de description"}</p>
+                    <p className="text-xs text-gray-500 mt-1">Enregistré le: {new Date(dmg.date_creation).toLocaleDateString("fr-FR")}</p>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant={dmg.etat === 'grave' ? 'destructive' : 'warning'}>{dmg.etat}</Badge>
+                    <p className="text-lg font-bold mt-1">{dmg.montant_penalite ? `${dmg.montant_penalite}FCFA` : ""}</p>
+                    {dmg.penalite_appliquer && <p className="text-xs text-green-600">Pénalité appliquée</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-center text-gray-500 py-8">Aucun dommage enregistré.</p>
+          )}
+        </CardContent>
+      </Card>
+         <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Dommages et Cas Matériels ({prestataire._count?.dommages ?? 0})</CardTitle>
+            <CardDescription>Historique des dommages matériels enregistrés pour ce prestataire.</CardDescription>
+          </div>
+          <div className="flex gap-2"> {/* Added a div to group buttons */}
+           
             <Button onClick={() => setIsMaterielCaseModalOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
               <Wrench className="w-4 h-4 mr-2" />
               Matériel cassé verification pour campagnes
@@ -210,7 +244,6 @@ export default function DetailPrestataire({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
-
       {/* New Incident Modal */}
       <AddIncidentModal
         isOpen={isIncidentModalOpen}
