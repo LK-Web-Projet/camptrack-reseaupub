@@ -27,7 +27,7 @@ interface EditUserModalProps {
 }
 
 export default function EditUserModal({ isOpen, onClose, user, onEditUser }: EditUserModalProps) {
-  const { token } = useAuth()
+  const { apiClient } = useAuth()
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -47,11 +47,10 @@ export default function EditUserModal({ isOpen, onClose, user, onEditUser }: Edi
     onSubmit: async (values, { resetForm, setSubmitting }) => {
       if (!user) return;
       try {
-        const res = await fetch(`/api/users/${user.id_user}`, {
+        const res = await apiClient(`/api/users/${user.id_user}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(values),
         })
@@ -63,7 +62,8 @@ export default function EditUserModal({ isOpen, onClose, user, onEditUser }: Edi
 
         resetForm()
         onClose()
-      } catch {
+      } catch (error) {
+        console.error("Erreur modification utilisateur:", error)
         toast.error("Erreur lors de la modification des informations de l'utilisateur")
       } finally {
         setSubmitting(false)

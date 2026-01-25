@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash } from "lucide-react"
+import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/app/context/AuthContext"
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import AddMaterielCaseModal from "./AddMaterielCaseModal"
 import AddIncidentModal from "./AddIncidentModal"
 
 // Interfaces (gardées telles quelles)
@@ -25,8 +26,26 @@ interface Affectation {
 interface Dommage {
   id_materiels_case: string; etat: string; description: string; montant_penalite: number; penalite_appliquer: boolean; date_creation: string; campagne?: { nom_campagne: string }
 }
+interface IncidentPhoto {
+  id_photo: string
+  url: string
+  created_at: string
+}
+interface Incident {
+  id_incident: string
+  id_prestataire: string
+  date_incident: string
+  commentaire: string
+  created_at: string
+  type_incident: {
+    id_type_incident: string
+    nom: string
+    description?: string
+  }
+  photos: IncidentPhoto[]
+}
 interface Prestataire {
-  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; _count?: { affectations: number; dommages: number }
+  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; incidents?: Incident[]; _count?: { affectations: number; dommages: number; incidents: number }
 }
 
 // Composant pour afficher une information
@@ -50,7 +69,9 @@ const AvailabilityBadge = ({ available }: { available: boolean }) => (
 export default function DetailPrestataire({ id }: { id: string }) {
   const { apiClient } = useAuth()
   const [prestataire, setPrestataire] = useState<Prestataire | null>(null)
+  const [incidents, setIncidents] = useState<Incident[]>([])
   const [loading, setLoading] = useState(true)
+  const [isMaterielCaseModalOpen, setIsMaterielCaseModalOpen] = useState(false)
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false)
 
   const fetchPrestataire = useCallback(async () => {
@@ -70,9 +91,22 @@ export default function DetailPrestataire({ id }: { id: string }) {
     }
   }, [id, apiClient]);
 
+  const fetchIncidents = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await apiClient(`/api/incidents?prestataireId=${id}`)
+      if (!res.ok) throw new Error("Erreur lors du chargement des incidents")
+      const data = await res.json()
+      setIncidents(data)
+    } catch (err) {
+      console.error("Erreur fetch incidents:", err)
+    }
+  }, [id, apiClient]);
+
   useEffect(() => {
     fetchPrestataire()
-  }, [fetchPrestataire])
+    fetchIncidents()
+  }, [fetchPrestataire, fetchIncidents])
 
   if (loading) {
     return (
@@ -171,13 +205,67 @@ export default function DetailPrestataire({ id }: { id: string }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
+            <CardTitle>Déclarations d'incidents ({incidents.length})</CardTitle>
+            <CardDescription>Historique des incidents enregistrés pour ce prestataire.</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setIsIncidentModalOpen(true)} className="bg-[#d61353] hover:bg-[#b01044] text-white">
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Déclarer un Incident
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {incidents && incidents.length > 0 ? (
+            <div className="space-y-4">
+              {incidents.map((incident) => (
+                <div key={incident.id_incident} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="font-semibold text-lg">{incident.type_incident?.nom}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{incident.commentaire}</p>
+                      <p className="text-xs text-gray-500 mt-1">Enregistré le: {new Date(incident.date_incident).toLocaleDateString("fr-FR")}</p>
+                    </div>
+                    <Badge variant="secondary">{incident.type_incident?.nom}</Badge>
+                  </div>
+                  
+                  {incident.photos && incident.photos.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-sm font-medium mb-2">Photos ({incident.photos.length})</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {incident.photos.map((photo) => (
+                          <div key={photo.id_photo} className="relative">
+                            <img
+                              src={photo.url}
+                              alt="Photo incident"
+                              className="w-full h-24 object-cover rounded border border-gray-300 dark:border-gray-600"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-center text-gray-500 py-8">Aucun incident enregistré.</p>
+          )}
+        </CardContent>
+      </Card>
+         <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
             <CardTitle>Dommages et Cas Matériels ({prestataire._count?.dommages ?? 0})</CardTitle>
             <CardDescription>Historique des dommages matériels enregistrés pour ce prestataire.</CardDescription>
           </div>
-          <Button onClick={() => setIsIncidentModalOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
-            <Wrench className="w-4 h-4 mr-2" />
-            Signaler un problème
-          </Button>
+          <div className="flex gap-2"> {/* Added a div to group buttons */}
+           
+            <Button onClick={() => setIsMaterielCaseModalOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Wrench className="w-4 h-4 mr-2" />
+              Matériel cassé verification pour campagnes
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {prestataire.dommages && prestataire.dommages.length > 0 ? (
@@ -202,11 +290,21 @@ export default function DetailPrestataire({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
-
-
+      {/* New Incident Modal */}
       <AddIncidentModal
         isOpen={isIncidentModalOpen}
         onClose={() => setIsIncidentModalOpen(false)}
+        prestataireId={id}
+        onIncidentAdded={() => {
+          fetchPrestataire()
+          fetchIncidents()
+        }}
+      />
+
+      {/* Materiel Case Modal (renamed) */}
+      <AddMaterielCaseModal
+        isOpen={isMaterielCaseModalOpen}
+        onClose={() => setIsMaterielCaseModalOpen(false)}
         prestataireId={id}
         affectations={prestataire.affectations || []}
         onIncidentAdded={fetchPrestataire}

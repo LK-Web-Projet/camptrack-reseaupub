@@ -5,6 +5,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
+
 }
 
 // === ENUMS ===
@@ -158,7 +160,8 @@ model Prestataire {
   // Relations
   service         Service               @relation(fields: [id_service], references: [id_service])
   affectations    PrestataireCampagne[]
-  dommages        MaterielsCase[]       
+  dommages        MaterielsCase[]
+  incidents       Incident[]
 
   @@map("prestataires")
 }
@@ -269,4 +272,43 @@ model AuditLog {
   timestamp  DateTime  @default(now())
 
   @@map("audit_logs")
+}
+
+// === MODÈLES POUR LES INCIDENTS ===
+
+model TypeIncident {
+  id_type_incident String   @id @default(cuid())
+  nom              String   @unique
+  description      String?
+  created_at       DateTime @default(now())
+
+  incidents        Incident[]
+
+  @@map("types_incident")
+}
+
+model Incident {
+  id_incident      String   @id @default(cuid())
+  id_prestataire   String
+  id_type_incident String
+  date_incident    DateTime
+  commentaire      String
+  created_at       DateTime @default(now())
+
+  prestataire      Prestataire   @relation(fields: [id_prestataire], references: [id_prestataire], onDelete: Cascade)
+  type_incident    TypeIncident  @relation(fields: [id_type_incident], references: [id_type_incident])
+  photos           IncidentPhoto[]
+
+  @@map("incidents")
+}
+
+model IncidentPhoto {
+  id_photo    String   @id @default(cuid())
+  id_incident String
+  url         String
+  created_at  DateTime @default(now())
+
+  incident    Incident @relation(fields: [id_incident], references: [id_incident], onDelete: Cascade)
+
+  @@map("incident_photos")
 }

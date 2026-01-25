@@ -84,6 +84,9 @@ export const userUpdateSchema = Joi.object({
   'object.min': 'Au moins un champ doit être fourni pour la modification'
 })
 
+// New exports for incident schemas
+export { incidentCreateSchema, incidentUpdateSchema, typeIncidentCreateSchema } from './incidentSchemas';
+
 export function validateData<T>(schema: Joi.ObjectSchema, data: unknown): { success: true; data: T } | { success: false; error: string } {
   const { error, value } = schema.validate(data, { 
     abortEarly: false,

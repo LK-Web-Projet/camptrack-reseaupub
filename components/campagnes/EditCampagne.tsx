@@ -7,6 +7,13 @@ import { X } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface Client {
   id_client: string
@@ -38,12 +45,31 @@ interface Campagne {
   objectif?: string
   quantite_service?: number
   nbr_prestataire?: number
-  client?: { nom?: string }
-  lieu?: { nom?: string }
-  service?: { nom?: string; id_service?: string }
-  id_client?: string
-  id_lieu?: string
-  id_service?: string
+  client: { // Structure détaillée du client
+    id_client: string
+    nom?: string
+    prenom?: string
+    entreprise?: string
+    contact?: string
+    mail?: string
+  }
+  lieu: { // Structure détaillée du lieu
+    id_lieu: string
+    nom: string
+    ville?: string
+  }
+  service: { // Structure détaillée du service
+    id_service: string
+    nom: string
+    description?: string
+  }
+  gestionnaire: { // Structure détaillée du gestionnaire
+    id_user: string;
+    nom: string;
+    prenom: string;
+    email: string;
+    type_user: string;
+  }
 }
 
 interface EditCampagneModalProps {
@@ -106,9 +132,9 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
       objectif: campagne.objectif || "",
       date_debut: campagne.date_debut ? campagne.date_debut.slice(0, 10) : "",
       date_fin: campagne.date_fin ? campagne.date_fin.slice(0, 10) : "",
-      id_client: campagne.id_client || "",
-      id_lieu: campagne.id_lieu || "",
-      id_service: campagne.id_service || "",
+      id_client: campagne.client?.id_client || "", // Utiliser l'ID du client imbriqué
+      id_lieu: campagne.lieu?.id_lieu || "",       // Utiliser l'ID du lieu imbriqué
+      id_service: campagne.service?.id_service || "", // Utiliser l'ID du service imbriqué
       quantite_service: campagne.quantite_service?.toString() || "",
       nbr_prestataire: campagne.nbr_prestataire?.toString() || "",
     },
@@ -204,17 +230,15 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
 
               <div>
                 <label className="block text-sm font-medium mb-1">Type de campagne</label>
-                <select
-                  name="type_campagne"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.type_campagne}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  <option value="MASSE">MASSE</option>
-                  <option value="PROXIMITE">PROXIMITE</option>
-                </select>
+                <Select value={formik.values.type_campagne} onValueChange={(value) => formik.setFieldValue("type_campagne", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MASSE">MASSE</SelectItem>
+                    <SelectItem value="PROXIMITE">PROXIMITE</SelectItem>
+                  </SelectContent>
+                </Select>
                 {formik.touched.type_campagne && formik.errors.type_campagne && (
                   <p className="text-red-500 text-xs mt-1">{formik.errors.type_campagne}</p>
                 )}
@@ -225,20 +249,18 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-sm font-medium mb-1">Client</label>
-                <select
-                  name="id_client"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.id_client}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Sélectionner un client --</option>
-                  {clients.map((client) => (
-                    <option key={client.id_client} value={client.id_client}>
-                      {client.nom} {client.prenom} {client.entreprise ? `(${client.entreprise})` : ""}
-                    </option>
-                  ))}
-                </select>
+                <Select value={formik.values.id_client} onValueChange={(value) => formik.setFieldValue("id_client", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner un client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id_client} value={client.id_client}>
+                        {client.nom} {client.prenom} {client.entreprise ? `(${client.entreprise})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {formik.touched.id_client && formik.errors.id_client && (
                   <p className="text-red-500 text-xs mt-1">{formik.errors.id_client}</p>
                 )}
@@ -246,18 +268,17 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
 
               <div>
                 <label className="block text-sm font-medium mb-1">Status</label>
-                <select
-                  name="status"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.status}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="PLANIFIEE">PLANIFIEE</option>
-                  <option value="EN_COURS">EN_COURS</option>
-                  <option value="TERMINEE">TERMINEE</option>
-                  <option value="ANNULEE">ANNULEE</option>
-                </select>
+                <Select value={formik.values.status} onValueChange={(value) => formik.setFieldValue("status", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PLANIFIEE">PLANIFIEE</SelectItem>
+                    <SelectItem value="EN_COURS">EN_COURS</SelectItem>
+                    <SelectItem value="TERMINEE">TERMINEE</SelectItem>
+                    <SelectItem value="ANNULEE">ANNULEE</SelectItem>
+                  </SelectContent>
+                </Select>
                 {formik.touched.status && formik.errors.status && (
                   <p className="text-red-500 text-xs mt-1">{formik.errors.status}</p>
                 )}
@@ -268,20 +289,18 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-sm font-medium mb-1">Lieu</label>
-                <select
-                  name="id_lieu"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.id_lieu}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  {lieux.map((lieu) => (
-                    <option key={lieu.id_lieu} value={lieu.id_lieu}>
-                      {lieu.nom} {lieu.ville ? `(${lieu.ville})` : ""}
-                    </option>
-                  ))}
-                </select>
+                <Select value={formik.values.id_lieu} onValueChange={(value) => formik.setFieldValue("id_lieu", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {lieux.map((lieu) => (
+                      <SelectItem key={lieu.id_lieu} value={lieu.id_lieu}>
+                        {lieu.nom} {lieu.ville ? `(${lieu.ville})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {formik.touched.id_lieu && formik.errors.id_lieu && (
                   <p className="text-red-500 text-xs mt-1">{formik.errors.id_lieu}</p>
                 )}
@@ -289,20 +308,18 @@ export default function EditCampagneModal({ isOpen, campagne, onClose, onEditCam
 
               <div>
                 <label className="block text-sm font-medium mb-1">Service</label>
-                <select
-                  name="id_service"
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.id_service}
-                  className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  {services.map((service) => (
-                    <option key={service.id_service} value={service.id_service}>
-                      {service.nom}
-                    </option>
-                  ))}
-                </select>
+                <Select value={formik.values.id_service} onValueChange={(value) => formik.setFieldValue("id_service", value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {services.map((service) => (
+                      <SelectItem key={service.id_service} value={service.id_service}>
+                        {service.nom}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {formik.touched.id_service && formik.errors.id_service && (
                   <p className="text-red-500 text-xs mt-1">{formik.errors.id_service}</p>
                 )}
