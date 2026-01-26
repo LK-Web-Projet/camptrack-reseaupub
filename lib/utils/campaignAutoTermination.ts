@@ -38,7 +38,7 @@ export async function autoTerminateCampaigns(
             }
         });
 
-        const expiredCampaignIds = expiredCampaigns.map(c => c.id_campagne);
+        const expiredCampaignIds = expiredCampaigns.map((c: { id_campagne: string }) => c.id_campagne);
 
         if (expiredCampaignIds.length === 0) {
             return {
@@ -50,65 +50,28 @@ export async function autoTerminateCampaigns(
             };
         }
 
-        // Utiliser une transaction pour assurer la cohérence
-        const result = await prisma.$transaction(async (tx: any) => {
-            // 1. Mettre à jour le statut des campagnes
-            await tx.campagne.updateMany({
-                where: { id_campagne: { in: expiredCampaignIds } },
-                data: { status: 'TERMINEE' }
-            });
-
-            // 2. Récupérer les prestataires avec affectations actives sur ces campagnes
-            const affectationsToClose = await tx.prestataireCampagne.findMany({
-                where: {
-                    id_campagne: { in: expiredCampaignIds },
-                    date_fin: null
-                },
-                select: { id_prestataire: true }
-            });
-
-            const prestataireIds = [...new Set(affectationsToClose.map(a => a.id_prestataire))];
-            const affectationsCount = affectationsToClose.length;
-
-            if (prestataireIds.length > 0) {
-                // 3. Clôturer les affectations (date_fin = now)
-                await tx.prestataireCampagne.updateMany({
-                    where: {
-                        id_campagne: { in: expiredCampaignIds },
-                        date_fin: null
-                    },
-                    data: { date_fin: now }
-                });
-
-                // 4. Libérer les prestataires (disponible = true)
-                await tx.prestataire.updateMany({
-                    where: { id_prestataire: { in: prestataireIds } },
-                    data: { disponible: true }
-                });
-            }
-
-            return {
-                campaignsTerminated: expiredCampaignIds.length,
-                providersReleased: prestataireIds.length,
-                affectationsClosed: affectationsCount
-            };
+        // Mettre à jour uniquement le statut des campagnes
+        // Les prestataires restent affectés jusqu'à leur date_fin personnelle
+        await prisma.campagne.updateMany({
+            where: { id_campagne: { in: expiredCampaignIds } },
+            data: { status: 'TERMINEE' }
         });
 
         // Log pour le monitoring
-        console.log(`[AUTO-TERMINATION] ${result.campaignsTerminated} campagne(s) clôturée(s)`, {
-            campaigns: expiredCampaigns.map(c => ({
+        console.log(`[AUTO-TERMINATION] ${expiredCampaignIds.length} campagne(s) clôturée(s)`, {
+            campaigns: expiredCampaigns.map((c: { id_campagne: string; nom_campagne: string; date_fin: Date }) => ({
                 id: c.id_campagne,
                 name: c.nom_campagne,
                 endDate: c.date_fin
             })),
-            providersReleased: result.providersReleased,
-            affectationsClosed: result.affectationsClosed,
             timestamp: now.toISOString()
         });
 
         return {
             success: true,
-            ...result,
+            campaignsTerminated: expiredCampaignIds.length,
+            providersReleased: 0, // Plus de libération automatique
+            affectationsClosed: 0, // Plus de clôture automatique
             terminatedCampaignIds: expiredCampaignIds
         };
 

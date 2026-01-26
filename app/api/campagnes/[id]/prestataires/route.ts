@@ -221,14 +221,34 @@ export async function POST(
 
         // 7. Transaction d'insertion
         const result = await prisma.$transaction(async (tx) => {
-            // Créer les affectations
-            // createMany n'est pas supporté par SQLite standard facilement avec RETURNING, mais PostgreSQL oui.
-            // Prisma createMany retourne le count.
+            // Récupérer les dates de la campagne pour calculer la durée
+            const campagneWithDates = await tx.campagne.findUnique({
+                where: { id_campagne: campagneId },
+                select: {
+                    date_debut: true,
+                    date_fin: true
+                }
+            });
+
+            if (!campagneWithDates) {
+                throw new Error("Campagne introuvable");
+            }
+
+            // Calculer la durée de la campagne en millisecondes
+            const dureeCampagne = campagneWithDates.date_fin.getTime() - campagneWithDates.date_debut.getTime();
+            const now = new Date();
+
+            // Calculer la date de fin personnalisée pour chaque prestataire
+            // date_fin = date_affectation + durée_campagne
+            const dateFinPrestataire = new Date(now.getTime() + dureeCampagne);
+
+            // Créer les affectations avec date_fin personnalisée
             const created = await tx.prestataireCampagne.createMany({
                 data: prestatairesToAssign.map(pid => ({
                     id_campagne: campagneId,
                     id_prestataire: pid,
-                    status: "ACTIF"
+                    status: "ACTIF",
+                    date_fin: dateFinPrestataire // Date de fin personnalisée
                 }))
             });
 
