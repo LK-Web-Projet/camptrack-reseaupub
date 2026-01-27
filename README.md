@@ -92,9 +92,11 @@ CampTrack est une API développée avec Next.js (App Router) permettant de gére
    DATABASE_URL="postgresql://user:pass@localhost:5432/camptrack"
    JWT_ACCESS_SECRET=<votre-secret-jwt-access>
    JWT_REFRESH_SECRET=<votre-secret-jwt-refresh>
-   SEED_ADMIN_EMAIL=user@admin.com
-   SEED_ADMIN_PASSWORD=ChangeMe123!
+   NODE_ENV=development
+   CRON_SECRET=<votre-secret-cron>
    ```
+
+   
 
    Pour générer des secrets JWT sécurisés :
    ```powershell
