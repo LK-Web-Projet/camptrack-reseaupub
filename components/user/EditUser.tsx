@@ -58,7 +58,7 @@ export default function EditUserModal({ isOpen, onClose, user, onEditUser }: Edi
         const data = await res.json()
         onEditUser(data.user)
         toast.success("Informations de l'utilisateur modifiées avec succès")
-        window.location.href = "/dashboard/admin"; // Actualiser la page pour refléter les changements
+        window.location.href = "/dashboard/users"; // Actualiser la page pour refléter les changements
 
         resetForm()
         onClose()
