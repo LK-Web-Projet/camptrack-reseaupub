@@ -10,7 +10,7 @@ import { verifyAccessToken } from '@/lib/auth/jwt';
 export async function PUT(request: NextRequest) {
     try {
         // Vérifier l'authentification
-        const token = request.cookies.get('token')?.value;
+        const token = request.cookies.get('accessToken')?.value;
 
         if (!token) {
             return NextResponse.json(

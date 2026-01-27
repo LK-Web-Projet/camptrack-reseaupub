@@ -13,7 +13,7 @@ export async function DELETE(
 ) {
     try {
         // Vérifier l'authentification
-        const token = request.cookies.get('token')?.value;
+        const token = request.cookies.get('accessToken')?.value;
         if (!token) {
             return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
         }
