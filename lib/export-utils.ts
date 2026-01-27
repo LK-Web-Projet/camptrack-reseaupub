@@ -6,7 +6,6 @@ export type ExportModel = 'campagne' | 'prestataire' | 'user' | 'client';
 
 export async function exportDataToBuffer(model: ExportModel): Promise<Buffer> {
     let data: any[] = [];
-    let filename = `export-${model}.xlsx`;
 
     try {
         switch (model) {

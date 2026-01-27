@@ -33,7 +33,6 @@ async function seedNotificationRules() {
     ];
 
     for (const rule of rules) {
-        // @ts-ignore - On ignore les potentiels problèmes de typage enum ici
         await prisma.notificationRule.upsert({
             where: { type: rule.type as any },
             update: {

@@ -598,7 +598,7 @@ export default function DetailCampagne({ id }: { id: string }) {
                 {prestataires.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">Aucun prestataire disponible</p>
                 ) : filteredPrestataires.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">Aucun résultat trouvé pour "{searchQuery}"</p>
+                  <p className="text-center text-gray-500 py-8">Aucun résultat trouvé pour &quot;{searchQuery}&quot;</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredPrestataires.map((p) => (
@@ -739,7 +739,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                 <TableRow>
                   <TableHead>Prestataire</TableHead>
                   <TableHead>Image</TableHead>
-                  <TableHead>Date d'assignation</TableHead>
+                  <TableHead>Date d&apos;assignation</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Montant Initial</TableHead>
                   <TableHead>Pénalité</TableHead>

@@ -20,11 +20,11 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import { UploadCloud, AlertTriangle, Camera, X, Image as ImageIcon, PlusCircle } from "lucide-react";
+import { UploadCloud, AlertTriangle, Camera, X, Image as ImageIcon, PlusCircle, Calendar as CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon } from "@radix-ui/react-icons";
+// import { CalendarIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import AddTypeIncidentDialog from "@/components/types-incident/AddTypeIncidentDialog"; // Import the dialog
@@ -266,7 +266,7 @@ export default function AddIncidentModal({
                             <div className="space-y-4">
                                 {/* Type Incident */}
                                 <div className="space-y-1">
-                                    <Label className="block text-sm font-medium text-gray-700">Type d'Incident</Label>
+                                    <Label className="block text-sm font-medium text-gray-700">Type d&apos;Incident</Label>
                                     <Select
                                         value={selectedTypeIncident}
                                         onValueChange={(value) => {
@@ -282,7 +282,7 @@ export default function AddIncidentModal({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="__NEW__" className="font-bold text-blue-600">
-                                                <PlusCircle className="mr-2 h-4 w-4 inline" /> Nouveau type d'incident
+                                                <PlusCircle className="mr-2 h-4 w-4 inline" /> Nouveau type d&apos;incident
                                             </SelectItem>
                                             {typesIncident.length > 0 && (
                                                 <>
@@ -303,7 +303,7 @@ export default function AddIncidentModal({
 
                                 {/* Date Incident */}
                                 <div className="space-y-1">
-                                    <Label className="block text-sm font-medium text-gray-700">Date de l'Incident</Label>
+                                    <Label className="block text-sm font-medium text-gray-700">Date de l&apos;Incident</Label>
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button

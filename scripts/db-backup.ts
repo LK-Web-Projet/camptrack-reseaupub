@@ -13,7 +13,7 @@ async function backupDatabase() {
 
     // Use DIRECT_URL if available (for Prisma Accelerate setups)
     // Otherwise fall back to DATABASE_URL
-    let databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+    const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
 
     if (!databaseUrl) {
         console.error('Error: Neither DIRECT_URL nor DATABASE_URL environment variable is defined.');
