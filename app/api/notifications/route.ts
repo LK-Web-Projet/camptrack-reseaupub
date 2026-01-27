@@ -43,6 +43,9 @@ export async function GET(request: NextRequest) {
             offset
         });
 
+        console.log(`[API Debug] Fetching notifications for UserID: ${userId}`);
+        console.log(`[API Debug] Found ${notifications.length} notifications`);
+
         // Compter le total de notifications non lues
         const unreadCount = await notificationService.getUnreadCount(userId);
 
