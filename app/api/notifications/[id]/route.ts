@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { notificationService } from '@/lib/services/notificationService';
-import { verifyToken } from '@/lib/auth';
+import { verifyAccessToken } from '@/lib/auth/jwt';
 
 export async function DELETE(
     request: NextRequest,
@@ -17,7 +17,7 @@ export async function DELETE(
         if (!token) {
             return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
         }
-        const decoded = await verifyToken(token);
+        const decoded = verifyAccessToken(token);
         if (!decoded || !decoded.userId) {
             return NextResponse.json({ error: 'Token invalide' }, { status: 401 });
         }
