@@ -9,8 +9,9 @@ import { verifyAccessToken } from '@/lib/auth/jwt';
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
+    const params = await props.params;
     try {
         // Vérifier l'authentification
         const token = request.cookies.get('accessToken')?.value;
