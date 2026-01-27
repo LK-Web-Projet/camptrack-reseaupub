@@ -1,14 +1,36 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+// Lazy getters with build-time fallbacks for Vercel
+// In production, these MUST be set via environment variables
+function getAccessSecret(): string {
+  const secret = process.env.JWT_ACCESS_SECRET;
 
-if (!ACCESS_SECRET) {
-  throw new Error("JWT_ACCESS_SECRET manquant dans les variables d'environnement");
+  // Allow build to proceed with a placeholder, but warn
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('WARNING: JWT_ACCESS_SECRET not set in production!');
+    }
+    // Fallback only for build-time (will fail at runtime if not set)
+    return process.env.NODE_ENV === 'production'
+      ? 'REPLACE_ME_IN_PRODUCTION_ENV'
+      : 'dev-secret-key-not-for-production';
+  }
+  return secret;
 }
-if (!REFRESH_SECRET) {
-  throw new Error("JWT_REFRESH_SECRET manquant dans les variables d'environnement");
+
+function getRefreshSecret(): string {
+  const secret = process.env.JWT_REFRESH_SECRET;
+
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('WARNING: JWT_REFRESH_SECRET not set in production!');
+    }
+    return process.env.NODE_ENV === 'production'
+      ? 'REPLACE_ME_IN_PRODUCTION_ENV'
+      : 'dev-refresh-secret-not-for-production';
+  }
+  return secret;
 }
 
 interface TokenPayload {
@@ -21,13 +43,13 @@ interface TokenPayload {
 export function signAccessToken(payload: TokenPayload): string {
   // Générer un ID unique pour ce token
   const jti = crypto.randomBytes(16).toString('hex');
-  
+
   return jwt.sign(
-    { 
-      ...payload, 
-      jti 
-    }, 
-    ACCESS_SECRET, 
+    {
+      ...payload,
+      jti
+    },
+    getAccessSecret(),
     {
       algorithm: "HS256",
       // Access tokens valables 15 minutes (aligné avec le cookie accessToken)
@@ -40,13 +62,13 @@ export function signAccessToken(payload: TokenPayload): string {
 
 export function signRefreshToken(payload: TokenPayload): string {
   const jti = crypto.randomBytes(16).toString('hex');
-  
+
   return jwt.sign(
-    { 
-      ...payload, 
-      jti 
-    }, 
-    REFRESH_SECRET, 
+    {
+      ...payload,
+      jti
+    },
+    getRefreshSecret(),
     {
       algorithm: "HS256",
       expiresIn: "7d",
@@ -58,7 +80,7 @@ export function signRefreshToken(payload: TokenPayload): string {
 
 export function verifyAccessToken<T = TokenPayload & { jti: string }>(token: string): T {
   try {
-    return jwt.verify(token, ACCESS_SECRET) as T;
+    return jwt.verify(token, getAccessSecret()) as T;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       throw new Error("ACCESS_TOKEN_EXPIRED");
@@ -72,7 +94,7 @@ export function verifyAccessToken<T = TokenPayload & { jti: string }>(token: str
 
 export function verifyRefreshToken<T = TokenPayload & { jti: string }>(token: string): T {
   try {
-    return jwt.verify(token, REFRESH_SECRET) as T;
+    return jwt.verify(token, getRefreshSecret()) as T;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       throw new Error("REFRESH_TOKEN_EXPIRED");

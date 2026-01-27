@@ -1,4 +1,4 @@
-import { PrismaClient, TypePanneau } from '../app/generated/prisma'; // Adaptez le chemin si nécessaire
+import { PrismaClient, TypePanneau } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import path from 'path';

@@ -1,4 +1,4 @@
-import { PrismaClient } from '../app/generated/prisma'
+import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../lib/auth/hash'
 
 const prisma = new PrismaClient()
@@ -7,8 +7,8 @@ async function main() {
   console.log('🌱 Démarrage du seeding...')
 
   // Créer l'admin principal
-  const adminPassword = await hashPassword('admin123') 
-  
+  const adminPassword = await hashPassword('admin123')
+
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@camptrack.com' },
     update: {},

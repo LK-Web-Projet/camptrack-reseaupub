@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
 }
 
 datasource db {
@@ -53,6 +52,20 @@ enum TypeFichier {
   PIGE
 }
 
+enum NotificationType {
+  CAMPAIGN_EXPIRING
+  ASSIGNMENT_WEEK_BEFORE
+  ASSIGNMENT_2DAYS_BEFORE
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+
 // === MODÈLES ===
 
 model User {
@@ -71,6 +84,7 @@ model User {
   campagnes       Campagne[]
   refreshTokens   RefreshToken[]
   revokedTokens   RevokedToken[]  // RELATION AJOUTÉE
+  notifications   Notification[]  // RELATION NOTIFICATIONS
 
   @@map("users")
 }
@@ -312,4 +326,65 @@ model IncidentPhoto {
   incident    Incident @relation(fields: [id_incident], references: [id_incident], onDelete: Cascade)
 
   @@map("incident_photos")
+}
+
+// === MODÈLES POUR LES NOTIFICATIONS ===
+
+model Notification {
+  id_notification   String              @id @default(cuid())
+  
+  // Type et priorité
+  type              NotificationType
+  priority          NotificationPriority @default(MEDIUM)
+  
+  // Destinataire (User qui doit voir la notification)
+  user_id           String
+  user              User                @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
+  
+  // Références à l'entité concernée
+  entity_type       String              // "CAMPAGNE" ou "AFFECTATION"
+  entity_id         String              // id_campagne ou "id_campagne:id_prestataire"
+  
+  // Contenu
+  title             String
+  message           String              @db.Text
+  action_url        String?             // URL pour rediriger (ex: /campagnes/xxx)
+  
+  // Métadonnées
+  metadata          Json?               // Données additionnelles
+  
+  // État de lecture
+  is_read           Boolean             @default(false)
+  read_at           DateTime?
+  
+  // Dates
+  created_at        DateTime            @default(now())
+  expires_at        DateTime?           // Optionnel : auto-suppression après X jours
+  
+  @@index([user_id, is_read])           // Pour requêtes efficaces
+  @@index([user_id, created_at])        // Pour tri par date
+  @@index([entity_type, entity_id])     // Pour retrouver notifications par entité
+  @@map("notifications")
+}
+
+model NotificationRule {
+  id_rule           String              @id @default(cuid())
+  
+  // Configuration
+  type              NotificationType    @unique
+  days_before       Int                 // Nombre de jours avant l'événement
+  priority          NotificationPriority @default(MEDIUM)
+  is_active         Boolean             @default(true)
+  
+  // Template du message
+  title_template    String
+  message_template  String              @db.Text
+  
+  // Métadonnées
+  description       String?
+  
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @updatedAt
+  
+  @@map("notification_rules")
 }
