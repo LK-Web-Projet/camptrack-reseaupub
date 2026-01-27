@@ -6626,6 +6626,51 @@ const openApi = {
         }
       },
 
+      Notification: {
+        type: "object",
+        properties: {
+          id_notification: {
+            type: "string",
+            description: "Identifiant unique de la notification"
+          },
+          type: {
+            type: "string",
+            enum: ["CAMPAIGN_EXPIRING", "ASSIGNMENT_WEEK_BEFORE", "ASSIGNMENT_2DAYS_BEFORE"],
+            description: "Type de notification"
+          },
+          priority: {
+            type: "string",
+            enum: ["LOW", "MEDIUM", "HIGH", "URGENT"],
+            description: "Niveau de priorité"
+          },
+          title: {
+            type: "string",
+            description: "Titre de la notification"
+          },
+          message: {
+            type: "string",
+            description: "Contenu du message"
+          },
+          action_url: {
+            type: "string",
+            description: "Lien de redirection (optionnel)"
+          },
+          is_read: {
+            type: "boolean",
+            description: "Statut de lecture"
+          },
+          created_at: {
+            type: "string",
+            format: "date-time",
+            description: "Date de création"
+          },
+          metadata: {
+            type: "object",
+            description: "Données supplémentaires (JSON)"
+          }
+        }
+      },
+
       Client: {
         type: "object",
         properties: {
@@ -7607,6 +7652,198 @@ const openApi = {
     },
 
     // ==================== STATISTIQUES ====================
+    // ==================== NOTIFICATIONS ====================
+    "/notifications": {
+      get: {
+        tags: ["Notifications"],
+        summary: "Lister les notifications de l'utilisateur",
+        description: "Récupère la liste paginée des notifications pour l'utilisateur connecté",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "unread",
+            in: "query",
+            required: false,
+            description: "Filtrer uniquement les non lues (true/false)",
+            schema: { type: "boolean" }
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            description: "Nombre de notifications à retourner",
+            schema: { type: "integer", default: 20 }
+          },
+          {
+            name: "offset",
+            in: "query",
+            required: false,
+            description: "Pagination (offset)",
+            schema: { type: "integer", default: 0 }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des notifications récupérée",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    notifications: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Notification" }
+                    },
+                    total: { type: "integer" },
+                    unread_count: { type: "integer" },
+                    has_more: { type: "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    "/notifications/count": {
+      get: {
+        tags: ["Notifications"],
+        summary: "Compter les notifications non lues",
+        description: "Retourne le nombre total de notifications non lues pour l'utilisateur",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Compteur récupéré",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    count: { type: "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    "/notifications/read-all": {
+      put: {
+        tags: ["Notifications"],
+        summary: "Marquer toutes les notifications comme lues",
+        description: "Met à jour le statut de toutes les notifications non lues de l'utilisateur",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Opération réussie",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" },
+                    count: { type: "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    "/notifications/{id}": {
+      delete: {
+        tags: ["Notifications"],
+        summary: "Supprimer une notification",
+        description: "Supprime définitivement une notification",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la notification",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Notification supprimée",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    "/notifications/{id}/read": {
+      put: {
+        tags: ["Notifications"],
+        summary: "Marquer une notification comme lue",
+        description: "Met à jour le statut d'une notification spécifique",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la notification",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Notification marquée comme lue",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
     "/statistiques": {
       get: {
         tags: ["Statistiques"],
