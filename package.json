@@ -10,7 +10,8 @@
         "lint": "eslint",
         "seed": "pnpm exec prisma db seed",
         "db:seed": "pnpm exec prisma db seed",
-        "prisma:import": "tsx prisma/import-prestataires.ts"
+        "prisma:import": "tsx prisma/import-prestataires.ts",
+        "db:backup": "tsx scripts/db-backup.ts"
     },
     "prisma": {
         "seed": "tsx prisma/seed.ts"
