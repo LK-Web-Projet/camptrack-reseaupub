@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const pathname = usePathname()
+  // const pathname = usePathname()
 
   // Fonction pour vérifier la session (Silent Refresh)
   const checkSession = useCallback(async (): Promise<string | null> => {
@@ -104,12 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push("/") // Ou dashboard standard
       }
       return true
-    } catch (e) {
+    } catch {
       return false
     }
   }
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
     } catch (e) {
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(null)
       router.push("/")
     }
-  }
+  }, [router])
 
   // Client API qui injecte le token et gère le refresh automatique
   const apiClient = useCallback(async (url: string, options: RequestInit = {}) => {

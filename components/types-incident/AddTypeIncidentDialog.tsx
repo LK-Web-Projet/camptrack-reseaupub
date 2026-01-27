@@ -73,7 +73,7 @@ export default function AddTypeIncidentDialog({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <PlusCircle className="h-5 w-5 text-[#d61353]" />
-                        Créer un Nouveau Type d'Incident
+                        Créer un Nouveau Type d&apos;Incident
                     </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
@@ -98,7 +98,7 @@ export default function AddTypeIncidentDialog({
                             id="description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Description détaillée du type d'incident."
+                            placeholder="Description détaillée du type d&apos;incident."
                             className="col-span-3"
                             rows={3}
                         />

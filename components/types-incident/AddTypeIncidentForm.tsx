@@ -90,16 +90,16 @@ export default function AddTypeIncidentForm() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <PlusCircle className="w-5 h-5 text-[#d61353]" />
-                        Ajouter un Nouveau Type d'Incident
+                        Ajouter un Nouveau Type d&apos;Incident
                     </CardTitle>
                     <CardDescription>
-                        Définissez de nouveaux types d'incidents pour une meilleure catégorisation.
+                        Définissez de nouveaux types d&apos;incidents pour une meilleure catégorisation.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-1">
-                            <Label htmlFor="nom">Nom du Type d'Incident</Label>
+                            <Label htmlFor="nom">Nom du Type d&apos;Incident</Label>
                             <Input
                                 id="nom"
                                 type="text"
@@ -115,7 +115,7 @@ export default function AddTypeIncidentForm() {
                                 id="description"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Description détaillée de ce type d'incident."
+                                placeholder="Description détaillée de ce type d&apos;incident."
                                 rows={3}
                             />
                         </div>
@@ -126,7 +126,7 @@ export default function AddTypeIncidentForm() {
                                     Création...
                                 </>
                             ) : (
-                                "Créer le Type d'Incident"
+                                <>Créer le Type d&apos;Incident</>
                             )}
                         </Button>
                     </form>
@@ -135,9 +135,9 @@ export default function AddTypeIncidentForm() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Types d'Incidents Existants</CardTitle>
+                    <CardTitle>Types d&apos;Incidents Existants</CardTitle>
                     <CardDescription>
-                        Liste de tous les types d'incidents actuellement configurés.
+                        Liste de tous les types d&apos;incidents actuellement configurés.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -146,7 +146,7 @@ export default function AddTypeIncidentForm() {
                             <Loader2 className="h-6 w-6 animate-spin text-[#d61353]" />
                         </div>
                     ) : typeIncidents.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">Aucun type d'incident enregistré pour le moment.</p>
+                        <p className="text-center text-gray-500 py-8">Aucun type d&apos;incident enregistré pour le moment.</p>
                     ) : (
                         <Table>
                             <TableHeader>

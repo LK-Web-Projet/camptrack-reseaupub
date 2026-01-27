@@ -205,7 +205,7 @@ export default function DetailPrestataire({ id }: { id: string }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Déclarations d'incidents ({incidents.length})</CardTitle>
+            <CardTitle>Déclarations d&apos;incidents ({incidents.length})</CardTitle>
             <CardDescription>Historique des incidents enregistrés pour ce prestataire.</CardDescription>
           </div>
           <div className="flex gap-2">
@@ -228,7 +228,7 @@ export default function DetailPrestataire({ id }: { id: string }) {
                     </div>
                     <Badge variant="secondary">{incident.type_incident?.nom}</Badge>
                   </div>
-                  
+
                   {incident.photos && incident.photos.length > 0 && (
                     <div className="mt-3">
                       <p className="text-sm font-medium mb-2">Photos ({incident.photos.length})</p>
@@ -253,14 +253,14 @@ export default function DetailPrestataire({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
-         <Card>
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Dommages et Cas Matériels ({prestataire._count?.dommages ?? 0})</CardTitle>
             <CardDescription>Historique des dommages matériels enregistrés pour ce prestataire.</CardDescription>
           </div>
           <div className="flex gap-2"> {/* Added a div to group buttons */}
-           
+
             <Button onClick={() => setIsMaterielCaseModalOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
               <Wrench className="w-4 h-4 mr-2" />
               Matériel cassé verification pour campagnes

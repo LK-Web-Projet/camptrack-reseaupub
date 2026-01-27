@@ -424,7 +424,7 @@ export default function VerificationMaterielleModal({
                     {!previewUrl && !isCameraActive && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
                         <ImageIcon className="w-12 h-12 text-gray-300 mb-3" />
-                        <p className="text-gray-500 text-sm mb-4">Ajoutez une photo pour valider l'état</p>
+                        <p className="text-gray-500 text-sm mb-4">Ajoutez une photo pour valider l&apos;état</p>
 
                         <div className="flex gap-3">
                           <button
