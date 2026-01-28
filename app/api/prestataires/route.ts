@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get("limit");
     const search = searchParams.get("search");
     const disponible = searchParams.get("disponible");
+    const contratValide = searchParams.get("contratValide");
     const serviceId = searchParams.get("serviceId");
     const campagne = searchParams.get("campagne");
     const dateDebut = searchParams.get("dateDebut");
@@ -28,6 +29,11 @@ export async function GET(request: NextRequest) {
     if (disponible !== null) {
       if (disponible === "true") where.disponible = true;
       if (disponible === "false") where.disponible = false;
+    }
+
+    if (contratValide !== null) {
+      if (contratValide === "true") where.contrat_valide = true;
+      if (contratValide === "false") where.contrat_valide = false;
     }
 
     if (serviceId) {

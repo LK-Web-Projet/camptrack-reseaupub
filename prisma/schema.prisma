@@ -114,19 +114,21 @@ model RevokedToken {
 }
 
 model Client {
-  id_client        String     @id @default(cuid())
-  nom              String?
-  prenom           String?
-  entreprise       String
+  id_client          String     @id @default(cuid())
+  nom                String?
+  prenom             String?
+  entreprise         String
   domaine_entreprise String?
-  adresse          String?
-  contact          String?
-  mail             String?    @unique
-  type_client      ClientType
-  created_at       DateTime   @default(now())
-  updated_at       DateTime   @updatedAt
+  adresse            String?
+  contact            String?
+  fonction_contact   String?
+  commentaire        String?
+  mail               String?    @unique
+  type_client        ClientType
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
 
-  campagnes        Campagne[]
+  campagnes          Campagne[]
 
   @@map("clients")
 }
