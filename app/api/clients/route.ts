@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
         domaine_entreprise: true,
         adresse: true,
         contact: true,
+        fonction_contact: true,
+        commentaire: true,
         mail: true,
         type_client: true,
         created_at: true,
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
       throw new AppError(validation.error, 400);
     }
 
-    const { nom, prenom, entreprise, domaine_entreprise, adresse, contact, mail, type_client } = validation.data;
+    const { nom, prenom, entreprise, domaine_entreprise, adresse, contact, fonction_contact, commentaire, mail, type_client } = validation.data;
 
     // Vérifier si un client avec le même email existe déjà
     if (mail) {
@@ -90,6 +92,8 @@ export async function POST(request: NextRequest) {
         domaine_entreprise: domaine_entreprise || null,
         adresse: adresse || null,
         contact: contact || null,
+        fonction_contact: fonction_contact || null,
+        commentaire: commentaire || null,
         mail: mail || null,
         type_client
       },
@@ -101,6 +105,8 @@ export async function POST(request: NextRequest) {
         domaine_entreprise: true,
         adresse: true,
         contact: true,
+        fonction_contact: true,
+        commentaire: true,
         mail: true,
         type_client: true,
         created_at: true

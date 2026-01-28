@@ -11,6 +11,8 @@ export const clientCreateSchema = Joi.object({
   domaine_entreprise: Joi.string().trim().optional().allow(''),
   adresse: Joi.string().trim().optional().allow(''),
   contact: Joi.string().pattern(/^[0-9+\s()-]{6,}$/).optional().allow('', null),
+  fonction_contact: Joi.string().trim().optional().allow('', null),
+  commentaire: Joi.string().trim().optional().allow('', null),
   mail: Joi.string().email().trim().optional().allow('', null).messages({
     'string.email': 'Email invalide'
   }),
@@ -27,6 +29,8 @@ export const clientUpdateSchema = Joi.object({
   domaine_entreprise: Joi.string().trim().optional().allow('', null),
   adresse: Joi.string().trim().optional().allow('', null),
   contact: Joi.string().pattern(/^[0-9+\s()-]{6,}$/).optional().allow('', null),
+  fonction_contact: Joi.string().trim().optional().allow('', null),
+  commentaire: Joi.string().trim().optional().allow('', null),
   mail: Joi.string().email().trim().optional().allow('', null).messages({
     'string.email': 'Email invalide'
   }),

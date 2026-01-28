@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/middleware/authMiddleware"; 
+import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { clientUpdateSchema, validateData } from "@/lib/validation/clientSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 
 // GET /api/clients/[id] - Récupérer un client spécifique
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const clientId = id;
 
     const client = await prisma.client.findUnique({
@@ -26,6 +26,8 @@ export async function GET(
         domaine_entreprise: true,
         adresse: true,
         contact: true,
+        fonction_contact: true,
+        commentaire: true,
         mail: true,
         type_client: true,
         created_at: true,
@@ -63,17 +65,17 @@ export async function GET(
 // PUT /api/clients/[id] - Modifier un client
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const clientId = id;
 
     const body = await request.json();
-    
+
     const validation = validateData(clientUpdateSchema, body);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
@@ -88,13 +90,13 @@ export async function PUT(
     }
 
     const updateData = { ...validation.data };
-    
+
     // Si l'email est modifié, vérifier qu'il n'existe pas déjà
     if (updateData.mail && updateData.mail !== existingClient.mail) {
       const clientExists = await prisma.client.findUnique({
         where: { mail: updateData.mail }
       });
-      
+
       if (clientExists) {
         throw new AppError("Un client avec cet email existe déjà", 409);
       }
@@ -111,6 +113,8 @@ export async function PUT(
         domaine_entreprise: true,
         adresse: true,
         contact: true,
+        fonction_contact: true,
+        commentaire: true,
         mail: true,
         type_client: true,
         created_at: true,
@@ -131,13 +135,13 @@ export async function PUT(
 // DELETE /api/clients/[id] - Supprimer un client
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const clientId = id;
 
     const existingClient = await prisma.client.findUnique({

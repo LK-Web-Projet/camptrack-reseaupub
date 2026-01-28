@@ -3585,6 +3585,13 @@ const openApi = {
             schema: { type: "boolean" }
           },
           {
+            name: "contratValide",
+            in: "query",
+            required: false,
+            description: "Filtrer par validité du contrat",
+            schema: { type: "boolean" }
+          },
+          {
             name: "serviceId",
             in: "query",
             required: false,
