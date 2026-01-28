@@ -32,15 +32,21 @@ interface Campagne {
   nom_campagne: string
 }
 
+interface Service {
+  id_service: string
+  nom: string
+}
+
 export default function PrestataireTable() {
   const { apiClient } = useAuth()
   const [prestataires, setPrestataires] = useState<Prestataire[]>([])
   const [campagnes, setCampagnes] = useState<Campagne[]>([])
+  const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showFilters, setShowFilters] = useState(false)
-  
+
   // Filtres
   const [selectedCampagne, setSelectedCampagne] = useState<string>("")
   const [dateDebut, setDateDebut] = useState<string>("")
@@ -50,7 +56,7 @@ export default function PrestataireTable() {
   const page = parseInt(searchParam?.get("page") || "1");
   const [totalPages, setTotalPages] = useState(1);
 
-  // Charger les campagnes au montage
+  // Charger les campagnes et les services au montage
   useEffect(() => {
     const fetchCampagnes = async () => {
       try {
@@ -63,15 +69,29 @@ export default function PrestataireTable() {
         console.error("Erreur campagnes:", err)
       }
     }
+
+    const fetchServices = async () => {
+      try {
+        const res = await apiClient("/api/services?page=1&limit=100")
+        if (res.ok) {
+          const data = await res.json()
+          setServices(data.services || [])
+        }
+      } catch (err) {
+        console.error("Erreur services:", err)
+      }
+    }
+
     fetchCampagnes()
+    fetchServices()
   }, [apiClient])
 
   const fetchPrestataires = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const params = new URLSearchParams({ 
-        page: String(page), 
+      const params = new URLSearchParams({
+        page: String(page),
         limit: '7',
         ...(searchQuery && { search: searchQuery }),
         ...(selectedCampagne && { campagne: selectedCampagne }),
@@ -166,27 +186,27 @@ export default function PrestataireTable() {
           <span>Ajouter un prestataire</span>
         </button>
       </div>
-     <div className="w-full flex flex-wrap items-center justify-between gap-4 mb-4">
-  {/* Recherche */}
-  <div className="relative">
-    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-    <Input
-      placeholder="Rechercher..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="pl-9 w-[200px] bg-white dark:bg-gray-800"
-    />
-  </div>
+      <div className="w-full flex flex-wrap items-center justify-between gap-4 mb-4">
+        {/* Recherche */}
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-[200px] bg-white dark:bg-gray-800"
+          />
+        </div>
 
-  {/* Bouton filtres */}
-  <button
-    onClick={() => setShowFilters(!showFilters)}
-    className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition whitespace-nowrap"
-  >
-    <Filter className="w-4 h-4" />
-    <span>{showFilters ? "Masquer les filtres" : "Afficher les filtres"}</span>
-  </button>
-</div>
+        {/* Bouton filtres */}
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition whitespace-nowrap"
+        >
+          <Filter className="w-4 h-4" />
+          <span>{showFilters ? "Masquer les filtres" : "Afficher les filtres"}</span>
+        </button>
+      </div>
 
 
       {/* Section Filtres */}
@@ -366,6 +386,7 @@ export default function PrestataireTable() {
         <EditPrestaireModal
           isOpen={isEditModalOpen}
           prestataire={prestaireToEdit}
+          services={services}
           onClose={() => setIsEditModalOpen(false)}
           onEditPrestataire={handleEditPrestataire}
         />

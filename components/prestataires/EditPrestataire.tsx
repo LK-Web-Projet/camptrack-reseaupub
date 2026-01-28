@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useFormik } from "formik"
 import * as Yup from "yup"
 import { X } from "lucide-react"
@@ -34,6 +34,7 @@ interface EditPrestaireModalProps {
   isOpen: boolean
   onClose: () => void
   prestataire: Prestataire | null
+  services: Service[] // Add services prop
   onEditPrestataire: (prestataire: Prestataire) => void
 }
 
@@ -53,30 +54,28 @@ const validationSchema = Yup.object().shape({
   equipe_gps: Yup.boolean(),
 })
 
-export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEditPrestataire }: EditPrestaireModalProps) {
+export default function EditPrestaireModal({ isOpen, onClose, prestataire, services, onEditPrestataire }: EditPrestaireModalProps) {
   const { apiClient } = useAuth()
   const [submitting, setSubmitting] = useState(false)
-  const [services, setServices] = useState<Service[]>([])
+  // Removed internal services state and fetching logic
 
-  // Charger les services au montage ou quand le modal s'ouvre
-  useEffect(() => {
-    const fetchServices = async () => {
-      if (services.length > 0) return
-      try {
-        const res = await apiClient("/api/services?page=1&limit=100")
-        if (!res.ok) throw new Error("Erreur lors du chargement des services")
-        const data = await res.json()
-        setServices(data.services || [])
-      } catch (err) {
-        console.error("Erreur services:", err)
-        toast.error("Impossible de charger les services")
-      }
-    }
 
-    if (isOpen) {
-      fetchServices()
+  // Trouver l'ID du service correspondant au nom du service du prestataire
+  const initialServiceId = useMemo(() => {
+    console.log("Debug - Prestataire:", prestataire);
+    console.log("Debug - Services:", services);
+
+    if (prestataire?.service?.id_service) return prestataire.service.id_service
+
+    if (prestataire?.service?.nom && services.length > 0) {
+      const found = services.find((s) => s.nom === prestataire.service?.nom)
+      console.log("Debug - Found Service:", found);
+      return found ? found.id_service : ""
     }
-  }, [isOpen, apiClient, services.length])
+    return ""
+  }, [prestataire, services])
+
+  console.log("Debug - InitialServiceId:", initialServiceId);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -84,7 +83,7 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, onEdi
       nom: prestataire?.nom || "",
       prenom: prestataire?.prenom || "",
       contact: prestataire?.contact || "",
-      id_service: prestataire?.service?.id_service || "",
+      id_service: initialServiceId,
       disponible: prestataire?.disponible ?? true,
       type_panneau: prestataire?.type_panneau || "",
       couleur: prestataire?.couleur || "",

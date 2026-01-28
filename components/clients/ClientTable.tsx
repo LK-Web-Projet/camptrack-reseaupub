@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, User, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, User, Search, Eye } from "lucide-react";
 import AddClientModal from "@/components/clients/AddClient";
 import EditClientModal from "@/components/clients/EditClient";
 import DeleteClientModal from "@/components/clients/DeleteClient";
 import { toast } from "react-toastify";
 import { useAuth } from "@/app/context/AuthContext";
 import { Paginate } from "../Paginate";
-import { useSearchParams } from "next/navigation";
+
+import { useSearchParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input"
 
 type Client = {
@@ -39,6 +40,7 @@ export default function ClientTable() {
   const { apiClient } = useAuth()
   const [clients, setClients] = useState<Client[]>([]);
   const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter();
 
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
@@ -241,6 +243,13 @@ export default function ClientTable() {
 
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-3">
+                        <button
+                          onClick={() => router.push(`/dashboard/clients/${c.id_client}`)}
+                          className="p-2 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 transition"
+                          title="Voir détails"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => {
                             setClientToEdit(c);
