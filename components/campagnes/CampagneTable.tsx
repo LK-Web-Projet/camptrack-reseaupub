@@ -20,7 +20,10 @@ interface Campagne {
   status?: string
   date_debut?: string
   date_fin?: string
+  client?: { nom?: string; prenom?: string; entreprise?: string; id_client?: string }
+  lieu?: { nom?: string; ville?: string; id_lieu?: string }
   service?: { nom?: string; id_service?: string }
+  gestionnaire?: { nom?: string; prenom?: string; email?: string; id_user?: string; type_user?: string }
   quantite_service?: number
   _count?: { affectations?: number }
 }
