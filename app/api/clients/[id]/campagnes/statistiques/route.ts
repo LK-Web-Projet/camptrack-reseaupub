@@ -13,13 +13,13 @@ import { handleApiError, AppError } from "@/lib/utils/errorHandler";
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const authCheck = await requireAdmin(request);
         if (!authCheck.ok) return authCheck.response;
 
-        const clientId = params.id;
+        const { id: clientId } = await params;
         const { searchParams } = new URL(request.url);
         const dateDebut = searchParams.get('dateDebut');
         const dateFin = searchParams.get('dateFin');
