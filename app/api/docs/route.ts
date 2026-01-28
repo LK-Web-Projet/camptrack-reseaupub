@@ -6390,6 +6390,579 @@ const openApi = {
         }
       }
     },
+
+    // ==================== NOTIFICATIONS ====================
+    "/notifications": {
+      get: {
+        tags: ["Notifications"],
+        summary: "Lister les notifications de l'utilisateur",
+        description: "Récupère la liste paginée des notifications pour l'utilisateur connecté",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "unread",
+            in: "query",
+            required: false,
+            description: "Filtrer uniquement les non lues (true/false)",
+            schema: { type: "boolean" }
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            description: "Nombre de notifications à retourner",
+            schema: { type: "integer", default: 20 }
+          },
+          {
+            name: "offset",
+            in: "query",
+            required: false,
+            description: "Pagination (offset)",
+            schema: { type: "integer", default: 0 }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des notifications récupérée",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    notifications: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Notification" }
+                    },
+                    total: { type: "integer" },
+                    unread_count: { type: "integer" },
+                    has_more: { type: "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    "/notifications/count": {
+      get: {
+        tags: ["Notifications"],
+        summary: "Compter les notifications non lues",
+        description: "Retourne le nombre total de notifications non lues pour l'utilisateur",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Compteur récupéré",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    count: { type: "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    "/notifications/read-all": {
+      put: {
+        tags: ["Notifications"],
+        summary: "Marquer toutes les notifications comme lues",
+        description: "Met à jour le statut de toutes les notifications non lues de l'utilisateur",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Opération réussie",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" },
+                    count: { type: "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    "/notifications/{id}": {
+      delete: {
+        tags: ["Notifications"],
+        summary: "Supprimer une notification",
+        description: "Supprime définitivement une notification",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la notification",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Notification supprimée",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    "/notifications/{id}/read": {
+      put: {
+        tags: ["Notifications"],
+        summary: "Marquer une notification comme lue",
+        description: "Met à jour le statut d'une notification spécifique",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la notification",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Notification marquée comme lue",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+
+    // ==================== STATISTIQUES ====================
+    "/statistiques": {
+      get: {
+        tags: ["Statistiques"],
+        summary: "Obtenir les statistiques globales (ADMIN seulement)",
+        description: "Récupère les statistiques globales de l'application incluant les compteurs, les répartitions par statut et type de campagne, et la disponibilité des prestataires",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Statistiques récupérées avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    counts: {
+                      type: "object",
+                      properties: {
+                        users: { type: "integer", description: "Nombre total d'utilisateurs" },
+                        clients: { type: "integer", description: "Nombre total de clients" },
+                        campagnes: { type: "integer", description: "Nombre total de campagnes" },
+                        prestataires: { type: "integer", description: "Nombre total de prestataires" },
+                        lieux: { type: "integer", description: "Nombre total de lieux" },
+                        services: { type: "integer", description: "Nombre total de services" }
+                      }
+                    },
+                    campagnes: {
+                      type: "object",
+                      properties: {
+                        parStatus: {
+                          type: "object",
+                          description: "Répartition des campagnes par statut",
+                          additionalProperties: { type: "integer" }
+                        },
+                        parType: {
+                          type: "object",
+                          description: "Répartition des campagnes par type",
+                          additionalProperties: { type: "integer" }
+                        }
+                      }
+                    },
+                    prestataires: {
+                      type: "object",
+                      properties: {
+                        total: { type: "integer", description: "Nombre total de prestataires" },
+                        disponibles: { type: "integer", description: "Nombre de prestataires disponibles" },
+                        indisponibles: { type: "integer", description: "Nombre de prestataires indisponibles" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  counts: {
+                    users: 15,
+                    clients: 8,
+                    campagnes: 25,
+                    prestataires: 120,
+                    lieux: 5,
+                    services: 4
+                  },
+                  campagnes: {
+                    parStatus: {
+                      PLANIFIEE: 5,
+                      EN_COURS: 12,
+                      TERMINEE: 7,
+                      ANNULEE: 1
+                    },
+                    parType: {
+                      MASSE: 18,
+                      PROXIMITE: 7
+                    }
+                  },
+                  prestataires: {
+                    total: 120,
+                    disponibles: 95,
+                    indisponibles: 25
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Token manquant ou invalide"
+                }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Accès refusé - Admin requis"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/campagnes/statistiques": {
+      get: {
+        tags: ["Statistiques"],
+        summary: "Obtenir les statistiques des campagnes (ADMIN seulement)",
+        description: "Récupère les statistiques agrégées des campagnes avec filtres optionnels. Permet d'obtenir la répartition par statut et par type de campagne.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "clientId",
+            in: "query",
+            required: false,
+            description: "Filtrer les statistiques par client",
+            schema: { type: "string", example: "clxxx123" }
+          },
+          {
+            name: "lieuId",
+            in: "query",
+            required: false,
+            description: "Filtrer les statistiques par lieu",
+            schema: { type: "string", example: "clxxx456" }
+          },
+          {
+            name: "dateDebut",
+            in: "query",
+            required: false,
+            description: "Date de début minimale (ISO 8601)",
+            schema: { type: "string", format: "date", example: "2024-01-01" }
+          },
+          {
+            name: "dateFin",
+            in: "query",
+            required: false,
+            description: "Date de fin maximale (ISO 8601)",
+            schema: { type: "string", format: "date", example: "2024-12-31" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Statistiques des campagnes récupérées avec succès",
+            headers: {
+              "Cache-Control": {
+                description: "Cache public pendant 5 minutes avec stale-while-revalidate de 10 minutes",
+                schema: { type: "string", example: "public, s-maxage=300, stale-while-revalidate=600" }
+              }
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    total: {
+                      type: "integer",
+                      description: "Nombre total de campagnes"
+                    },
+                    parStatus: {
+                      type: "object",
+                      description: "Répartition des campagnes par statut",
+                      properties: {
+                        PLANIFIEE: { type: "integer", description: "Nombre de campagnes planifiées" },
+                        EN_COURS: { type: "integer", description: "Nombre de campagnes en cours" },
+                        TERMINEE: { type: "integer", description: "Nombre de campagnes terminées" },
+                        ANNULEE: { type: "integer", description: "Nombre de campagnes annulées" }
+                      }
+                    },
+                    parType: {
+                      type: "object",
+                      description: "Répartition des campagnes par type",
+                      properties: {
+                        MASSE: { type: "integer", description: "Nombre de campagnes de masse" },
+                        PROXIMITE: { type: "integer", description: "Nombre de campagnes de proximité" },
+                        NON_SPECIFIE: { type: "integer", description: "Nombre de campagnes sans type spécifié" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  total: 45,
+                  parStatus: {
+                    PLANIFIEE: 12,
+                    EN_COURS: 8,
+                    TERMINEE: 20,
+                    ANNULEE: 5
+                  },
+                  parType: {
+                    MASSE: 30,
+                    PROXIMITE: 10,
+                    NON_SPECIFIE: 5
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Token manquant ou invalide"
+                }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Accès refusé - Admin requis"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/clients/{id}/campagnes/statistiques": {
+      get: {
+        tags: ["Statistiques", "Clients"],
+        summary: "Obtenir les statistiques des campagnes d'un client (ADMIN seulement)",
+        description: "Récupère les statistiques détaillées des campagnes pour un client spécifique, incluant la répartition par statut, par type et le nombre d'affectations de prestataires.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du client",
+            schema: { type: "string", example: "clxxx123" }
+          },
+          {
+            name: "dateDebut",
+            in: "query",
+            required: false,
+            description: "Date de début minimale (ISO 8601)",
+            schema: { type: "string", format: "date", example: "2024-01-01" }
+          },
+          {
+            name: "dateFin",
+            in: "query",
+            required: false,
+            description: "Date de fin maximale (ISO 8601)",
+            schema: { type: "string", format: "date", example: "2024-12-31" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Statistiques du client récupérées avec succès",
+            headers: {
+              "Cache-Control": {
+                description: "Cache public pendant 5 minutes avec stale-while-revalidate de 10 minutes",
+                schema: { type: "string", example: "public, s-maxage=300, stale-while-revalidate=600" }
+              }
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    client: {
+                      type: "object",
+                      description: "Informations du client",
+                      properties: {
+                        id: { type: "string", description: "ID du client" },
+                        nom: { type: "string", description: "Nom du client" },
+                        prenom: { type: "string", description: "Prénom du client" },
+                        entreprise: { type: "string", description: "Nom de l'entreprise" }
+                      }
+                    },
+                    campagnes: {
+                      type: "object",
+                      description: "Statistiques des campagnes",
+                      properties: {
+                        total: { type: "integer", description: "Nombre total de campagnes" },
+                        actives: { type: "integer", description: "Nombre de campagnes actuellement en cours" },
+                        parStatus: {
+                          type: "object",
+                          description: "Répartition par statut",
+                          properties: {
+                            PLANIFIEE: { type: "integer" },
+                            EN_COURS: { type: "integer" },
+                            TERMINEE: { type: "integer" },
+                            ANNULEE: { type: "integer" }
+                          }
+                        },
+                        parType: {
+                          type: "object",
+                          description: "Répartition par type",
+                          properties: {
+                            MASSE: { type: "integer" },
+                            PROXIMITE: { type: "integer" },
+                            NON_SPECIFIE: { type: "integer" }
+                          }
+                        }
+                      }
+                    },
+                    prestataires: {
+                      type: "object",
+                      description: "Statistiques des prestataires",
+                      properties: {
+                        totalAffectations: { type: "integer", description: "Nombre total d'affectations de prestataires" }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  client: {
+                    id: "clxxx123",
+                    nom: "Dupont",
+                    prenom: "Jean",
+                    entreprise: "Entreprise XYZ"
+                  },
+                  campagnes: {
+                    total: 15,
+                    actives: 3,
+                    parStatus: {
+                      PLANIFIEE: 4,
+                      EN_COURS: 3,
+                      TERMINEE: 6,
+                      ANNULEE: 2
+                    },
+                    parType: {
+                      MASSE: 10,
+                      PROXIMITE: 3,
+                      NON_SPECIFIE: 2
+                    }
+                  },
+                  prestataires: {
+                    totalAffectations: 45
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Token manquant ou invalide"
+                }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Accès refusé - Admin requis"
+                }
+              }
+            }
+          },
+          "404": {
+            description: "Client non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Client non trouvé"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    
   },
   components: {
     securitySchemes: {
@@ -7651,304 +8224,7 @@ const openApi = {
       }
     },
 
-    // ==================== STATISTIQUES ====================
-    // ==================== NOTIFICATIONS ====================
-    "/notifications": {
-      get: {
-        tags: ["Notifications"],
-        summary: "Lister les notifications de l'utilisateur",
-        description: "Récupère la liste paginée des notifications pour l'utilisateur connecté",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "unread",
-            in: "query",
-            required: false,
-            description: "Filtrer uniquement les non lues (true/false)",
-            schema: { type: "boolean" }
-          },
-          {
-            name: "limit",
-            in: "query",
-            required: false,
-            description: "Nombre de notifications à retourner",
-            schema: { type: "integer", default: 20 }
-          },
-          {
-            name: "offset",
-            in: "query",
-            required: false,
-            description: "Pagination (offset)",
-            schema: { type: "integer", default: 0 }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Liste des notifications récupérée",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    notifications: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/Notification" }
-                    },
-                    total: { type: "integer" },
-                    unread_count: { type: "integer" },
-                    has_more: { type: "boolean" }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
-          }
-        }
-      }
-    },
-
-    "/notifications/count": {
-      get: {
-        tags: ["Notifications"],
-        summary: "Compter les notifications non lues",
-        description: "Retourne le nombre total de notifications non lues pour l'utilisateur",
-        security: [{ bearerAuth: [] }],
-        responses: {
-          "200": {
-            description: "Compteur récupéré",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    count: { type: "integer" }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
-          }
-        }
-      }
-    },
-
-    "/notifications/read-all": {
-      put: {
-        tags: ["Notifications"],
-        summary: "Marquer toutes les notifications comme lues",
-        description: "Met à jour le statut de toutes les notifications non lues de l'utilisateur",
-        security: [{ bearerAuth: [] }],
-        responses: {
-          "200": {
-            description: "Opération réussie",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    message: { type: "string" },
-                    count: { type: "integer" }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
-          }
-        }
-      }
-    },
-
-    "/notifications/{id}": {
-      delete: {
-        tags: ["Notifications"],
-        summary: "Supprimer une notification",
-        description: "Supprime définitivement une notification",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la notification",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Notification supprimée",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    message: { type: "string" }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
-          }
-        }
-      }
-    },
-
-    "/notifications/{id}/read": {
-      put: {
-        tags: ["Notifications"],
-        summary: "Marquer une notification comme lue",
-        description: "Met à jour le statut d'une notification spécifique",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            description: "ID de la notification",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Notification marquée comme lue",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    message: { type: "string" }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
-          }
-        }
-      }
-    },
-
-    "/statistiques": {
-      get: {
-        tags: ["Statistiques"],
-        summary: "Obtenir les statistiques globales (ADMIN seulement)",
-        description: "Récupère les statistiques globales de l'application incluant les compteurs, les répartitions par statut et type de campagne, et la disponibilité des prestataires",
-        security: [{ bearerAuth: [] }],
-        responses: {
-          "200": {
-            description: "Statistiques récupérées avec succès",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    counts: {
-                      type: "object",
-                      properties: {
-                        users: { type: "integer", description: "Nombre total d'utilisateurs" },
-                        clients: { type: "integer", description: "Nombre total de clients" },
-                        campagnes: { type: "integer", description: "Nombre total de campagnes" },
-                        prestataires: { type: "integer", description: "Nombre total de prestataires" },
-                        lieux: { type: "integer", description: "Nombre total de lieux" },
-                        services: { type: "integer", description: "Nombre total de services" }
-                      }
-                    },
-                    campagnes: {
-                      type: "object",
-                      properties: {
-                        parStatus: {
-                          type: "object",
-                          description: "Répartition des campagnes par statut",
-                          additionalProperties: { type: "integer" }
-                        },
-                        parType: {
-                          type: "object",
-                          description: "Répartition des campagnes par type",
-                          additionalProperties: { type: "integer" }
-                        }
-                      }
-                    },
-                    prestataires: {
-                      type: "object",
-                      properties: {
-                        total: { type: "integer", description: "Nombre total de prestataires" },
-                        disponibles: { type: "integer", description: "Nombre de prestataires disponibles" },
-                        indisponibles: { type: "integer", description: "Nombre de prestataires indisponibles" }
-                      }
-                    }
-                  }
-                },
-                example: {
-                  counts: {
-                    users: 15,
-                    clients: 8,
-                    campagnes: 25,
-                    prestataires: 120,
-                    lieux: 5,
-                    services: 4
-                  },
-                  campagnes: {
-                    parStatus: {
-                      PLANIFIEE: 5,
-                      EN_COURS: 12,
-                      TERMINEE: 7,
-                      ANNULEE: 1
-                    },
-                    parType: {
-                      MASSE: 18,
-                      PROXIMITE: 7
-                    }
-                  },
-                  prestataires: {
-                    total: 120,
-                    disponibles: 95,
-                    indisponibles: 25
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Non authentifié",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Token manquant ou invalide"
-                }
-              }
-            }
-          },
-          "403": {
-            description: "Accès refusé",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                  error: "Accès refusé - Admin requis"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
+    
   }
 }
 
