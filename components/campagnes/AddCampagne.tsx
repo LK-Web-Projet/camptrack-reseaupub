@@ -32,6 +32,12 @@ interface Service {
   description?: string
 }
 
+interface User {
+  id_user: string
+  nom: string
+  prenom: string
+}
+
 interface AddCampagneModalProps {
   isOpen: boolean
   onClose: () => void
@@ -43,6 +49,7 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
   const [clients, setClients] = useState<Client[]>([])
   const [lieux, setLieux] = useState<Lieu[]>([])
   const [services, setServices] = useState<Service[]>([])
+  const [superviseurs, setSuperviseurs] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [isAddClientOpen, setIsAddClientOpen] = useState(false)
@@ -50,10 +57,11 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
   const fetchOptions = useCallback(async () => {
     setLoading(true)
     try {
-      const [clientRes, lieuRes, serviceRes] = await Promise.all([
+      const [clientRes, lieuRes, serviceRes, superviseurRes] = await Promise.all([
         apiClient("/api/clients?limit=500"),
         apiClient("/api/lieux?limit=500"),
         apiClient("/api/services?limit=500"),
+        apiClient("/api/users?type=SUPERVISEUR_CAMPAGNE"),
       ])
 
       if (clientRes.ok) {
@@ -67,6 +75,10 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
       if (serviceRes.ok) {
         const data = await serviceRes.json()
         setServices(data.services || [])
+      }
+      if (superviseurRes.ok) {
+        const data = await superviseurRes.json()
+        setSuperviseurs(data.users || [])
       }
     } catch (err) {
       console.error("Erreur chargement options:", err)
@@ -100,6 +112,7 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
       id_client: "",
       id_lieu: "",
       id_service: "",
+      id_superviseur: "",
       quantite_service: "",
       nbr_prestataire: "",
     },
@@ -112,6 +125,7 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
       id_client: Yup.string().required("Client obligatoire"),
       id_lieu: Yup.string().required("Lieu obligatoire"),
       id_service: Yup.string().required("Service obligatoire"),
+      id_superviseur: Yup.string().nullable(),
       quantite_service: Yup.number()
         .typeError("La quantité doit être un nombre")
         .positive("La quantité doit être positive"),
@@ -304,6 +318,26 @@ export default function AddCampagneModal({ isOpen, onClose, onAddCampagne }: Add
                     <p className="text-red-500 text-xs mt-1">{formik.errors.id_service}</p>
                   )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="id_superviseur">Superviseur (Optionnel)</Label>
+                <Select
+                  name="id_superviseur"
+                  onValueChange={(value) => formik.setFieldValue("id_superviseur", value)}
+                  value={formik.values.id_superviseur}
+                >
+                  <SelectTrigger onBlur={() => formik.setFieldTouched("id_superviseur", true)}>
+                    <SelectValue placeholder="-- Sélectionner --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {superviseurs.map((user) => (
+                      <SelectItem key={user.id_user} value={user.id_user}>
+                        {user.nom} {user.prenom}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

@@ -15,6 +15,8 @@ export type Client = {
   domaine_entreprise?: string | null;
   adresse?: string | null;
   contact?: string | null;
+  fonction_contact?: string | null;
+  commentaire?: string | null;
   mail?: string | null;
   type_client?: string | null;
   created_at: string;
@@ -38,6 +40,8 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
       domaine_entreprise: "",
       adresse: "",
       contact: "",
+      fonction_contact: "",
+      commentaire: "",
       mail: "",
       type_client: "EXTERNE",
     },
@@ -47,6 +51,8 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
       entreprise: Yup.string().required("Entreprise requise"),
       mail: Yup.string().email("Email invalide").nullable(),
       contact: Yup.string().nullable(),
+      fonction_contact: Yup.string().nullable(),
+      commentaire: Yup.string().nullable(),
       type_client: Yup.string().required("Type requis"),
     }),
     onSubmit: async (values, { resetForm }) => {
@@ -190,6 +196,29 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
           </div>
 
           <div>
+            <label className="block text-sm mb-1">Fonction du contact</label>
+            <input
+              type="text"
+              name="fonction_contact"
+              value={formik.values.fonction_contact}
+              onChange={formik.handleChange}
+              className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+
+
+          <div>
+            <label className="block text-sm mb-1">Commentaire</label>
+            <textarea
+              name="commentaire"
+              value={formik.values.commentaire}
+              onChange={formik.handleChange}
+              className="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:text-white min-h-[80px]"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm mb-1">Type</label>
             <select
               name="type_client"
@@ -222,7 +251,7 @@ export default function AddClientModal({ isOpen, onClose, onAddClient }: AddClie
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
