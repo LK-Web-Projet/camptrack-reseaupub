@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { campagneCreateSchema, validateData } from "@/lib/validation/campagneSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 import { autoTerminateCampaigns, autoTerminationCache } from "@/lib/utils/campaignAutoTermination";
+import { UserType } from "@prisma/client";
 
 // GET /api/campagnes - Lister toutes les campagnes
 export async function GET(request: NextRequest) {
@@ -79,6 +80,13 @@ export async function GET(request: NextRequest) {
             email: true
           }
         },
+        superviseur: {
+          select: {
+            nom: true,
+            prenom: true,
+            email: true
+          }
+        },
         _count: {
           select: {
             affectations: true,
@@ -130,7 +138,8 @@ export async function POST(request: NextRequest) {
       nbr_prestataire,
       type_campagne,
       date_debut,
-      date_fin
+      date_fin,
+      id_superviseur
     } = validation.data;
 
     // Vérifier que le client existe
@@ -157,6 +166,21 @@ export async function POST(request: NextRequest) {
       throw new AppError("Service non trouvé", 404);
     }
 
+    // Vérifier le superviseur si fourni
+    if (id_superviseur) {
+      const superviseur = await prisma.user.findUnique({
+        where: { id_user: id_superviseur }
+      });
+
+      if (!superviseur) {
+        throw new AppError("Superviseur non trouvé", 404);
+      }
+
+      if (superviseur.type_user !== UserType.SUPERVISEUR_CAMPAGNE) {
+        throw new AppError("L'utilisateur spécifié n'est pas un superviseur", 400);
+      }
+    }
+
     // Créer la campagne
     const campagne = await prisma.campagne.create({
       data: {
@@ -164,6 +188,7 @@ export async function POST(request: NextRequest) {
         id_lieu,
         id_service,
         id_gestionnaire: authCheck.user.id_user,
+        id_superviseur: id_superviseur || null,
         nom_campagne,
         description: description || null,
         objectif: objectif || null,
@@ -196,6 +221,13 @@ export async function POST(request: NextRequest) {
           select: {
             nom: true,
             ville: true
+          }
+        },
+        superviseur: {
+          select: {
+            nom: true,
+            prenom: true,
+            email: true
           }
         },
         service: {

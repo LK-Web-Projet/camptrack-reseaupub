@@ -82,6 +82,7 @@ model User {
   updated_at      DateTime  @updatedAt
 
   campagnes       Campagne[]
+  campagnes_supervisees Campagne[] @relation("CampagneSuperviseur")
   refreshTokens   RefreshToken[]
   revokedTokens   RevokedToken[]  // RELATION AJOUTÉE
   notifications   Notification[]  // RELATION NOTIFICATIONS
@@ -204,6 +205,10 @@ model Campagne {
   client          Client            @relation(fields: [id_client], references: [id_client])
   lieu            Lieu              @relation(fields: [id_lieu], references: [id_lieu])
   gestionnaire    User              @relation(fields: [id_gestionnaire], references: [id_user])
+  
+  id_superviseur  String?
+  superviseur     User?             @relation("CampagneSuperviseur", fields: [id_superviseur], references: [id_user])
+
   service         Service           @relation(fields: [id_service], references: [id_service])
 
   affectations    PrestataireCampagne[]

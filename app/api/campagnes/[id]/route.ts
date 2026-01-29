@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { campagneUpdateSchema, validateData } from "@/lib/validation/campagneSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { UserType } from "@prisma/client";
 
 // GET /api/campagnes/[id] - Récupérer une campagne spécifique
 export async function GET(
@@ -56,6 +57,15 @@ export async function GET(
           }
         },
         gestionnaire: {
+          select: {
+            id_user: true,
+            nom: true,
+            prenom: true,
+            email: true,
+            type_user: true
+          }
+        },
+        superviseur: {
           select: {
             id_user: true,
             nom: true,
@@ -155,6 +165,21 @@ export async function PUT(
       throw new AppError("Campagne non trouvée", 404);
     }
 
+    // Vérifier le superviseur si fourni dans la mise à jour
+    if (validation.data.id_superviseur) {
+      const superviseur = await prisma.user.findUnique({
+        where: { id_user: validation.data.id_superviseur }
+      });
+
+      if (!superviseur) {
+        throw new AppError("Superviseur non trouvé", 404);
+      }
+
+      if (superviseur.type_user !== UserType.SUPERVISEUR_CAMPAGNE) {
+        throw new AppError("L'utilisateur spécifié n'est pas un superviseur", 400);
+      }
+    }
+
 
 
     const updatedCampagne = await prisma.campagne.update({
@@ -184,6 +209,13 @@ export async function PUT(
           select: {
             nom: true,
             ville: true
+          }
+        },
+        superviseur: {
+          select: {
+            id_user: true,
+            nom: true,
+            prenom: true
           }
         }
       }

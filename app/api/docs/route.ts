@@ -6969,7 +6969,7 @@ const openApi = {
         }
       }
     },
-    
+
   },
   components: {
     securitySchemes: {
@@ -8231,7 +8231,7 @@ const openApi = {
       }
     },
 
-    
+
   }
 }
 

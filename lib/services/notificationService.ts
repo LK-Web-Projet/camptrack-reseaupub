@@ -95,7 +95,8 @@ export class NotificationService {
                 }
             },
             include: {
-                gestionnaire: true
+                gestionnaire: true,
+                superviseur: true
             }
         });
 
@@ -108,7 +109,7 @@ export class NotificationService {
                     entity_type: 'CAMPAGNE',
                     entity_id: campaign.id_campagne,
                     type: rule.type,
-                    user_id: campaign.id_gestionnaire
+                    user_id: campaign.id_superviseur || campaign.id_gestionnaire
                 }
             });
 
@@ -118,7 +119,7 @@ export class NotificationService {
                     data: {
                         type: rule.type,
                         priority: rule.priority,
-                        user_id: campaign.id_gestionnaire,
+                        user_id: campaign.id_superviseur || campaign.id_gestionnaire,
                         entity_type: 'CAMPAGNE',
                         entity_id: campaign.id_campagne,
                         title: renderTemplate(rule.title_template, {
@@ -165,7 +166,8 @@ export class NotificationService {
                 prestataire: true,
                 campagne: {
                     include: {
-                        gestionnaire: true
+                        gestionnaire: true,
+                        superviseur: true
                     }
                 }
             }
@@ -182,7 +184,7 @@ export class NotificationService {
                     entity_type: 'AFFECTATION',
                     entity_id: entityId,
                     type: rule.type,
-                    user_id: assignment.campagne.id_gestionnaire
+                    user_id: assignment.campagne.id_superviseur || assignment.campagne.id_gestionnaire
                 }
             });
 
@@ -192,7 +194,7 @@ export class NotificationService {
                     data: {
                         type: rule.type,
                         priority: rule.priority,
-                        user_id: assignment.campagne.id_gestionnaire,
+                        user_id: assignment.campagne.id_superviseur || assignment.campagne.id_gestionnaire,
                         entity_type: 'AFFECTATION',
                         entity_id: entityId,
                         title: renderTemplate(rule.title_template, {
