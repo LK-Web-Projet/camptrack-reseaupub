@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
         date_creation: true,
         client: {
           select: {
+            id_client: true,
             nom: true,
             prenom: true,
             entreprise: true
@@ -60,12 +61,14 @@ export async function GET(request: NextRequest) {
         },
         lieu: {
           select: {
+            id_lieu: true,
             nom: true,
             ville: true
           }
         },
         service: {
           select: {
+            id_service: true,
             nom: true
           }
         },
