@@ -34,7 +34,8 @@ export const campagneCreateSchema = Joi.object({
     'date.base': 'Date de fin invalide',
     'date.min': 'La date de fin doit être après la date de début',
     'any.required': 'Date de fin requise'
-  })
+  }),
+  id_superviseur: Joi.string().optional().allow(null)
 })
 
 export const campagneUpdateSchema = Joi.object({
@@ -54,7 +55,8 @@ export const campagneUpdateSchema = Joi.object({
   type_campagne: Joi.string().valid('MASSE', 'PROXIMITE').optional(),
   date_debut: Joi.date().iso().optional(),
   date_fin: Joi.date().iso().optional(),
-  status: Joi.string().valid('PLANIFIEE', 'EN_COURS', 'TERMINEE', 'ANNULEE').optional()
+  status: Joi.string().valid('PLANIFIEE', 'EN_COURS', 'TERMINEE', 'ANNULEE').optional(),
+  id_superviseur: Joi.string().optional().allow(null)
 }).min(1).messages({
   'object.min': 'Au moins un champ doit être fourni pour la modification'
 })
@@ -66,4 +68,4 @@ export const campagneStatusSchema = Joi.object({
   })
 })
 
-export {validateData}
+export { validateData }

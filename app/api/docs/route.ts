@@ -2866,6 +2866,11 @@ const openApi = {
                         prenom: "CampTrack",
                         email: "admin@camptrack.com"
                       },
+                      superviseur: {
+                        nom: "Superviseur",
+                        prenom: "Campagne",
+                        email: "superviseur@camptrack.com"
+                      },
                       _count: {
                         affectations: 5,
                         fichiers: 2
@@ -2930,6 +2935,11 @@ const openApi = {
                     type: "string",
                     description: "ID du service publicitaire utilisé",
                     example: "cmservice001"
+                  },
+                  id_superviseur: {
+                    type: "string",
+                    description: "ID du superviseur assigné (optionnel)",
+                    example: "cmuser002"
                   },
                   nom_campagne: {
                     type: "string",
@@ -3143,6 +3153,13 @@ const openApi = {
                       email: "admin@camptrack.com",
                       type_user: "ADMIN"
                     },
+                    superviseur: {
+                      id_user: "cmuser002",
+                      nom: "Superviseur",
+                      prenom: "Campagne",
+                      email: "superviseur@camptrack.com",
+                      type_user: "SUPERVISEUR_CAMPAGNE"
+                    },
                     "affectations": [
                       {
                         "prestataire": {
@@ -3235,6 +3252,11 @@ const openApi = {
                     minLength: 2,
                     example: "Nouveau nom de campagne"
                   },
+                  id_superviseur: {
+                    type: "string",
+                    description: "ID du nouveau superviseur (optionnel)",
+                    example: "cmuser003"
+                  },
                   description: {
                     type: "string",
                     example: "Nouvelle description"
@@ -3313,6 +3335,16 @@ const openApi = {
                     lieu: {
                       nom: "Abidjan Plateau",
                       ville: "Abidjan"
+                    },
+                    gestionnaire: {
+                      nom: "Admin",
+                      prenom: "CampTrack",
+                      email: "admin@camptrack.com"
+                    },
+                    superviseur: {
+                      nom: "Superviseur",
+                      prenom: "Campagne",
+                      email: "superviseur@camptrack.com"
                     }
                   }
                 }
@@ -3597,6 +3629,13 @@ const openApi = {
             required: false,
             description: "Filtrer par ID de service",
             schema: { type: "string" }
+          },
+          {
+            name: "campagne",
+            in: "query",
+            required: false,
+            description: "Filtrer par ID de campagne",
+            schema: { type: "string" }
           }
         ],
         responses: {
@@ -3737,11 +3776,6 @@ const openApi = {
                     type: "string",
                     description: "Plaque d'immatriculation",
                     example: "AB-123-CD"
-                  },
-                  id_verification: {
-                    type: "string",
-                    description: "ID de vérification du véhicule",
-                    example: "VERIF-001"
                   }
                 }
               }
@@ -6969,7 +7003,7 @@ const openApi = {
         }
       }
     },
-    
+
   },
   components: {
     securitySchemes: {
@@ -7624,6 +7658,14 @@ const openApi = {
               email: { type: "string" }
             }
           },
+          superviseur: {
+            type: "object",
+            properties: {
+              nom: { type: "string" },
+              prenom: { type: "string" },
+              email: { type: "string" }
+            }
+          },
           updated_at: {
             type: "string",
             format: "date-time",
@@ -7724,6 +7766,19 @@ const openApi = {
             }
           },
           gestionnaire: {
+            type: "object",
+            properties: {
+              id_user: { type: "string" },
+              nom: { type: "string" },
+              prenom: { type: "string" },
+              email: { type: "string" },
+              type_user: {
+                type: "string",
+                enum: ["ADMIN", "SUPERVISEUR_CAMPAGNE", "CONTROLEUR", "OPERATIONNEL", "EQUIPE"]
+              }
+            }
+          },
+          superviseur: {
             type: "object",
             properties: {
               id_user: { type: "string" },
@@ -8231,7 +8286,7 @@ const openApi = {
       }
     },
 
-    
+
   }
 }
 

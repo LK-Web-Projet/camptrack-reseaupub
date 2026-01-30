@@ -3,6 +3,21 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { prestataireCreateSchema, validateData } from "@/lib/validation/prestataireSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { Prisma } from "@prisma/client";
+
+async function generateNextIdOp(id_service: string, tx: Prisma.TransactionClient): Promise<string> {
+  const prestataires = await tx.prestataire.findMany({
+    where: { id_service },
+    select: { id_verification: true }
+  });
+
+  const ids = prestataires
+    .map(p => parseInt(p.id_verification || '0', 10))
+    .filter(n => !isNaN(n));
+
+  const maxId = ids.length > 0 ? Math.max(...ids) : 0;
+  return (maxId + 1).toString();
+}
 
 // GET /api/prestataires - Lister tous les prestataires avec filtres avancés
 export async function GET(request: NextRequest) {
@@ -157,7 +172,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-
 // POST /api/prestataires - Créer un nouveau prestataire
 export async function POST(request: NextRequest) {
   try {
@@ -171,6 +185,8 @@ export async function POST(request: NextRequest) {
       throw new AppError(validation.error, 400);
     }
 
+    const data = validation.data as any; // Cast explicite pour éviter les erreurs de typage strictement inconnu
+
     const {
       id_service,
       nom,
@@ -182,69 +198,75 @@ export async function POST(request: NextRequest) {
       marque,
       modele,
       plaque,
-      id_verification,
+      // id_verification, // Retiré de la validation
       contrat_valide,
       equipe_gps
-    } = validation.data;
+    } = data;
 
-    // Vérifier que le service existe
-    const service = await prisma.service.findUnique({
-      where: { id_service }
-    });
-    if (!service) {
-      throw new AppError("Service non trouvé", 404);
-    }
-
-    // Vérifier l'unicité de la plaque si fournie
-    if (plaque) {
-      const plaqueExistante = await prisma.prestataire.findFirst({
-        where: { plaque }
+    // Utilisation d'une transaction pour garantir l'unicité et la cohérence
+    const prestataire = await prisma.$transaction(async (tx) => {
+      // Vérifier que le service existe
+      const service = await tx.service.findUnique({
+        where: { id_service }
       });
-      if (plaqueExistante) {
-        throw new AppError("Un prestataire avec cette plaque existe déjà", 409);
+      if (!service) {
+        throw new AppError("Service non trouvé", 404);
       }
-    }
 
-    // Créer le prestataire avec les infos véhicule intégrées
-    const prestataire = await prisma.prestataire.create({
-      data: {
-        id_service,
-        nom,
-        prenom,
-        contact,
-        disponible: disponible !== undefined ? disponible : true,
-        // CHAMPS VÉHICULE INTÉGRÉS
-        type_panneau,
-        couleur: couleur || null,
-        marque: marque || null,
-        modele: modele || null,
-        plaque: plaque || null,
-        id_verification,
-        contrat_valide: contrat_valide !== undefined ? contrat_valide : null,
-        equipe_gps: equipe_gps !== undefined ? equipe_gps : null
-      },
-      select: {
-        id_prestataire: true,
-        nom: true,
-        prenom: true,
-        contact: true,
-        disponible: true,
-        // Afficher aussi les infos véhicule
-        type_panneau: true,
-        plaque: true,
-        couleur: true,
-        marque: true,
-        modele: true,
-        id_verification: true,
-        contrat_valide: true,
-        equipe_gps: true,
-        created_at: true,
-        service: {
-          select: {
-            nom: true
-          }
+      // Vérifier l'unicité de la plaque si fournie
+      if (plaque) {
+        const plaqueExistante = await tx.prestataire.findFirst({
+          where: { plaque }
+        });
+        if (plaqueExistante) {
+          throw new AppError("Un prestataire avec cette plaque existe déjà", 409);
         }
       }
+
+      // Générer l'ID de vérification
+      const id_verification = await generateNextIdOp(id_service, tx);
+
+      // Créer le prestataire
+      return tx.prestataire.create({
+        data: {
+          id_service,
+          nom,
+          prenom,
+          contact,
+          disponible: disponible !== undefined ? disponible : true,
+          // CHAMPS VÉHICULE INTÉGRÉS
+          type_panneau,
+          couleur: couleur || null,
+          marque: marque || null,
+          modele: modele || null,
+          plaque: plaque || null,
+          id_verification, // Génération auto sécurisée
+          contrat_valide: contrat_valide !== undefined ? contrat_valide : null,
+          equipe_gps: equipe_gps !== undefined ? equipe_gps : null
+        },
+        select: {
+          id_prestataire: true,
+          nom: true,
+          prenom: true,
+          contact: true,
+          disponible: true,
+          // Afficher aussi les infos véhicule
+          type_panneau: true,
+          plaque: true,
+          couleur: true,
+          marque: true,
+          modele: true,
+          id_verification: true,
+          contrat_valide: true,
+          equipe_gps: true,
+          created_at: true,
+          service: {
+            select: {
+              nom: true
+            }
+          }
+        }
+      });
     });
 
     return NextResponse.json({

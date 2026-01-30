@@ -28,19 +28,19 @@ const validationSchema = Yup.object().shape({
     prenom: Yup.string().required("Le prénom est requis"),
     contact: Yup.string().required("Le contact est requis"),
     id_service: Yup.string().required("Le service est requis"),
-    id_verification: Yup.string().required("ID Vérification requis"),
+    // id_verification removed
     type_panneau: Yup.string().optional(),
     plaque: Yup.string().optional(),
 })
 
-export default function QuickAddPrestataireModal({ isOpen, onClose, onSuccess }: QuickAddPrestataireModalProps) {
+export default function QuickAddPrestataireModal({ isOpen, onClose, onSuccess, defaultServiceId, defaultServiceName }: QuickAddPrestataireModalProps & { defaultServiceId?: string, defaultServiceName?: string }) {
     const { apiClient } = useAuth()
     const [services, setServices] = useState<Service[]>([])
     const [loadingServices, setLoadingServices] = useState(false)
 
     // Fetch services when modal opens
     useEffect(() => {
-        if (isOpen && services.length === 0) {
+        if (isOpen && services.length === 0 && !defaultServiceId) {
             const fetchServices = async () => {
                 setLoadingServices(true)
                 try {
@@ -57,19 +57,20 @@ export default function QuickAddPrestataireModal({ isOpen, onClose, onSuccess }:
             }
             fetchServices()
         }
-    }, [isOpen, apiClient, services.length])
+    }, [isOpen, apiClient, services.length, defaultServiceId])
 
     const formik = useFormik({
         initialValues: {
             nom: "",
             prenom: "",
             contact: "",
-            id_service: "",
-            id_verification: "",
+            id_service: defaultServiceId || "",
+            // id_verification removed
             type_panneau: "",
             plaque: "",
             disponible: true, // Default
         },
+        enableReinitialize: true,
         validationSchema,
         onSubmit: async (values, { setSubmitting, resetForm }) => {
             try {
@@ -151,19 +152,27 @@ export default function QuickAddPrestataireModal({ isOpen, onClose, onSuccess }:
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="id_service">Service *</Label>
-                            <Select
-                                value={formik.values.id_service}
-                                onValueChange={(val) => formik.setFieldValue("id_service", val)}
-                            >
-                                <SelectTrigger className={formik.touched.id_service && formik.errors.id_service ? "border-red-500" : ""}>
-                                    <SelectValue placeholder={loadingServices ? "Chargement..." : "Sélectionner un service"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {services.map((s) => (
-                                        <SelectItem key={s.id_service} value={s.id_service}>{s.nom}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            {defaultServiceId ? (
+                                <Input
+                                    value={defaultServiceName || "Service imposé"}
+                                    disabled
+                                    className="bg-gray-100 text-gray-500"
+                                />
+                            ) : (
+                                <Select
+                                    value={formik.values.id_service}
+                                    onValueChange={(val) => formik.setFieldValue("id_service", val)}
+                                >
+                                    <SelectTrigger className={formik.touched.id_service && formik.errors.id_service ? "border-red-500" : ""}>
+                                        <SelectValue placeholder={loadingServices ? "Chargement..." : "Sélectionner un service"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {services.map((s) => (
+                                            <SelectItem key={s.id_service} value={s.id_service}>{s.nom}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
                             {formik.touched.id_service && formik.errors.id_service && (
                                 <p className="text-red-500 text-xs">{formik.errors.id_service}</p>
                             )}
@@ -213,18 +222,7 @@ export default function QuickAddPrestataireModal({ isOpen, onClose, onSuccess }:
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="id_verification">ID Vérification *</Label>
-                        <Input
-                            id="id_verification"
-                            placeholder="Identifiant unique"
-                            {...formik.getFieldProps("id_verification")}
-                            className={formik.touched.id_verification && formik.errors.id_verification ? "border-red-500" : ""}
-                        />
-                        {formik.touched.id_verification && formik.errors.id_verification && (
-                            <p className="text-red-500 text-xs">{formik.errors.id_verification}</p>
-                        )}
-                    </div>
+                    {/* id_verification input removed */}
 
                     <DialogFooter className="gap-2 pt-4">
                         <Button type="button" variant="outline" onClick={onClose}>
