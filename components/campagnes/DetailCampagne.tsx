@@ -186,8 +186,9 @@ export default function DetailCampagne({ id }: { id: string }) {
   }, [fetchCampagne]);
 
   const fetchPrestataires = useCallback(async () => {
+    if (!campagne?.service?.id_service) return;
     try {
-      const res = await apiClient(`/api/prestataires?disponible=true&limit=-1`);
+      const res = await apiClient(`/api/prestataires?disponible=true&limit=-1&serviceId=${campagne.service.id_service}`);
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const data = await res.json();
 
@@ -220,7 +221,7 @@ export default function DetailCampagne({ id }: { id: string }) {
       console.error("Erreur fetch prestataires:", err);
       toast.error(err instanceof Error ? err.message : "Erreur lors du chargement des prestataires");
     }
-  }, [apiClient]);
+  }, [apiClient, campagne]);
 
   const handleFileUpload = async () => {
     if (!fileUpload || !fileType) {
@@ -568,6 +569,8 @@ export default function DetailCampagne({ id }: { id: string }) {
                 isOpen={isQuickAddOpen}
                 onClose={() => setIsQuickAddOpen(false)}
                 onSuccess={handleQuickAddSuccess}
+                defaultServiceId={campagne.service?.id_service}
+                defaultServiceName={campagne.service?.nom}
               />
               <DialogHeader>
                 <DialogTitle className="flex justify-between items-center">

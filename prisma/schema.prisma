@@ -169,7 +169,7 @@ model Prestataire {
   marque          String?
   modele          String?
   plaque          String?     
-  id_verification String?     @unique
+  id_verification String?    
   contrat_valide  Boolean?
   equipe_gps      Boolean?
   created_at      DateTime    @default(now())
@@ -181,6 +181,7 @@ model Prestataire {
   dommages        MaterielsCase[]
   incidents       Incident[]
 
+  @@unique([id_service, id_verification])
   @@map("prestataires")
 }
 
