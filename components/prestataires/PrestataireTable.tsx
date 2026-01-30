@@ -25,6 +25,7 @@ interface Prestataire {
   id_verification?: string
   service?: { nom?: string }
   disponible: boolean
+  contrat_valide?: boolean | null
 }
 
 interface Campagne {
@@ -51,6 +52,8 @@ export default function PrestataireTable() {
   const [selectedCampagne, setSelectedCampagne] = useState<string>("")
   const [dateDebut, setDateDebut] = useState<string>("")
   const [dateFin, setDateFin] = useState<string>("")
+  const [filterContratValide, setFilterContratValide] = useState<string>("")
+  const [filterDisponible, setFilterDisponible] = useState<string>("")
 
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
@@ -96,7 +99,9 @@ export default function PrestataireTable() {
         ...(searchQuery && { search: searchQuery }),
         ...(selectedCampagne && { campagne: selectedCampagne }),
         ...(dateDebut && { dateDebut }),
-        ...(dateFin && { dateFin })
+        ...(dateFin && { dateFin }),
+        ...(filterContratValide && { contratValide: filterContratValide }),
+        ...(filterDisponible && { disponible: filterDisponible })
       })
       const res = await apiClient(`/api/prestataires?${params.toString()}`)
       if (!res.ok) {
@@ -115,7 +120,7 @@ export default function PrestataireTable() {
     } finally {
       setLoading(false)
     }
-  }, [apiClient, page, searchQuery, selectedCampagne, dateDebut, dateFin])
+  }, [apiClient, page, searchQuery, selectedCampagne, dateDebut, dateFin, filterContratValide, filterDisponible])
 
   useEffect(() => {
     fetchPrestataires()
@@ -168,6 +173,8 @@ export default function PrestataireTable() {
     setSelectedCampagne("")
     setDateDebut("")
     setDateFin("")
+    setFilterContratValide("")
+    setFilterDisponible("")
   }
 
   return (
@@ -257,16 +264,44 @@ export default function PrestataireTable() {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#d61353]"
               />
             </div>
+
+            {/* Filtre Contrat Validé */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Contrat Validé
+              </label>
+              <select
+                value={filterContratValide}
+                onChange={(e) => setFilterContratValide(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#d61353]"
+              >
+                <option value="">-- Tous --</option>
+                <option value="true">Oui</option>
+                <option value="false">Non</option>
+              </select>
+            </div>
+
+            {/* Filtre Disponibilité */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Disponibilité
+              </label>
+              <select
+                value={filterDisponible}
+                onChange={(e) => setFilterDisponible(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#d61353]"
+              >
+                <option value="">-- Tous --</option>
+                <option value="true">Disponible</option>
+                <option value="false">Indisponible</option>
+              </select>
+            </div>
           </div>
 
           {/* Bouton Réinitialiser */}
           <div className="flex justify-end">
             <button
-              onClick={() => {
-                setSelectedCampagne("")
-                setDateDebut("")
-                setDateFin("")
-              }}
+              onClick={handleResetFilters}
               className="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-4 py-2 rounded-lg transition"
             >
               Réinitialiser les filtres
@@ -298,6 +333,7 @@ export default function PrestataireTable() {
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Contact</th>
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Service</th>
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Modèle</th>
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Contrat Validé</th>
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Disponibilité</th>
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold text-center">Actions</th>
                 </tr>
@@ -305,19 +341,19 @@ export default function PrestataireTable() {
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {loading && (
                   <tr>
-                    <td colSpan={7} className="p-4 text-center text-sm text-gray-500">Chargement...</td>
+                    <td colSpan={8} className="p-4 text-center text-sm text-gray-500">Chargement...</td>
                   </tr>
                 )}
 
                 {!loading && error && (
                   <tr>
-                    <td colSpan={7} className="p-4 text-center text-sm text-red-500">{error}</td>
+                    <td colSpan={8} className="p-4 text-center text-sm text-red-500">{error}</td>
                   </tr>
                 )}
 
                 {!loading && filteredPrestataires.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-4 text-center text-sm text-gray-500">Aucun prestataire trouvé</td>
+                    <td colSpan={8} className="p-4 text-center text-sm text-gray-500">Aucun prestataire trouvé</td>
                   </tr>
                 )}
 
@@ -328,6 +364,16 @@ export default function PrestataireTable() {
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.contact ?? "-"}</td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.service?.nom ?? "-"}</td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.modele ?? "-"}</td>
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${prestataire.contrat_valide
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
+                      >
+                        {prestataire.contrat_valide ? "Oui" : "Non"}
+                      </span>
+                    </td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${prestataire.disponible
