@@ -3,11 +3,28 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { prestataireUpdateSchema, validateData } from "@/lib/validation/prestataireSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { Prisma, TypePanneau } from "@prisma/client";
+
+interface PrestataireUpdateInput {
+  id_service?: string;
+  nom?: string;
+  prenom?: string;
+  contact?: string;
+  disponible?: boolean;
+  type_panneau?: TypePanneau | null;
+  couleur?: string | null;
+  marque?: string | null;
+  modele?: string | null;
+  plaque?: string | null;
+  id_verification?: string | null;
+  contrat_valide?: boolean | null;
+  equipe_gps?: boolean | null;
+}
 
 // GET /api/prestataires/[id] - Détails d'un prestataire
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
@@ -33,6 +50,9 @@ export async function GET(
         id_verification: true,
         created_at: true,
         updated_at: true,
+        // @ts-expect-error -- Known Prisma issue with relation typing
+        photos: true,
+        fichiers: true,
         service: {
           select: {
             id_service: true,
@@ -95,7 +115,7 @@ export async function GET(
 // PUT /api/prestataires/[id] - Modifier un prestataire
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
@@ -105,11 +125,13 @@ export async function PUT(
     const prestataireId = id;
 
     const body = await request.json();
-    
-    const validation = validateData(prestataireUpdateSchema, body);
+
+    const validation = validateData<PrestataireUpdateInput>(prestataireUpdateSchema, body);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
     }
+
+    const data = validation.data;
 
     const existingPrestataire = await prisma.prestataire.findUnique({
       where: { id_prestataire: prestataireId }
@@ -120,9 +142,9 @@ export async function PUT(
     }
 
     // Vérifier le service si modification
-    if (validation.data.id_service) {
+    if (data.id_service) {
       const service = await prisma.service.findUnique({
-        where: { id_service: validation.data.id_service }
+        where: { id_service: data.id_service }
       });
       if (!service) {
         throw new AppError("Service non trouvé", 404);
@@ -130,10 +152,10 @@ export async function PUT(
     }
 
     // Vérifier l'unicité de la plaque si modifiée
-    if (validation.data.plaque && validation.data.plaque !== existingPrestataire.plaque) {
+    if (data.plaque && data.plaque !== existingPrestataire.plaque) {
       const plaqueExistante = await prisma.prestataire.findFirst({
-        where: { 
-          plaque: validation.data.plaque,
+        where: {
+          plaque: data.plaque,
           id_prestataire: { not: prestataireId }
         }
       });
@@ -144,7 +166,41 @@ export async function PUT(
 
     const updatedPrestataire = await prisma.prestataire.update({
       where: { id_prestataire: prestataireId },
-      data: validation.data,
+      data: {
+        ...(data.nom && { nom: data.nom }),
+        ...(data.prenom && { prenom: data.prenom }),
+        ...(data.contact && { contact: data.contact }),
+        ...(data.disponible !== undefined && { disponible: data.disponible }),
+        ...(data.id_service && { service: { connect: { id_service: data.id_service } } }),
+        ...(data.type_panneau && { type_panneau: data.type_panneau }),
+        ...(data.couleur && { couleur: data.couleur }),
+        ...(data.marque && { marque: data.marque }),
+        ...(data.modele && { modele: data.modele }),
+        ...(data.plaque && { plaque: data.plaque }),
+        ...(data.id_verification && { id_verification: data.id_verification }),
+        ...(data.contrat_valide !== undefined && { contrat_valide: data.contrat_valide }),
+        ...(data.equipe_gps !== undefined && { equipe_gps: data.equipe_gps }),
+        // Gestion des photos (suppression et ajout)
+        ...((body.deletedPhotoIds || body.addedPhotos) && {
+          photos: {
+            ...(body.deletedPhotoIds && { deleteMany: { id_photo: { in: body.deletedPhotoIds } } }),
+            ...(body.addedPhotos && { create: body.addedPhotos.map((url: string) => ({ url })) })
+          }
+        }),
+        // Gestion des fichiers (suppression et ajout)
+        ...((body.deletedFileIds || body.addedFiles) && {
+          fichiers: {
+            ...(body.deletedFileIds && { deleteMany: { id_fichier: { in: body.deletedFileIds } } }),
+            ...(body.addedFiles && {
+              create: body.addedFiles.map((file: { url: string, nom: string, type: string }) => ({
+                url: file.url,
+                nom: file.nom,
+                type: file.type
+              }))
+            })
+          }
+        })
+      },
       select: {
         id_prestataire: true,
         nom: true,
@@ -163,7 +219,9 @@ export async function PUT(
           select: {
             nom: true
           }
-        }
+        },
+        // @ts-expect-error -- Known Prisma issue with relation typing
+        photos: true // Retourner les photos mises à jour
       }
     });
 
@@ -180,7 +238,7 @@ export async function PUT(
 // DELETE /api/prestataires/[id] - Supprimer un prestataire
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
@@ -199,7 +257,7 @@ export async function DELETE(
 
     // Vérifier si le prestataire a des affectations en cours
     const affectationsEnCours = await prisma.prestataireCampagne.count({
-      where: { 
+      where: {
         id_prestataire: prestataireId,
         date_fin: null // Affectations non terminées
       }

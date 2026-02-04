@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle, FileText } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/app/context/AuthContext"
@@ -44,8 +44,18 @@ interface Incident {
   }
   photos: IncidentPhoto[]
 }
+interface PrestatairePhoto {
+  id_photo: string
+  url: string
+}
+interface PrestataireFichier {
+  id_fichier: string
+  url: string
+  nom: string
+  type?: string
+}
 interface Prestataire {
-  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; incidents?: Incident[]; _count?: { affectations: number; dommages: number; incidents: number }
+  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; incidents?: Incident[]; photos?: PrestatairePhoto[]; fichiers?: PrestataireFichier[]; _count?: { affectations: number; dommages: number; incidents: number }
 }
 
 // Composant pour afficher une information
@@ -166,6 +176,61 @@ export default function DetailPrestataire({ id }: { id: string }) {
           <InfoItem icon={<Calendar size={20} />} label="Date de création" value={prestataire.created_at ? new Date(prestataire.created_at).toLocaleDateString('fr-FR') : '-'} />
         </CardContent>
       </Card>
+
+      {/* PHOTOS DU PRESTATAIRE */}
+      {prestataire.photos && prestataire.photos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Photos du Prestataire / Véhicule</CardTitle>
+            <CardDescription>Images associées à ce prestataire.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {prestataire.photos.map((photo) => (
+                <div key={photo.id_photo} className="relative aspect-square group cursor-pointer overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                  <img
+                    src={photo.url}
+                    alt="Prestataire"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* DOCUMENTS ADMINISTRATIFS */}
+      {prestataire.fichiers && prestataire.fichiers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Documents Administratifs</CardTitle>
+            <CardDescription>Documents et fichiers associés à ce prestataire.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {prestataire.fichiers.map((file) => (
+                <div key={file.id_fichier} className="flex items-center p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-decoration-none">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg mr-3">
+                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 truncate block"
+                    >
+                      {file.nom}
+                    </a>
+                    <p className="text-xs text-gray-500 truncate">{file.type || 'Document'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* AFFECTATIONS */}
       <Card>

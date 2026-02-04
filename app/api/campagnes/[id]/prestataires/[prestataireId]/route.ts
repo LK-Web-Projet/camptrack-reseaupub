@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { Prisma } from "@prisma/client";
 
 // DELETE /api/campagnes/[id]/prestataires/[prestataireId] - Retirer un prestataire
 export async function DELETE(
@@ -118,7 +119,7 @@ export async function PUT(
     }
 
     // Vérifier les champs à mettre à jour
-    const updateData: any = {};
+    const updateData: Prisma.PrestataireCampagneUpdateInput = {};
 
     if (body.status !== undefined) {
       // Valider les statuts possibles

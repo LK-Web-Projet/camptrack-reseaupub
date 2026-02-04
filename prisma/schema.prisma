@@ -180,9 +180,37 @@ model Prestataire {
   affectations    PrestataireCampagne[]
   dommages        MaterielsCase[]
   incidents       Incident[]
+  photos          PrestatairePhoto[]
+  fichiers        PrestataireFichier[]
 
   @@unique([id_service, id_verification])
+
   @@map("prestataires")
+}
+
+model PrestatairePhoto {
+  id_photo       String      @id @default(cuid())
+  id_prestataire String
+  url            String
+  description    String?
+  created_at     DateTime    @default(now())
+
+  prestataire    Prestataire @relation(fields: [id_prestataire], references: [id_prestataire], onDelete: Cascade)
+
+  @@map("prestataire_photos")
+}
+
+model PrestataireFichier {
+  id_fichier     String      @id @default(cuid())
+  id_prestataire String
+  url            String
+  nom            String      
+  type           String?     
+  created_at     DateTime    @default(now())
+
+  prestataire    Prestataire @relation(fields: [id_prestataire], references: [id_prestataire], onDelete: Cascade)
+  
+  @@map("prestataire_fichiers")
 }
 
 model Campagne {

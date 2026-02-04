@@ -9,7 +9,7 @@ export async function GET() {
       message: "Nettoyage terminé",
       result
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({
       success: false,
       error: "Échec du nettoyage"

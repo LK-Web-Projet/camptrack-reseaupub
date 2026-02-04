@@ -88,7 +88,7 @@ export default function NotificationDropdown() {
                 onClick={handleMarkAllRead}
                 className="text-xs text-brand-500 hover:text-brand-600 font-medium"
               >
-               Marqué tout lu
+                Marqué tout lu
               </button>
             )}
             <button
@@ -165,7 +165,7 @@ export default function NotificationDropdown() {
           href="/notifications"
           className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
         >
-         Voir toutes les notifications
+          Voir toutes les notifications
         </Link>
       </Dropdown>
     </div>

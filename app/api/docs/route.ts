@@ -3676,6 +3676,12 @@ const openApi = {
                       couleur: "Bleu",
                       id_verification: "VERIF-001",
                       created_at: "2025-01-03T11:00:00.000Z",
+                      photos: [
+                        {
+                          id_photo: "cmphoto001",
+                          url: "/uploads/prestataires/photos/abc123.jpg"
+                        }
+                      ],
                       _count: {
                         affectations: 3,
                         dommages: 0
@@ -3941,6 +3947,30 @@ const openApi = {
                         campagne: {
                           nom_campagne: "Campagne Hiver 2024"
                         }
+                      }
+                    ],
+                    photos: [
+                      {
+                        id_photo: "cmphoto001",
+                        url: "/uploads/prestataires/photos/abc123.jpg"
+                      },
+                      {
+                        id_photo: "cmphoto002",
+                        url: "/uploads/prestataires/photos/def456.jpg"
+                      }
+                    ],
+                    fichiers: [
+                      {
+                        id_fichier: "cmfichier001",
+                        url: "/uploads/prestataires/files/contrat.pdf",
+                        nom: "contrat.pdf",
+                        type: "application/pdf"
+                      },
+                      {
+                        id_fichier: "cmfichier002",
+                        url: "/uploads/prestataires/files/assurance.pdf",
+                        nom: "assurance.pdf",
+                        type: "application/pdf"
                       }
                     ],
                     _count: {
@@ -4289,6 +4319,252 @@ const openApi = {
                 schema: { $ref: "#/components/schemas/Error" },
                 example: {
                   error: "Le champ 'disponible' doit être un booléen"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/prestataires/{id}/photos": {
+      post: {
+        tags: ["Prestataires"],
+        summary: "Ajouter des photos à un prestataire",
+        description: "Permet d'ajouter rapidement des photos à un prestataire existant",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["photos"],
+                properties: {
+                  photos: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                      format: "uri",
+                      description: "URL de la photo uploadée"
+                    },
+                    minItems: 1,
+                    description: "Liste des URLs des photos à ajouter",
+                    example: ["/uploads/prestataires/photos/abc123.jpg", "/uploads/prestataires/photos/def456.jpg"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Photos ajoutées avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    photos: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id_photo: { type: "string" },
+                          url: { type: "string" },
+                          id_prestataire: { type: "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  message: "Photos ajoutées avec succès",
+                  photos: [
+                    {
+                      id_photo: "cmphoto003",
+                      url: "/uploads/prestataires/photos/abc123.jpg",
+                      id_prestataire: "cmpresta001"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Au moins une photo est requise"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire non trouvé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/prestataires/{id}/files": {
+      post: {
+        tags: ["Prestataires"],
+        summary: "Ajouter des documents à un prestataire",
+        description: "Permet d'ajouter rapidement des documents administratifs (PDF, Word, Excel) à un prestataire existant",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["files"],
+                properties: {
+                  files: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      required: ["url", "nom"],
+                      properties: {
+                        url: {
+                          type: "string",
+                          format: "uri",
+                          description: "URL du fichier uploadé",
+                          example: "/uploads/prestataires/files/contrat.pdf"
+                        },
+                        nom: {
+                          type: "string",
+                          description: "Nom du fichier",
+                          example: "contrat.pdf"
+                        },
+                        type: {
+                          type: "string",
+                          description: "Type MIME du fichier",
+                          example: "application/pdf"
+                        }
+                      }
+                    },
+                    minItems: 1,
+                    description: "Liste des fichiers à ajouter"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Fichiers ajoutés avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    files: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id_fichier: { type: "string" },
+                          url: { type: "string" },
+                          nom: { type: "string" },
+                          type: { type: "string" },
+                          id_prestataire: { type: "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                example: {
+                  message: "Fichiers ajoutés avec succès",
+                  files: [
+                    {
+                      id_fichier: "cmfichier003",
+                      url: "/uploads/prestataires/files/contrat.pdf",
+                      nom: "contrat.pdf",
+                      type: "application/pdf",
+                      id_prestataire: "cmpresta001"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Données invalides",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Au moins un fichier est requis"
                 }
               }
             }

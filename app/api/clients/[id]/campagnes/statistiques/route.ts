@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { Prisma } from "@prisma/client";
 
 /**
  * GET /api/clients/[id]/campagnes/statistiques
@@ -40,7 +41,7 @@ export async function GET(
         }
 
         // Construction du filtre
-        const where: any = { id_client: clientId };
+        const where: Prisma.CampagneWhereInput = { id_client: clientId };
         if (dateDebut || dateFin) {
             where.date_debut = {};
             if (dateDebut) where.date_debut.gte = new Date(dateDebut);
@@ -61,6 +62,11 @@ export async function GET(
                 where,
                 _count: {
                     id_campagne: true
+                },
+                orderBy: {
+                    _count: {
+                        id_campagne: 'desc'
+                    }
                 }
             }),
             // Grouper par type
@@ -69,6 +75,11 @@ export async function GET(
                 where,
                 _count: {
                     id_campagne: true
+                },
+                orderBy: {
+                    _count: {
+                        id_campagne: 'desc'
+                    }
                 }
             }),
             // Total des campagnes
@@ -120,15 +131,21 @@ export async function GET(
 
         // Remplir les statistiques par status
         campagnesParStatus.forEach(stat => {
-            statistiques.campagnes.parStatus[stat.status] = stat._count.id_campagne;
+            if (stat._count && typeof stat._count === 'object') {
+                const count = stat._count as { id_campagne: number };
+                statistiques.campagnes.parStatus[stat.status] = count.id_campagne;
+            }
         });
 
         // Remplir les statistiques par type
         campagnesParType.forEach(stat => {
-            if (stat.type_campagne) {
-                statistiques.campagnes.parType[stat.type_campagne] = stat._count.id_campagne;
-            } else {
-                statistiques.campagnes.parType.NON_SPECIFIE = stat._count.id_campagne;
+            if (stat._count && typeof stat._count === 'object') {
+                const count = stat._count as { id_campagne: number };
+                if (stat.type_campagne) {
+                    statistiques.campagnes.parType[stat.type_campagne] = count.id_campagne;
+                } else {
+                    statistiques.campagnes.parType.NON_SPECIFIE = count.id_campagne;
+                }
             }
         });
 

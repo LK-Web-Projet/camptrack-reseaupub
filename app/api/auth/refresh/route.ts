@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "@/lib/auth/jwt";
+import { signAccessToken, signRefreshToken, verifyRefreshToken, TokenPayload } from "@/lib/auth/jwt";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, comparePassword } from "@/lib/auth/hash";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       const refreshTokenCookie = cookies
         .split(";")
         .find(c => c.trim().startsWith("refreshToken="));
-      
+
       if (refreshTokenCookie) {
         refreshToken = refreshTokenCookie.split("=")[1];
       }
@@ -26,11 +26,12 @@ export async function POST(req: Request) {
     }
 
     // Vérification JWT du refresh token
-    let payload;
+    let payload: TokenPayload;
     try {
-      payload = verifyRefreshToken(refreshToken);
-    } catch (error: any) {
-      if (error.message === "REFRESH_TOKEN_EXPIRED") {
+      payload = verifyRefreshToken<TokenPayload>(refreshToken);
+    } catch (error) {
+      const err = error as Error;
+      if (err.message === "REFRESH_TOKEN_EXPIRED") {
         throw new AppError("Refresh token expiré", 401);
       }
       throw new AppError("Refresh token invalide", 401);
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
       const isMatch = await comparePassword(refreshToken, record.token_hash);
       if (isMatch) {
         tokenValid = true;
-        
+
         // Révoquer l'ancien token
         await prisma.refreshToken.update({
           where: { id: record.id },

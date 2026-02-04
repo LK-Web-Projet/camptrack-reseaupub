@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { comparePassword } from "@/lib/auth/hash";
-import { verifyAccessToken, verifyRefreshToken } from "@/lib/auth/jwt";
+import { verifyAccessToken, verifyRefreshToken, TokenPayload } from "@/lib/auth/jwt";
 import { handleApiError } from "@/lib/utils/errorHandler";
 
 function parseCookies(cookieHeader: string | null): Record<string, string> {
@@ -36,10 +36,12 @@ export async function POST(req: Request) {
     let userId: string | undefined;
     let revokedTokens = 0;
 
+
+
     // 1. RÉVOQUER LE ACCESS TOKEN via son jti
     if (accessToken) {
       try {
-        const payload = verifyAccessToken(accessToken) as any;
+        const payload = verifyAccessToken(accessToken) as TokenPayload;
         userId = payload.userId;
 
         // Ajouter le jti à la blacklist
@@ -53,9 +55,10 @@ export async function POST(req: Request) {
           });
           revokedTokens++;
         }
-      } catch (error: any) {
+      } catch (error) {
         // Si le token est expiré, on ne peut pas le révoquer (c'est déjà fait)
-        if (error.message !== "ACCESS_TOKEN_EXPIRED") {
+        const err = error as Error;
+        if (err.message !== "ACCESS_TOKEN_EXPIRED") {
           console.log("Erreur lors de la révocation du access token:", error);
         }
       }
@@ -64,7 +67,7 @@ export async function POST(req: Request) {
     // 2. RÉVOQUER LE REFRESH TOKEN
     if (refreshToken) {
       try {
-        const payload = verifyRefreshToken(refreshToken) as any;
+        const payload = verifyRefreshToken(refreshToken) as TokenPayload;
 
         // Ajouter le jti du refresh token à la blacklist
         if (payload.jti) {
@@ -106,8 +109,9 @@ export async function POST(req: Request) {
             break;
           }
         }
-      } catch (error: any) {
-        if (error.message !== "REFRESH_TOKEN_EXPIRED") {
+      } catch (error) {
+        const err = error as Error;
+        if (err.message !== "REFRESH_TOKEN_EXPIRED") {
           console.log("Erreur lors de la révocation du refresh token:", error);
         }
       }

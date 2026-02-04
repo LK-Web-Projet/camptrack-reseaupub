@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { Prisma } from "@prisma/client";
 
 // GET /api/services/[id]/prestataires - Lister les prestataires d'un service
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const serviceId = id;
 
     // Vérifier que le service existe
@@ -33,7 +34,7 @@ export async function GET(
     const disponible = searchParams.get('disponible');
 
     // Construire le where
-    const where: any = { id_service: serviceId };
+    const where: Prisma.PrestataireWhereInput = { id_service: serviceId };
     if (disponible !== null) {
       where.disponible = disponible === 'true';
     }
@@ -60,7 +61,7 @@ export async function GET(
           select: {
             affectations: {
               where: {
-                date_fin: null 
+                date_fin: null
               }
             }
           }
