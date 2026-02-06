@@ -28,6 +28,8 @@ export const prestataireCreateSchema = Joi.object({
 
   contrat_valide: Joi.boolean().optional().allow(null),
   equipe_gps: Joi.boolean().optional().allow(null),
+  etat_vehicule: Joi.number().integer().min(1).max(5).optional().allow(null, 0),
+  score: Joi.number().optional().allow(null),
   photos: Joi.array().items(Joi.string().uri()).optional()
 });
 
@@ -46,7 +48,9 @@ export const prestataireUpdateSchema = Joi.object({
   plaque: Joi.string().trim().optional().allow(null, ''),
   id_verification: Joi.string().trim().optional().allow(null, ''),
   contrat_valide: Joi.boolean().optional().allow(null),
-  equipe_gps: Joi.boolean().optional().allow(null)
+  equipe_gps: Joi.boolean().optional().allow(null),
+  etat_vehicule: Joi.number().integer().min(1).max(5).optional().allow(null, 0),
+  score: Joi.number().optional().allow(null)
 }).min(1).messages({
   'object.min': 'Au moins un champ doit être fourni pour la modification'
 });

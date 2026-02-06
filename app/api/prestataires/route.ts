@@ -32,6 +32,8 @@ interface PrestataireCreateInput {
   plaque?: string | null;
   contrat_valide?: boolean | null;
   equipe_gps?: boolean | null;
+  etat_vehicule?: number | null;
+  score?: number | null;
   photos?: string[];
   fichiers?: { url: string; nom: string; type: string }[];
 }
@@ -125,6 +127,8 @@ export async function GET(request: NextRequest) {
         id_verification: true,
         contrat_valide: true,
         equipe_gps: true,
+        etat_vehicule: true,
+        score: true,
         created_at: true,
         service: {
           select: {
@@ -218,8 +222,12 @@ export async function POST(request: NextRequest) {
       plaque,
       // id_verification, // Retiré de la validation
       contrat_valide,
-      equipe_gps
+      equipe_gps,
+      etat_vehicule,
+      score,
     } = data;
+
+    console.log("🔍 [POST /api/prestataires] Données validées - etat_vehicule:", etat_vehicule, "score:", score); // DEBUG LOG
 
     // Utilisation d'une transaction pour garantir l'unicité et la cohérence
     const prestataire = await prisma.$transaction(async (tx) => {
@@ -261,6 +269,12 @@ export async function POST(request: NextRequest) {
           id_verification, // Génération auto sécurisée
           contrat_valide: contrat_valide !== undefined ? contrat_valide : null,
           equipe_gps: equipe_gps !== undefined ? equipe_gps : null,
+          etat_vehicule: (() => {
+            const val = etat_vehicule !== undefined ? etat_vehicule : null;
+            console.log("💾 [POST /api/prestataires] Saving etat_vehicule:", val);
+            return val;
+          })(),
+          score: score !== undefined ? score : null,
           ...(data.photos && data.photos.length > 0 ? {
             photos: {
               create: data.photos.map((url) => ({ url }))
@@ -291,6 +305,8 @@ export async function POST(request: NextRequest) {
           id_verification: true,
           contrat_valide: true,
           equipe_gps: true,
+          etat_vehicule: true,
+          score: true,
           created_at: true,
           service: {
             select: {

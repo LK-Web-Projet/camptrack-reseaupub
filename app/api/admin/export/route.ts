@@ -25,13 +25,18 @@ export async function GET(request: NextRequest) {
         // 3. Generate export
         const buffer = await exportDataToBuffer(model);
 
-        // 4. Return file
+        // 4. Return file with comprehensive headers
         const filename = `export-${model}-${new Date().toISOString().split('T')[0]}.xlsx`;
 
         return new NextResponse(buffer, {
+            status: 200,
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition': `attachment; filename="${filename}"`
+                'Content-Disposition': `attachment; filename="${filename}"`,
+                'Content-Length': buffer.length.toString(),
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
             }
         });
 

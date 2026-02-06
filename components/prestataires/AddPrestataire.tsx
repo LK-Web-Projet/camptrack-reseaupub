@@ -29,6 +29,7 @@ interface Prestataire {
   service?: { nom?: string }
   disponible: boolean
   photos?: { url: string }[]
+  etat_vehicule?: number
 }
 
 interface AddPrestaireModalProps {
@@ -51,6 +52,7 @@ const validationSchema = Yup.object().shape({
   plaque: Yup.string(),
   contrat_valide: Yup.boolean(),
   equipe_gps: Yup.boolean(),
+  etat_vehicule: Yup.number().nullable(),
 })
 
 export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }: AddPrestaireModalProps) {
@@ -123,6 +125,7 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
       plaque: "",
       contrat_valide: false,
       equipe_gps: false,
+      etat_vehicule: 0,
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -161,6 +164,7 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
           plaque: values.plaque || null,
           contrat_valide: values.contrat_valide,
           equipe_gps: values.equipe_gps,
+          etat_vehicule: values.etat_vehicule || null,
           photos: uploadedPhotoUrls // Attach photo URLs
         }
 
@@ -366,6 +370,25 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
                 className="w-full px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 border-gray-300 dark:border-gray-600"
                 placeholder="Ex: AB-123-CD"
               />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">État général du véhicule (1-5)</label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  type="button"
+                  key={star}
+                  onClick={() => formik.setFieldValue("etat_vehicule", star)}
+                  className={`text-2xl transition-colors ${(formik.values.etat_vehicule || 0) >= star
+                      ? "text-yellow-400"
+                      : "text-gray-300 dark:text-gray-600"
+                    }`}
+                >
+                  ★
+                </button>
+              ))}
             </div>
           </div>
 

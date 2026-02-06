@@ -19,6 +19,8 @@ interface PrestataireUpdateInput {
   id_verification?: string | null;
   contrat_valide?: boolean | null;
   equipe_gps?: boolean | null;
+  etat_vehicule?: number | null;
+  score?: number | null;
 }
 
 // GET /api/prestataires/[id] - Détails d'un prestataire
@@ -48,9 +50,12 @@ export async function GET(
         modele: true,
         plaque: true,
         id_verification: true,
+        contrat_valide: true,
+        equipe_gps: true,
+        etat_vehicule: true,
+        score: true,
         created_at: true,
         updated_at: true,
-        // @ts-expect-error -- Known Prisma issue with relation typing
         photos: true,
         fichiers: true,
         service: {
@@ -180,6 +185,8 @@ export async function PUT(
         ...(data.id_verification && { id_verification: data.id_verification }),
         ...(data.contrat_valide !== undefined && { contrat_valide: data.contrat_valide }),
         ...(data.equipe_gps !== undefined && { equipe_gps: data.equipe_gps }),
+        ...(data.etat_vehicule !== undefined && { etat_vehicule: data.etat_vehicule }),
+        ...(data.score !== undefined && { score: data.score }),
         // Gestion des photos (suppression et ajout)
         ...((body.deletedPhotoIds || body.addedPhotos) && {
           photos: {
@@ -213,6 +220,10 @@ export async function PUT(
         modele: true,
         plaque: true,
         id_verification: true,
+        contrat_valide: true,
+        equipe_gps: true,
+        etat_vehicule: true,
+        score: true,
         created_at: true,
         updated_at: true,
         service: {
@@ -220,7 +231,6 @@ export async function PUT(
             nom: true
           }
         },
-        // @ts-expect-error -- Known Prisma issue with relation typing
         photos: true // Retourner les photos mises à jour
       }
     });
