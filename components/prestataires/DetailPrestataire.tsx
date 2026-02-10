@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle, FileText } from "lucide-react"
+import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle, FileText, Star, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/app/context/AuthContext"
@@ -55,7 +55,7 @@ interface PrestataireFichier {
   type?: string
 }
 interface Prestataire {
-  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; incidents?: Incident[]; photos?: PrestatairePhoto[]; fichiers?: PrestataireFichier[]; _count?: { affectations: number; dommages: number; incidents: number }
+  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; contrat_valide?: boolean | null; equipe_gps?: boolean | null; etat_vehicule?: number | null; score?: number | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; incidents?: Incident[]; photos?: PrestatairePhoto[]; fichiers?: PrestataireFichier[]; _count?: { affectations: number; dommages: number; incidents: number }
 }
 
 // Composant pour afficher une information
@@ -173,6 +173,29 @@ export default function DetailPrestataire({ id }: { id: string }) {
           <InfoItem icon={<Fingerprint size={20} />} label="Plaque" value={prestataire.plaque} />
           <InfoItem icon={<ShieldCheck size={20} />} label="Type Panneau" value={prestataire.type_panneau} />
           <InfoItem icon={<Hash size={20} />} label="ID Vérification" value={prestataire.id_verification} />
+          <InfoItem
+            icon={<Star size={20} />}
+            label="État du véhicule"
+            value={
+              prestataire.etat_vehicule ? (
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={i < (prestataire.etat_vehicule || 0) ? "text-yellow-400" : "text-gray-300"}>
+                      ★
+                    </span>
+                  ))}
+                  <span className="ml-1 text-sm">({prestataire.etat_vehicule}/5)</span>
+                </div>
+              ) : "Non évalué"
+            }
+          />
+          {prestataire.score !== null && prestataire.score !== undefined && (
+            <InfoItem
+              icon={<TrendingUp size={20} />}
+              label="Score"
+              value={prestataire.score.toFixed(2)}
+            />
+          )}
           <InfoItem icon={<Calendar size={20} />} label="Date de création" value={prestataire.created_at ? new Date(prestataire.created_at).toLocaleDateString('fr-FR') : '-'} />
         </CardContent>
       </Card>

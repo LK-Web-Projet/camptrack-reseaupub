@@ -42,6 +42,7 @@ interface Prestataire {
   disponible: boolean
   photos?: PrestatairePhoto[]
   fichiers?: PrestataireFichier[]
+  etat_vehicule?: number | null
 }
 
 interface EditPrestaireModalProps {
@@ -65,6 +66,7 @@ const validationSchema = Yup.object().shape({
   plaque: Yup.string(),
   contrat_valide: Yup.boolean(),
   equipe_gps: Yup.boolean(),
+  etat_vehicule: Yup.number().nullable(),
 })
 
 export default function EditPrestaireModal({ isOpen, onClose, prestataire, services, onEditPrestataire }: EditPrestaireModalProps) {
@@ -264,7 +266,9 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, servi
       plaque: prestataire?.plaque || "",
       id_verification: prestataire?.id_verification || "",
       contrat_valide: prestataire?.contrat_valide ?? false,
+      contrat_valide: prestataire?.contrat_valide ?? false,
       equipe_gps: prestataire?.equipe_gps ?? false,
+      etat_vehicule: prestataire?.etat_vehicule || 0,
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -325,7 +329,9 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, servi
           modele: values.modele || null,
           plaque: values.plaque || null,
           contrat_valide: values.contrat_valide,
+          contrat_valide: values.contrat_valide,
           equipe_gps: values.equipe_gps,
+          etat_vehicule: values.etat_vehicule || null,
           addedPhotos: addedPhotoUrls, // URLs of newly uploaded photos
           deletedPhotoIds: deletedPhotoIds, // IDs of photos to delete
           addedFiles: addedFilesData,
@@ -544,6 +550,25 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, servi
                 className="w-full px-3 py-2 border rounded-lg bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-500 cursor-not-allowed"
                 placeholder="Généré automatiquement"
               />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">État général du véhicule (1-5)</label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  type="button"
+                  key={star}
+                  onClick={() => formik.setFieldValue("etat_vehicule", star)}
+                  className={`text-2xl transition-colors ${(formik.values.etat_vehicule || 0) >= star
+                    ? "text-yellow-400"
+                    : "text-gray-300 dark:text-gray-600"
+                    }`}
+                >
+                  ★
+                </button>
+              ))}
             </div>
           </div>
 

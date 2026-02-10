@@ -172,6 +172,9 @@ model Prestataire {
   id_verification String?    
   contrat_valide  Boolean?
   equipe_gps      Boolean?
+  etat_vehicule   Int?        // Évaluation état véhicule (1-5)
+  score           Float?      // Score pour statistiques
+
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
 

@@ -64,13 +64,26 @@ export async function exportDataToBuffer(model: ExportModel): Promise<Buffer> {
         const flattenedData = data.map(item => {
             const flatItem: any = {};
             for (const key in item) {
-                if (typeof item[key] === 'object' && item[key] !== null && !(item[key] instanceof Date)) {
-                    // Handle nested objects (like client.nom)
-                    for (const subKey in item[key]) {
-                        flatItem[`${key}_${subKey}`] = item[key][subKey];
+                const value = item[key];
+
+                // Handle dates
+                if (value instanceof Date) {
+                    flatItem[key] = value.toISOString();
+                }
+                // Handle nested objects (like client.nom, service.nom)
+                else if (typeof value === 'object' && value !== null) {
+                    for (const subKey in value) {
+                        const subValue = value[subKey];
+                        if (subValue instanceof Date) {
+                            flatItem[`${key}_${subKey}`] = subValue.toISOString();
+                        } else {
+                            flatItem[`${key}_${subKey}`] = subValue;
+                        }
                     }
-                } else {
-                    flatItem[key] = item[key];
+                }
+                // Handle primitive values
+                else {
+                    flatItem[key] = value;
                 }
             }
             return flatItem;
@@ -81,9 +94,9 @@ export async function exportDataToBuffer(model: ExportModel): Promise<Buffer> {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, model);
 
-        // Generate buffer
-        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-        return buffer;
+        // Generate buffer - ensure it's a proper Node.js Buffer
+        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        return Buffer.from(excelBuffer);
 
     } catch (error) {
         console.error("Export error:", error);
