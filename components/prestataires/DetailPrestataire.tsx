@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import AddMaterielCaseModal from "./AddMaterielCaseModal"
 import AddIncidentModal from "./AddIncidentModal"
+import DeletePhotoModal from "./DeletePhotoModal"
 
 // Interfaces (gardées telles quelles)
 interface Service {
@@ -83,6 +84,27 @@ export default function DetailPrestataire({ id }: { id: string }) {
   const [loading, setLoading] = useState(true)
   const [isMaterielCaseModalOpen, setIsMaterielCaseModalOpen] = useState(false)
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false)
+  // Suppression photo
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [photoToDelete, setPhotoToDelete] = useState<string | null>(null)
+  const [loadingDelete, setLoadingDelete] = useState(false)
+  // Suppression d'une photo
+  const openDeleteModal = (photoId: string) => {
+    setPhotoToDelete(photoId);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setPhotoToDelete(null);
+  };
+
+  // confirmDeletePhoto doit être déclaré après fetchPrestataire
+  // (déplacement après toutes les fonctions useCallback)
+
+  // ...existing code...
+
+  // Suppression d'une photo : déjà défini plus bas, on supprime cette déclaration en trop
 
   const fetchPrestataire = useCallback(async () => {
     if (!id) return;
@@ -100,6 +122,26 @@ export default function DetailPrestataire({ id }: { id: string }) {
       setLoading(false)
     }
   }, [id, apiClient]);
+
+  // Suppression d'une photo (après fetchPrestataire)
+  const confirmDeletePhoto = useCallback(async () => {
+    if (!photoToDelete || !prestataire) return;
+    setLoadingDelete(true);
+    try {
+      const res = await apiClient(`/api/prestataires/${prestataire.id_prestataire}/photos/${photoToDelete}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("Erreur suppression photo");
+      toast.success("Photo supprimée");
+      // Recharger le prestataire
+      await fetchPrestataire();
+    } catch (err) {
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setLoadingDelete(false);
+      closeDeleteModal();
+    }
+  }, [photoToDelete, prestataire, apiClient, fetchPrestataire]);
 
   const fetchIncidents = useCallback(async () => {
     if (!id) return;
@@ -216,9 +258,23 @@ export default function DetailPrestataire({ id }: { id: string }) {
                     alt="Prestataire"
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
+                  <button
+                    type="button"
+                    onClick={() => openDeleteModal(photo.id_photo)}
+                    className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/70"
+                    disabled={loadingDelete}
+                  >
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
                 </div>
               ))}
             </div>
+            {/* Modal de suppression */}
+            <DeletePhotoModal
+              isOpen={deleteModalOpen}
+              onClose={closeDeleteModal}
+              onConfirm={confirmDeletePhoto}
+            />
           </CardContent>
         </Card>
       )}

@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useCallback } from "react"
+import DeletePhotoModal from "./DeletePhotoModal"
 import { X, UploadCloud, Image as ImageIcon, Camera, RotateCcw } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
@@ -20,6 +22,64 @@ export default function QuickAddPhotoModal({ isOpen, onClose, prestataireId, onP
     const [submitting, setSubmitting] = useState(false)
     const [photos, setPhotos] = useState<File[]>([])
     const [previews, setPreviews] = useState<string[]>([])
+    // Ajout : photos existantes
+    const [existingPhotos, setExistingPhotos] = useState<Array<{ id: string, url: string }>>([])
+    const [loadingExisting, setLoadingExisting] = useState(false)
+    // Modal suppression
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [photoToDelete, setPhotoToDelete] = useState<string | null>(null)
+
+    // Charger les photos existantes du prestataire
+    useEffect(() => {
+        if (isOpen && prestataireId) {
+            setLoadingExisting(true);
+            apiClient(`/api/prestataires/${prestataireId}/photos`, {
+                method: "GET"
+            })
+                .then(async (res: Response) => {
+                    if (!res.ok) throw new Error("Erreur lors du chargement des photos existantes");
+                    const data = await res.json();
+                    setExistingPhotos(Array.isArray(data) ? data : []);
+                })
+                .catch(() => {
+                    toast.error("Erreur chargement photos existantes");
+                })
+                .finally(() => setLoadingExisting(false));
+        }
+    }, [isOpen, prestataireId, apiClient]);
+
+    // Ouvre le modal de suppression
+    const openDeleteModal = (photoId: string) => {
+        setPhotoToDelete(photoId);
+        setDeleteModalOpen(true);
+    };
+
+    // Ferme le modal
+    const closeDeleteModal = () => {
+        setDeleteModalOpen(false);
+        setPhotoToDelete(null);
+    };
+
+    // Confirme la suppression
+    const confirmDeletePhoto = useCallback(async () => {
+        if (!prestataireId || !photoToDelete) return;
+        setLoadingExisting(true);
+        try {
+            const res = await apiClient(`/api/prestataires/${prestataireId}/photos/${photoToDelete}`, {
+                method: "DELETE"
+            });
+            if (!res.ok) throw new Error("Erreur suppression photo");
+            toast.success("Photo supprimée");
+            setExistingPhotos(prev => prev.filter(p => p.id !== photoToDelete));
+        } catch (err) {
+            toast.error("Erreur lors de la suppression");
+        } finally {
+            setLoadingExisting(false);
+            closeDeleteModal();
+        }
+    }, [prestataireId, photoToDelete, apiClient]);
+
+    // ...existing code...
     
     // Photo State
     const [captureMode, setCaptureMode] = useState<CaptureMode>('FILE')
@@ -198,6 +258,38 @@ export default function QuickAddPhotoModal({ isOpen, onClose, prestataireId, onP
                         <X className="w-5 h-5" />
                     </button>
                 </div>
+                {/* Affichage des photos existantes */}
+                <div className="mb-4">
+                    <h4 className="text-sm font-semibold mb-2">Photos existantes</h4>
+                    {loadingExisting ? (
+                        <div className="text-gray-500 text-xs">Chargement...</div>
+                    ) : existingPhotos.length === 0 ? (
+                        <div className="text-gray-400 text-xs">Aucune photo enregistrée</div>
+                    ) : (
+                        <div className="flex flex-wrap gap-2">
+                            {existingPhotos.map(photo => (
+                                <div key={photo.id} className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                                    <img src={photo.url} alt="Photo existante" className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => openDeleteModal(photo.id)}
+                                        className="absolute top-1 right-1 p-0.5 bg-black/50 text-white rounded-full hover:bg-black/70"
+                                        disabled={loadingExisting}
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Modal de suppression */}
+                <DeletePhotoModal
+                    isOpen={deleteModalOpen}
+                    onClose={closeDeleteModal}
+                    onConfirm={confirmDeletePhoto}
+                />
 
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-4 py-2">
@@ -260,7 +352,7 @@ export default function QuickAddPhotoModal({ isOpen, onClose, prestataireId, onP
                                     </button>
                                 </div>
 
-                                <div className="flex flex-wrap gap-2 justify-center max-h-[200px] overflow-y-auto">
+                                <div className="flex flex-wrap gap-2 justify-center max-h-50 overflow-y-auto">
                                     {previews.map((url, index) => (
                                         <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border">
                                             <img src={url} alt={`Aperçu ${index}`} className="w-full h-full object-cover" />
@@ -285,7 +377,7 @@ export default function QuickAddPhotoModal({ isOpen, onClose, prestataireId, onP
 
                         {/* Camera Mode */}
                         {captureMode === 'CAMERA' && (
-                            <div className="border-2 border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900 overflow-hidden flex flex-col relative min-h-[300px]">
+                            <div className="border-2 border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900 overflow-hidden flex flex-col relative min-h-75">
                                 {/* Camera Active */}
                                 {isCameraActive && (
                                     <div className="flex-1 relative bg-black">
@@ -329,7 +421,7 @@ export default function QuickAddPhotoModal({ isOpen, onClose, prestataireId, onP
                                                 <RotateCcw size={18} />
                                             </button>
                                         </div>
-                                        <div className="flex flex-wrap gap-2 justify-center max-h-[250px] overflow-y-auto">
+                                        <div className="flex flex-wrap gap-2 justify-center max-h-62.5 overflow-y-auto">
                                             {previews.map((url, index) => (
                                                 <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border">
                                                     <img src={url} alt={`Capture ${index}`} className="w-full h-full object-cover" />
