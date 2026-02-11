@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { unlink } from "fs/promises";
+import path from "path";
 
 // DELETE /api/campagnes/[id]/prestataires/[prestataireId]/photo - Supprimer l'image d'affiche d'une affectation
 export async function DELETE(
@@ -40,6 +42,17 @@ export async function DELETE(
 
         if (!affectation.image_affiche) {
             throw new AppError("Aucune image d'affiche à supprimer", 400);
+        }
+
+        // Supprimer le fichier physique si l'URL est locale
+        if (affectation.image_affiche.startsWith("/uploads/")) {
+            try {
+                const filePath = path.join(process.cwd(), "public", affectation.image_affiche);
+                await unlink(filePath);
+            } catch (fileError) {
+                // Log l'erreur mais continue la suppression en base de données
+                console.error("Erreur lors de la suppression du fichier physique:", fileError);
+            }
         }
 
         // Supprimer l'image d'affiche (mettre à null)
