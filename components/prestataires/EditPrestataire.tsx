@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useFormik } from "formik"
 import * as Yup from "yup"
-import { X, UploadCloud, Image as ImageIcon, Trash2, Undo2, FileText, File as FileIcon } from "lucide-react"
+import { X, UploadCloud, Image as ImageIcon, Trash2, Undo2, FileText, File as FileIcon, Camera, RotateCcw } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
 import { Button } from "@/components/ui/button"
@@ -78,13 +78,85 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, servi
   const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
   const [existingPhotos, setExistingPhotos] = useState<PrestatairePhoto[]>([])
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([])
+  
+  // Camera states
+  const [captureMode, setCaptureMode] = useState<'FILE' | 'CAMERA'>('FILE')
+  const [isCameraActive, setIsCameraActive] = useState(false)
+  
+  // Camera Refs
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const nativeCameraInputRef = useRef<HTMLInputElement>(null)
 
   // File states
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [existingFiles, setExistingFiles] = useState<PrestataireFichier[]>([])
   const [deletedFileIds, setDeletedFileIds] = useState<string[]>([])
   const documentInputRef = useRef<HTMLInputElement>(null)
+
+  // --- Camera Logic ---
+  const startCamera = async () => {
+    // Fallback to native input if mediaDevices not available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.warn("Camera API not available, falling back to native input")
+      nativeCameraInputRef.current?.click()
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+      setIsCameraActive(true)
+    } catch (err) {
+      console.error("Camera error or permission denied:", err)
+      // Fallback to native camera input
+      toast.info("Caméra inapprochable, ouverture de l'appareil photo natif...")
+      nativeCameraInputRef.current?.click()
+    }
+  }
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+    setIsCameraActive(false)
+    setCaptureMode('FILE')
+  }
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current
+      const canvas = canvasRef.current
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `capture_${Date.now()}.jpg`, { type: "image/jpeg" })
+            handleAddNewPhoto(file)
+          }
+        }, 'image/jpeg', 0.8)
+      }
+    }
+  }
+
+  // Cleanup camera on unmount or modal close
+  useEffect(() => {
+    if (!isOpen) {
+      stopCamera()
+    }
+    return () => stopCamera()
+  }, [isOpen])
 
   // Initialisation des photos existantes
   useEffect(() => {
@@ -110,6 +182,13 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, servi
     setNewFiles([])
     setDeletedFileIds([])
   }, [prestataire, isOpen])
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      newPhotoPreviews.forEach(url => URL.revokeObjectURL(url))
+    }
+  }, [newPhotoPreviews])
 
   // Trouver l'ID du service
   const initialServiceId = useMemo(() => {
@@ -537,11 +616,25 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, servi
                 <div className="flex justify-center gap-3 mb-4">
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border shadow-sm rounded-lg hover:bg-gray-50 text-sm font-medium transition"
+                    onClick={() => {
+                      stopCamera();
+                      setCaptureMode('FILE');
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 border shadow-sm rounded-lg text-sm font-medium transition ${captureMode === 'FILE' ? 'bg-white border-gray-300 text-black' : 'bg-gray-100 border-transparent text-gray-600 hover:bg-gray-200'}`}
                   >
                     <UploadCloud size={16} />
                     Ajouter des nouvelles photos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCaptureMode('CAMERA');
+                      startCamera();
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 border shadow-sm rounded-lg text-sm font-medium transition ${captureMode === 'CAMERA' ? 'bg-black text-white' : 'bg-gray-100 border-transparent text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    <Camera size={16} />
+                    Caméra
                   </button>
                   <input
                     ref={fileInputRef}
@@ -551,29 +644,133 @@ export default function EditPrestaireModal({ isOpen, onClose, prestataire, servi
                     className="hidden"
                     onChange={handleFileChange}
                   />
+                  <input
+                    ref={nativeCameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
                 </div>
 
-                {/* Previews of new photos */}
-                <div className="flex flex-wrap gap-2 justify-center max-h-[200px] overflow-y-auto">
-                  {newPhotoPreviews.map((url, index) => (
-                    <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border">
-                      <img src={url} alt={`Aperçu ${index + 1}`} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveNewPhoto(index)}
-                        className="absolute top-1 right-1 p-0.5 bg-black/50 text-white rounded-full hover:bg-black/70"
-                      >
-                        <X size={14} />
-                      </button>
+                {/* Mode Importation de fichiers */}
+                {captureMode === 'FILE' && !isCameraActive && (
+                  <>
+                    {/* Previews of new photos */}
+                    <div className="flex flex-wrap gap-2 justify-center max-h-[200px] overflow-y-auto">
+                      {newPhotoPreviews.map((url, index) => (
+                        <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                          <img src={url} alt={`Aperçu ${index + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveNewPhoto(index)}
+                            className="absolute top-1 right-1 p-0.5 bg-black/50 text-white rounded-full hover:bg-black/70"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      {newPhotoPreviews.length === 0 && existingPhotos.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-4 text-center text-gray-400">
+                          <ImageIcon className="w-8 h-8 mb-1 opacity-50" />
+                          <p className="text-xs">Aucune photo</p>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                  {newPhotoPreviews.length === 0 && existingPhotos.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-4 text-center text-gray-400">
-                      <ImageIcon className="w-8 h-8 mb-1 opacity-50" />
-                      <p className="text-xs">Aucune photo</p>
-                    </div>
-                  )}
-                </div>
+                  </>
+                )}
+
+                {/* Mode Caméra */}
+                {captureMode === 'CAMERA' && (
+                  <div className="min-h-[300px] relative bg-gray-900 rounded-lg overflow-hidden">
+                    {/* Camera Active */}
+                    {isCameraActive && (
+                      <>
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover"
+                        />
+                        <canvas ref={canvasRef} className="hidden" />
+                        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+                          <button
+                            type="button"
+                            onClick={stopCamera}
+                            className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30"
+                          >
+                            <X size={24} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={capturePhoto}
+                            className="p-4 bg-white rounded-full text-black shadow-lg hover:scale-105 transition"
+                          >
+                            <Camera size={28} />
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Camera Inactive - Show button to start or previews */}
+                    {!isCameraActive && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                        {newPhotoPreviews.length === 0 ? (
+                          <>
+                            <Camera className="w-12 h-12 text-gray-300 mb-3" />
+                            <p className="text-gray-500 text-sm mb-4 text-center">
+                              Appuyez sur le bouton Caméra pour démarrer
+                            </p>
+                            <button
+                              type="button"
+                              onClick={startCamera}
+                              className="flex items-center gap-2 px-4 py-2 bg-black text-white shadow-sm rounded-lg hover:bg-gray-800 text-sm font-medium transition"
+                            >
+                              <Camera size={16} />
+                              Démarrer la caméra
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex justify-between items-center w-full mb-3 px-2">
+                              <p className="text-sm font-medium text-white">Photos capturées</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewPhotos([])
+                                  setNewPhotoPreviews(prev => {
+                                    prev.forEach(url => URL.revokeObjectURL(url))
+                                    return []
+                                  })
+                                }}
+                                className="p-1 text-gray-300 hover:text-white transition"
+                              >
+                                <RotateCcw size={18} />
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 justify-center max-h-[250px] overflow-y-auto w-full">
+                              {newPhotoPreviews.map((url, index) => (
+                                <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/20">
+                                  <img src={url} alt={`Capture ${index + 1}`} className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveNewPhoto(index)}
+                                    className="absolute top-1 right-1 p-0.5 bg-black/50 text-white rounded-full hover:bg-black/70"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
