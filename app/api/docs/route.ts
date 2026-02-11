@@ -4464,6 +4464,79 @@ const openApi = {
       }
     },
 
+    "/prestataires/{id}/photos/{photoId}": {
+      delete: {
+        tags: ["Prestataires"],
+        summary: "Supprimer une photo d'un prestataire",
+        description: "Supprime une photo spécifique d'un prestataire",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          },
+          {
+            name: "photoId",
+            in: "path",
+            required: true,
+            description: "ID de la photo à supprimer",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Photo supprimée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Photo supprimée avec succès"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé - La photo n'appartient pas à ce prestataire",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Cette photo n'appartient pas à ce prestataire"
+                }
+              }
+            }
+          },
+          "404": {
+            description: "Prestataire ou photo non trouvé(e)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Photo non trouvée"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
     "/prestataires/{id}/files": {
       post: {
         tags: ["Prestataires"],
@@ -5093,6 +5166,87 @@ const openApi = {
                 schema: { $ref: "#/components/schemas/Error" },
                 example: {
                   error: "Cette affectation n'existe pas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/campagnes/{id}/prestataires/{prestataireId}/photo": {
+      delete: {
+        tags: ["Prestataires Campagnes"],
+        summary: "Supprimer l'image d'affiche d'une affectation",
+        description: "Supprime l'image d'affiche d'une affectation de prestataire à une campagne (met image_affiche à null)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID de la campagne",
+            schema: { type: "string" }
+          },
+          {
+            name: "prestataireId",
+            in: "path",
+            required: true,
+            description: "ID du prestataire",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Image d'affiche supprimée avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" }
+                  }
+                },
+                example: {
+                  message: "Image d'affiche supprimée avec succès"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Aucune image d'affiche à supprimer",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Aucune image d'affiche à supprimer"
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Non authentifié",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "403": {
+            description: "Accès refusé",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            description: "Campagne ou affectation non trouvée",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                  error: "Affectation non trouvée"
                 }
               }
             }
