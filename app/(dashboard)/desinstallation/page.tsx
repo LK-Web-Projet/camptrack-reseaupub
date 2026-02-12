@@ -14,6 +14,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import ManualCampaignModal from "@/components/desinstallation/ManualCampaignModal";
 
 interface Prestataire {
     id_prestataire: string;
@@ -53,6 +54,7 @@ export default function DesinstallationPage() {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<string | null>(null);
     const [confirmData, setConfirmData] = useState<{ id_campagne: string; id_prestataire: string } | null>(null);
+    const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
     const fetchCampagnes = async () => {
         try {
@@ -140,12 +142,12 @@ export default function DesinstallationPage() {
                         Gérez le retrait des panneaux et les paiements associés pour les campagnes terminées.
                     </p>
                 </div>
-                <Link
-                    href="/campagnes/new"
+                <button
+                    onClick={() => setIsManualModalOpen(true)}
                     className="mt-4 sm:mt-0 px-4 py-2 bg-[#d61353] text-white rounded-lg hover:bg-[#b01044] transition flex items-center gap-2 shadow-lg shadow-pink-500/20"
                 >
                     <span>+ Ajouter Campagne Manuelle</span>
-                </Link>
+                </button>
             </div>
 
             {campagnes.length === 0 ? (
@@ -256,6 +258,12 @@ export default function DesinstallationPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <ManualCampaignModal
+                isOpen={isManualModalOpen}
+                onClose={() => setIsManualModalOpen(false)}
+                onSuccess={fetchCampagnes}
+            />
         </div>
     );
 }
