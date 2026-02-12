@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL")
 
 }
 
@@ -56,6 +56,12 @@ enum NotificationType {
   CAMPAIGN_EXPIRING
   ASSIGNMENT_WEEK_BEFORE
   ASSIGNMENT_2DAYS_BEFORE
+}
+
+enum TypePaiement {
+  INSTALLATION
+  DESINSTALLATION
+  AUTRE
 }
 
 enum NotificationPriority {
@@ -255,12 +261,13 @@ model PrestataireCampagne {
   id_prestataire String
   date_creation DateTime  @default(now())
   date_fin      DateTime?
+  date_desinstallation DateTime?
   status        String?
   image_affiche String?
 
   campagne      Campagne          @relation(fields: [id_campagne], references: [id_campagne])
   prestataire   Prestataire       @relation(fields: [id_prestataire], references: [id_prestataire])
-  paiement      PaiementPrestataire?
+  paiements     PaiementPrestataire[]
 
   @@id([id_campagne, id_prestataire])
   @@map("prestataires_campagne")
@@ -270,6 +277,7 @@ model PaiementPrestataire {
   id_paiement      String   @id @default(cuid())
   id_campagne      String
   id_prestataire   String
+  type             TypePaiement @default(INSTALLATION)
   paiement_base    Float
   paiement_final   Float
   date_paiement    DateTime?
@@ -279,7 +287,7 @@ model PaiementPrestataire {
 
   affectation      PrestataireCampagne @relation(fields: [id_campagne, id_prestataire], references: [id_campagne, id_prestataire])
 
-  @@unique([id_campagne, id_prestataire])
+  @@index([id_campagne, id_prestataire])
   @@map("paiements_prestataire")
 }
 
