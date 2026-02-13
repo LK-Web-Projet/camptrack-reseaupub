@@ -91,7 +91,7 @@ export async function GET(
                 id_verification: true
               }
             },
-            paiement: {
+            paiements: {
               select: {
                 id_paiement: true,
                 paiement_base: true,
