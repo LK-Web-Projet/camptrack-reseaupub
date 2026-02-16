@@ -115,6 +115,7 @@ export async function GET(request: NextRequest) {
       where,
       select: {
         id_prestataire: true,
+        id_service: true,
         nom: true,
         prenom: true,
         contact: true,
@@ -130,8 +131,10 @@ export async function GET(request: NextRequest) {
         etat_vehicule: true,
         score: true,
         created_at: true,
+
         service: {
           select: {
+            id_service: true,
             nom: true,
           },
         },

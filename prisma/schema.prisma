@@ -370,6 +370,12 @@ enum NotificationType {
   ASSIGNMENT_2DAYS_BEFORE
 }
 
+enum TypePaiement {
+  INSTALLATION
+  DESINSTALLATION
+  AUTRE
+}
+
 enum NotificationPriority {
   LOW
   MEDIUM

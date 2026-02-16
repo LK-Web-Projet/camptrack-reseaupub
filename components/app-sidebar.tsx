@@ -10,6 +10,7 @@ import {
   UserRound,
   MapPin,
   CreditCard,
+  Archive,
 } from "lucide-react"
 
 // import { SearchForm } from "@/components/search-form"
@@ -73,6 +74,11 @@ const data = {
       title: "Paiements",
       icon: CreditCard,
       items: [{ title: "Gestion des Paiements", url: "/paiements" }],
+    },
+    {
+      title: "Désinstallations",
+      icon: Archive,
+      items: [{ title: "Gestion des Retraits", url: "/desinstallation" }],
     },
 
 
