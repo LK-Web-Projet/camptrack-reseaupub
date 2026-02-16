@@ -47,6 +47,7 @@ import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
 import VerificationMaterielleModal from "./VerificationMaterielleModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
+import EndAssignmentModal from "./EndAssignmentModal";
 
 
 
@@ -159,6 +160,14 @@ export default function DetailCampagne({ id }: { id: string }) {
   // Verification Materielle states
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [selectedPrestataireForVerification, setSelectedPrestataireForVerification] = useState<string | undefined>(undefined);
+
+  // End Assignment Modal states
+  const [isEndAssignmentModalOpen, setIsEndAssignmentModalOpen] = useState(false);
+  const [selectedPrestataireForEndAssignment, setSelectedPrestataireForEndAssignment] = useState<{
+    id: string;
+    nom: string;
+    prenom: string;
+  } | null>(null);
 
   const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
 
@@ -863,6 +872,25 @@ ${selectedPrestataires.includes(p.id_prestataire)
                             <Button variant="outline" size="sm">Voir</Button>
                           </Link>
                         )}
+
+                        {/* Bouton Fin de Mission */}
+                        {a.prestataire && !a.date_desinstallation && a.status !== "TERMINE" && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="bg-red-100 text-red-600 hover:bg-red-200 border-red-200 ml-2"
+                            onClick={() => {
+                              setSelectedPrestataireForEndAssignment({
+                                id: a.prestataire.id_prestataire,
+                                nom: a.prestataire.nom || "",
+                                prenom: a.prestataire.prenom || ""
+                              });
+                              setIsEndAssignmentModalOpen(true);
+                            }}
+                          >
+                            Fin
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -876,6 +904,23 @@ ${selectedPrestataires.includes(p.id_prestataire)
           )}
         </CardContent>
       </Card>
+
+      {/* End Assignment Modal */}
+      {selectedPrestataireForEndAssignment && (
+        <EndAssignmentModal
+          isOpen={isEndAssignmentModalOpen}
+          onClose={() => {
+            setIsEndAssignmentModalOpen(false);
+            setSelectedPrestataireForEndAssignment(null);
+          }}
+          onSuccess={() => {
+            fetchCampagne();
+          }}
+          campagneId={id}
+          prestataireId={selectedPrestataireForEndAssignment.id}
+          prestataireName={`${selectedPrestataireForEndAssignment.nom} ${selectedPrestataireForEndAssignment.prenom}`}
+        />
+      )}
 
       {/* Modal d'incident */}
 

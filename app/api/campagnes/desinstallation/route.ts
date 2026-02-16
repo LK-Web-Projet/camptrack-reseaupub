@@ -5,7 +5,8 @@ import { z } from "zod";
 
 const uninstallationSchema = z.object({
     id_campagne: z.string().min(1, "ID Campagne requis"),
-    id_prestataire: z.string().min(1, "ID Prestataire requis")
+    id_prestataire: z.string().min(1, "ID Prestataire requis"),
+    mode: z.enum(["STANDARD", "REASSIGNATION"]).optional().default("STANDARD")
 });
 
 export async function POST(req: NextRequest) {
@@ -20,9 +21,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { id_campagne, id_prestataire } = validation.data;
+        const { id_campagne, id_prestataire, mode } = validation.data;
 
-        const result = await confirmUninstallation(id_campagne, id_prestataire);
+        const result = await confirmUninstallation(id_campagne, id_prestataire, mode);
 
         return NextResponse.json(
             { message: "Désinstallation confirmée et paiement généré", data: result },
