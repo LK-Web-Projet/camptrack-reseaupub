@@ -47,7 +47,7 @@ export async function confirmUninstallation(
     throw new AppError("Désinstallation déjà confirmée pour ce prestataire", 400);
   }
 
-  // 3. Transaction : Update date + Création paiement (Conditionnel)
+  // 3. Transaction : Update date + Création paiement (Conditionnel) + Disponibilité
   const result = await prisma.$transaction(async (tx) => {
     // 3.1 Update date désinstallation
     const updatedAffectation = await tx.prestataireCampagne.update({
@@ -63,9 +63,19 @@ export async function confirmUninstallation(
       }
     });
 
+    // 3.2 Remettre le prestataire comme disponible
+    const updatedPrestataire = await tx.prestataire.update({
+      where: {
+        id_prestataire
+      },
+      data: {
+        disponible: true
+      }
+    });
+
     let paiement = null;
 
-    // 3.2 Création paiement forfaitaire de 2000 FCFA UNIQUEMENT SI STANDARD
+    // 3.3 Création paiement forfaitaire de 2000 FCFA UNIQUEMENT SI STANDARD
     if (mode === "STANDARD") {
       paiement = await tx.paiementPrestataire.create({
         data: {
@@ -80,7 +90,7 @@ export async function confirmUninstallation(
       });
     }
 
-    return { updatedAffectation, paiement };
+    return { updatedAffectation, updatedPrestataire, paiement };
   });
 
   return result;

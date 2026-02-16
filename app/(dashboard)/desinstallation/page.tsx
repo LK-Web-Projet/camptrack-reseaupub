@@ -5,16 +5,9 @@ import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
 import { CheckCircle, AlertCircle, Calendar, Archive, Users, DollarSign } from "lucide-react";
 import Link from "next/link";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import ManualCampaignModal from "@/components/desinstallation/ManualCampaignModal";
+import EndAssignmentModal from "@/components/campagnes/EndAssignmentModal";
 
 interface Prestataire {
     id_prestataire: string;
@@ -52,9 +45,14 @@ export default function DesinstallationPage() {
     const { apiClient } = useAuth();
     const [campagnes, setCampagnes] = useState<Campagne[]>([]);
     const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] = useState<string | null>(null);
-    const [confirmData, setConfirmData] = useState<{ id_campagne: string; id_prestataire: string } | null>(null);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+    const [isEndAssignmentModalOpen, setIsEndAssignmentModalOpen] = useState(false);
+    const [selectedPrestataireForEndAssignment, setSelectedPrestataireForEndAssignment] = useState<{
+        id_campagne: string;
+        id_prestataire: string;
+        nom: string;
+        prenom: string;
+    } | null>(null);
 
     const fetchCampagnes = async () => {
         try {
@@ -75,51 +73,9 @@ export default function DesinstallationPage() {
         fetchCampagnes();
     }, []);
 
-    const openConfirmModal = (id_campagne: string, id_prestataire: string) => {
-        setConfirmData({ id_campagne, id_prestataire });
-    };
-
-    const performUninstallation = async () => {
-        if (!confirmData) return;
-        const { id_campagne, id_prestataire } = confirmData;
-
-        setProcessing(`${id_campagne}-${id_prestataire}`);
-        try {
-            const res = await apiClient("/api/campagnes/desinstallation", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id_campagne, id_prestataire })
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                toast.success("Désinstallation confirmée et paiement généré !");
-                // Update local state to reflect change immediately
-                setCampagnes(prev => prev.map(c => {
-                    if (c.id_campagne !== id_campagne) return c;
-                    return {
-                        ...c,
-                        affectations: c.affectations.map(a => {
-                            if (a.id_prestataire !== id_prestataire) return a;
-                            return {
-                                ...a,
-                                date_desinstallation: new Date().toISOString(),
-                                paiements: [...a.paiements, { type: "DESINSTALLATION", statut_paiement: false }]
-                            };
-                        })
-                    };
-                }));
-                setConfirmData(null);
-            } else {
-                toast.error(data.message || "Erreur lors de la confirmation");
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error("Erreur de connexion");
-        } finally {
-            setProcessing(null);
-        }
+    const openEndAssignmentModal = (id_campagne: string, id_prestataire: string, nom: string, prenom: string) => {
+        setSelectedPrestataireForEndAssignment({ id_campagne, id_prestataire, nom, prenom });
+        setIsEndAssignmentModalOpen(true);
     };
 
     if (loading) {
@@ -184,7 +140,6 @@ export default function DesinstallationPage() {
                                     const isDone = !!aff.date_desinstallation;
                                     // On vérifie si un paiement de désinstallation existe
                                     const hasPayment = aff.paiements.some(p => p.type === "DESINSTALLATION");
-                                    const isProcessing = processing === `${campagne.id_campagne}-${aff.id_prestataire}`;
 
                                     return (
                                         <div key={aff.id_prestataire} className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
@@ -215,15 +170,15 @@ export default function DesinstallationPage() {
                                                     </div>
                                                 ) : (
                                                     <button
-                                                        onClick={() => openConfirmModal(campagne.id_campagne, aff.id_prestataire)}
-                                                        disabled={isProcessing}
+                                                        onClick={() => openEndAssignmentModal(
+                                                            campagne.id_campagne,
+                                                            aff.id_prestataire,
+                                                            aff.prestataire.nom,
+                                                            aff.prestataire.prenom
+                                                        )}
                                                         className="text-sm px-4 py-2 bg-white border border-[#d61353] text-[#d61353] rounded-lg hover:bg-[#d61353] hover:text-white transition w-full sm:w-auto flex items-center justify-center gap-2"
                                                     >
-                                                        {isProcessing ? (
-                                                            <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
-                                                        ) : (
-                                                            <>Confirmer retrait</>
-                                                        )}
+                                                        Fin de Mission
                                                     </button>
                                                 )}
                                             </div>
@@ -235,29 +190,22 @@ export default function DesinstallationPage() {
                     ))}
                 </div>
             )}
-            {/* Confirmation Modal */}
-            <Dialog open={!!confirmData} onOpenChange={(open) => !open && setConfirmData(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirmer la désinstallation</DialogTitle>
-                        <DialogDescription>
-                            Confirmer la désinstallation pour ce prestataire ? Cela générera un paiement de 2000 FCFA.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setConfirmData(null)}>
-                            Annuler
-                        </Button>
-                        <Button
-                            className="bg-[#d61353] hover:bg-[#b01044] text-white"
-                            onClick={performUninstallation}
-                            disabled={!!processing}
-                        >
-                            {processing ? "Traitement..." : "Confirmer"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* End Assignment Modal */}
+            {selectedPrestataireForEndAssignment && (
+                <EndAssignmentModal
+                    isOpen={isEndAssignmentModalOpen}
+                    onClose={() => {
+                        setIsEndAssignmentModalOpen(false);
+                        setSelectedPrestataireForEndAssignment(null);
+                    }}
+                    onSuccess={() => {
+                        fetchCampagnes();
+                    }}
+                    campagneId={selectedPrestataireForEndAssignment.id_campagne}
+                    prestataireId={selectedPrestataireForEndAssignment.id_prestataire}
+                    prestataireName={`${selectedPrestataireForEndAssignment.nom} ${selectedPrestataireForEndAssignment.prenom}`}
+                />
+            )}
 
             <ManualCampaignModal
                 isOpen={isManualModalOpen}

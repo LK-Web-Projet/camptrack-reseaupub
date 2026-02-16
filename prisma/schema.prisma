@@ -7,6 +7,67 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserType {
+  ADMIN
+  SUPERVISEUR_CAMPAGNE
+  CONTROLEUR
+  OPERATIONNEL
+  EQUIPE
+}
+
+enum ClientType {
+  EXTERNE
+  INTERNE
+}
+
+enum TypeCampagne {
+  MASSE
+  PROXIMITE
+}
+
+enum CampagneStatus {
+  PLANIFIEE
+  EN_COURS
+  TERMINEE
+  ANNULEE
+}
+
+enum TypePanneau {
+  PETIT
+  GRAND
+}
+
+enum EtatMateriel {
+  BON
+  MOYEN
+  MAUVAIS
+}
+
+enum TypeFichier {
+  RAPPORT_JOURNALIER
+  RAPPORT_FINAL
+  PIGE
+}
+
+enum NotificationType {
+  CAMPAIGN_EXPIRING
+  ASSIGNMENT_WEEK_BEFORE
+  ASSIGNMENT_2DAYS_BEFORE
+}
+
+enum TypePaiement {
+  INSTALLATION
+  DESINSTALLATION
+  AUTRE
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
 model User {
   id_user               String         @id @default(cuid())
   nom                   String
@@ -320,71 +381,4 @@ model NotificationRule {
   updated_at       DateTime             @updatedAt
 
   @@map("notification_rules")
-}
-
-enum UserType {
-  ADMIN
-  SUPERVISEUR_CAMPAGNE
-  CONTROLEUR
-  OPERATIONNEL
-  EQUIPE
-}
-
-enum ClientType {
-  EXTERNE
-  INTERNE
-}
-
-enum TypeCampagne {
-  MASSE
-  PROXIMITE
-}
-
-enum CampagneStatus {
-  PLANIFIEE
-  EN_COURS
-  TERMINEE
-  ANNULEE
-}
-
-enum TypePanneau {
-  PETIT
-  GRAND
-}
-
-enum EtatMateriel {
-  BON
-  MOYEN
-  MAUVAIS
-}
-
-enum TypeFichier {
-  RAPPORT_JOURNALIER
-  RAPPORT_FINAL
-  PIGE
-}
-
-enum NotificationType {
-  CAMPAIGN_EXPIRING
-  ASSIGNMENT_WEEK_BEFORE
-  ASSIGNMENT_2DAYS_BEFORE
-}
-
-enum TypePaiement {
-  INSTALLATION
-  DESINSTALLATION
-  AUTRE
-}
-
-enum NotificationPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-enum TypePaiement {
-  INSTALLATION
-  DESINSTALLATION
-  AUTRE
 }

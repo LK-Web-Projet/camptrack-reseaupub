@@ -71,15 +71,16 @@ const data = {
       items: [{ title: "Gestion des prestataires", url: "/prestataires" }],
     },
     {
-      title: "Paiements",
-      icon: CreditCard,
-      items: [{ title: "Gestion des Paiements", url: "/paiements" }],
-    },
-    {
       title: "Désinstallations",
       icon: Archive,
       items: [{ title: "Gestion des Retraits", url: "/desinstallation" }],
     },
+    {
+      title: "Paiements",
+      icon: CreditCard,
+      items: [{ title: "Gestion des Paiements", url: "/paiements" }],
+    },
+    
 
 
   ],
