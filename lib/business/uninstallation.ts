@@ -127,7 +127,7 @@ export async function getCampaignsForUninstallation() {
       affectations: {
         include: {
           prestataire: true,
-          paiements: true // On récupère tous les paiements pour filtrer en JS si besoin
+          paiement: true // On récupère tous les paiements pour filtrer en JS si besoin
         }
       }
     },

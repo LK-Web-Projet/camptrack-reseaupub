@@ -26,7 +26,7 @@ interface Affectation {
     id_prestataire: string;
     date_desinstallation: string | null;
     prestataire: Prestataire;
-    paiements: Paiement[];
+    paiement: Paiement[];
 }
 
 interface Campagne {
@@ -139,7 +139,7 @@ export default function DesinstallationPage() {
                                 {campagne.affectations.map((aff) => {
                                     const isDone = !!aff.date_desinstallation;
                                     // On vérifie si un paiement de désinstallation existe
-                                    const hasPayment = aff.paiements.some(p => p.type === "DESINSTALLATION");
+                                    const hasPayment = aff.paiement?.some(p => p.type === "DESINSTALLATION");
 
                                     return (
                                         <div key={aff.id_prestataire} className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">

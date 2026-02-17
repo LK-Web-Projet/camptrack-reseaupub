@@ -74,6 +74,13 @@ export async function GET(
             type_user: true
           }
         },
+        id_campagne_parent: true,
+        campagne_parent: {
+          select: {
+            id_campagne: true,
+            nom_campagne: true
+          }
+        },
         affectations: {
           select: {
             prestataire: {
@@ -91,7 +98,7 @@ export async function GET(
                 id_verification: true
               }
             },
-            paiements: {
+            paiement: {
               select: {
                 id_paiement: true,
                 paiement_base: true,

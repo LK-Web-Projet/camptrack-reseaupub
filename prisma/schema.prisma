@@ -223,11 +223,14 @@ model Campagne {
   status           CampagneStatus        @default(PLANIFIEE)
   updated_at       DateTime              @updatedAt
   id_superviseur   String?
+  id_campagne_parent String?
   client           Client                @relation(fields: [id_client], references: [id_client])
   gestionnaire     User                  @relation(fields: [id_gestionnaire], references: [id_user])
   lieu             Lieu                  @relation(fields: [id_lieu], references: [id_lieu])
   service          Service               @relation(fields: [id_service], references: [id_service])
   superviseur      User?                 @relation("CampagneSuperviseur", fields: [id_superviseur], references: [id_user])
+  campagne_parent  Campagne?             @relation("CampagneRenouvellement", fields: [id_campagne_parent], references: [id_campagne], onDelete: SetNull)
+  renouvellements  Campagne[]            @relation("CampagneRenouvellement")
   fichiers         FichierCampagne[]
   dommages         MaterielsCase[]
   affectations     PrestataireCampagne[]
