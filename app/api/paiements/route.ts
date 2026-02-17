@@ -24,11 +24,12 @@ export async function GET(request: NextRequest) {
       id_campagne: searchParams.get("id_campagne") || undefined,
       id_prestataire: searchParams.get("id_prestataire") || undefined,
       statut_paiement: searchParams.get("statut_paiement") || undefined,
+      statut: searchParams.get("statut") || undefined,
     };
 
     // Supprimer les clés avec des valeurs nulles (paramètres non fournis)
     Object.keys(queryParams).forEach(key => {
-      if (queryParams[key] === null) {
+      if (queryParams[key] === null || queryParams[key] === undefined || queryParams[key] === "") {
         delete queryParams[key];
       }
     });
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
       throw new AppError(validation.error, 400);
     }
 
-    const { page, limit, id_campagne, id_prestataire, statut_paiement } =
+    const { page, limit, id_campagne, id_prestataire, statut_paiement, statut } =
       validation.data as PaiementQueryParams;
     const skip = (page - 1) * limit;
 
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
     if (id_campagne) where.id_campagne = id_campagne;
     if (id_prestataire) where.id_prestataire = id_prestataire;
     if (statut_paiement !== undefined) where.statut_paiement = statut_paiement;
+    if (statut && statut !== 'all') where.statut = statut;
 
     // Compter le total
     const total = await prisma.paiementPrestataire.count({ where });
@@ -55,6 +57,9 @@ export async function GET(request: NextRequest) {
     const paiements = await prisma.paiementPrestataire.findMany({
       where,
       include: {
+        transactions: {
+          orderBy: { date_transaction: 'desc' }
+        },
         affectation: {
           select: {
             id_campagne: true,
@@ -183,7 +188,8 @@ export async function POST(request: NextRequest) {
     const sanction_montant = penalites._sum.montant_penalite || 0;
 
     // 4. Calculer le paiement final
-    const paiement_final = paiement_base - sanction_montant;
+    const paiement_final = Math.max(0, paiement_base - sanction_montant);
+    const hasFullPayment = !!date_paiement;
 
     // 5. Créer le paiement
     const paiement = await prisma.paiementPrestataire.create({
@@ -191,12 +197,23 @@ export async function POST(request: NextRequest) {
         id_campagne,
         id_prestataire,
         paiement_base,
-        paiement_final: Math.max(0, paiement_final), // Ne pas aller en négatif
+        paiement_final,
         sanction_montant,
-        statut_paiement: !!date_paiement, // true si date_paiement est fournie
+        statut_paiement: hasFullPayment, // Deprecated compatibility
+        statut: hasFullPayment ? "PAYE" : "EN_ATTENTE", // New status
         date_paiement: date_paiement || null,
+        transactions: hasFullPayment ? {
+          create: {
+            montant: paiement_final,
+            date_transaction: new Date(date_paiement!),
+            moyen_paiement: 'AUTRE',
+            reference: 'Initial Payment',
+            created_by: 'SYSTEM'
+          }
+        } : undefined
       },
       include: {
+        transactions: true,
         affectation: {
           select: {
             campagne: {

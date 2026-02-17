@@ -254,6 +254,13 @@ model PrestataireCampagne {
   @@map("prestataires_campagne")
 }
 
+enum StatutPaiement {
+  EN_ATTENTE
+  PARTIEL
+  PAYE
+  ANNULE
+}
+
 model PaiementPrestataire {
   id_paiement      String              @id @default(cuid())
   id_campagne      String
@@ -261,15 +268,37 @@ model PaiementPrestataire {
   paiement_base    Float
   paiement_final   Float
   date_paiement    DateTime?
-  statut_paiement  Boolean             @default(false)
+  statut_paiement  Boolean             @default(false) // Deprecated: Use statut field
   sanction_montant Float               @default(0)
   created_at       DateTime            @default(now())
   type             TypePaiement        @default(INSTALLATION)
   affectation      PrestataireCampagne @relation(fields: [id_campagne, id_prestataire], references: [id_campagne, id_prestataire])
+  
+  // Nouveaux champs pour paiement multiple
+  statut           StatutPaiement      @default(EN_ATTENTE)
+  transactions     Transaction[]
 
   @@index([id_campagne, id_prestataire])
   @@map("paiements_prestataire")
 }
+
+model Transaction {
+  id_transaction   String              @id @default(cuid())
+  id_paiement      String
+  montant          Float
+  date_transaction DateTime            @default(now())
+  moyen_paiement   String?
+  reference        String?
+  note             String?
+  created_at       DateTime            @default(now())
+  created_by       String?
+  
+  paiement         PaiementPrestataire @relation(fields: [id_paiement], references: [id_paiement], onDelete: Cascade)
+
+  @@map("transactions")
+  @@index([id_paiement])
+}
+
 
 model MaterielsCase {
   id_materiels_case  String       @id @default(cuid())
