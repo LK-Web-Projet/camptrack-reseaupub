@@ -15,8 +15,6 @@ import {
   Paperclip,
   PlusCircle,
   Search,
-  RefreshCw,
-  Link as LinkIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
@@ -73,14 +71,13 @@ interface Affectation {
     nom?: string;
     prenom?: string;
     contact?: string;
-    disponible?: boolean;
     service?: { nom?: string } | null;
   };
-  paiement?: Array<{
+  paiement?: {
     paiement_base?: number;
     sanction_montant?: number;
     paiement_final?: number;
-  }> | null;
+  } | null;
   date_creation?: string;
   status?: string;
   image_affiche?: string | null;
@@ -107,8 +104,6 @@ interface PrestataireListItem {
 }
 interface Campagne {
   id_campagne: string; nom_campagne?: string; description?: string | null; objectif?: string | null; quantite_service?: number | null; nbr_prestataire?: number | null; type_campagne?: string | null; date_debut?: string | null; date_fin?: string | null; status?: string | null; date_creation?: string | null; updated_at?: string | null; client?: Client | null; lieu?: Lieu | null; service?: Service | null; gestionnaire?: Gestionnaire | null; affectations?: Affectation[] | null; fichiers?: Fichier[] | null; _count?: { affectations?: number; fichiers?: number; dommages?: number };
-  id_campagne_parent?: string | null;
-  campagne_parent?: { id_campagne: string; nom_campagne: string } | null;
 }
 
 // Composant pour afficher une information
@@ -135,7 +130,6 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [campagne, setCampagne] = useState<Campagne | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
-  const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
 
 
   // Assign prestataire states
@@ -174,16 +168,7 @@ export default function DetailCampagne({ id }: { id: string }) {
   } | null>(null);
 
   // Verification Materielle states
-  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
-  const [selectedPrestataireForVerification, setSelectedPrestataireForVerification] = useState<string | undefined>(undefined);
-
-  // End Assignment Modal states
-  const [isEndAssignmentModalOpen, setIsEndAssignmentModalOpen] = useState(false);
-  const [selectedPrestataireForEndAssignment, setSelectedPrestataireForEndAssignment] = useState<{
-    id: string;
-    nom: string;
-    prenom: string;
-  } | null>(null);
+  
 
   const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
 
@@ -393,24 +378,9 @@ export default function DetailCampagne({ id }: { id: string }) {
         </Link>
         <div className="flex items-center gap-3 text-[#d61353]">
           <Megaphone className="w-7 h-7" />
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-bold">{campagne.nom_campagne}</h1>
-            {campagne.id_campagne_parent && campagne.campagne_parent && (
-              <Link href={`/dashboard/campagnes/${campagne.id_campagne_parent}`} className="text-sm text-gray-500 hover:text-[#d61353] flex items-center gap-1 mt-1 transition-colors">
-                <LinkIcon className="w-3 h-3" />
-                Renouvellement de {campagne.campagne_parent.nom_campagne}
-              </Link>
-            )}
-          </div>
+          <h1 className="text-3xl font-bold">{campagne.nom_campagne}</h1>
         </div>
-        <div>
-          {campagne.status === "TERMINEE" && (
-            <Button onClick={() => setIsRenewModalOpen(true)} className="gap-2 bg-amber-600 hover:bg-amber-700 text-white">
-              <RefreshCw className="w-4 h-4" />
-              Renouveler
-            </Button>
-          )}
-        </div>
+        <div />
       </div>
 
       {/* Carte Principale */}
@@ -829,6 +799,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                                     prenom: a.prestataire.prenom || ""
                                   });
                                   setIsMaterielCaseModalOpen(true);
+                                  setIsMaterielCaseModalOpen(true);
                                 }}
                               >
                                 🔧
@@ -862,9 +833,9 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       </TableCell>
 
                       <TableCell>{a.status ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.[0]?.paiement_base ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.[0]?.sanction_montant ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.[0]?.paiement_final ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.paiement_base ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
 
                       <TableCell className="max-md:hidden block"
                       >
@@ -893,6 +864,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                                 prenom: a.prestataire.prenom || ""
                               });
                               setIsMaterielCaseModalOpen(true);
+                              setIsMaterielCaseModalOpen(true);
                             }}
                           >
                             Vérification matériel
@@ -902,25 +874,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
                           <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
                             <Button variant="outline" size="sm">Voir</Button>
                           </Link>
-                        )}
-
-                        {/* Bouton Fin de Mission */}
-                        {a.prestataire && !a.date_desinstallation && a.status !== "TERMINE" && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="bg-red-100 text-red-600 hover:bg-red-200 border-red-200 ml-2"
-                            onClick={() => {
-                              setSelectedPrestataireForEndAssignment({
-                                id: a.prestataire.id_prestataire,
-                                nom: a.prestataire.nom || "",
-                                prenom: a.prestataire.prenom || ""
-                              });
-                              setIsEndAssignmentModalOpen(true);
-                            }}
-                          >
-                            Fin
-                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -955,8 +908,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
         )
       }
 
-      {/* Modal d'incident */}
-
+      {/* Modal Vérification Matériel */}
       {
         selectedPrestataireForIncident && (
           <AddIncidentModal
@@ -976,7 +928,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
             ]}
             onIncidentAdded={() => {
               fetchCampagne();
-              toast.success("Incident enregistré avec succès");
+              toast.success("Vérification matériel enregistrée avec succès");
             }}
           />
         )
@@ -1027,23 +979,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
         )
       }
 
-      {
-        isRenewModalOpen && campagne && (
-          <RenewCampaignModal
-            isOpen={isRenewModalOpen}
-            onClose={() => setIsRenewModalOpen(false)}
-            campagneId={campagne.id_campagne}
-            nomCampagne={campagne.nom_campagne || ""}
-            prestataires={campagne.affectations?.map((a) => ({
-              id_prestataire: a.prestataire.id_prestataire,
-              nom: a.prestataire.nom || "",
-              prenom: a.prestataire.prenom || "",
-              contact: a.prestataire.contact || "",
-              disponible: a.prestataire.disponible ?? true,
-            })) || []}
-          />
-        )
-      }
-    </div>
+    </div >
   );
 }
