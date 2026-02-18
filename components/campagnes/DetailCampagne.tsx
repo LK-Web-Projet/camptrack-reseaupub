@@ -57,7 +57,7 @@ interface Client {
 interface Lieu { id_lieu?: string; nom?: string; ville?: string; }
 interface Service { id_service?: string; nom?: string; description?: string | null; }
 interface Gestionnaire { id_user?: string; nom?: string; prenom?: string; email?: string; }
-interface Affectation {
+interface Affectations {
   prestataire: {
     id_prestataire: string;
     nom?: string;
@@ -65,11 +65,14 @@ interface Affectation {
     contact?: string;
     service?: { nom?: string } | null;
   };
-  paiement?: {
+  paiement?: Array<{
+    id_paiement?: string;
     paiement_base?: number;
     sanction_montant?: number;
     paiement_final?: number;
-  } | null;
+    date_paiement?: string | null;
+    statut_paiement?: boolean;
+  }> | null;
   date_creation?: string;
   status?: string;
   image_affiche?: string | null;
@@ -818,9 +821,9 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       </TableCell>
 
                       <TableCell>{a.status ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.paiement_base ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.[0]?.paiement_base ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.[0]?.sanction_montant ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.[0]?.paiement_final ?? "-"}</TableCell>
 
                       <TableCell className="max-md:hidden block"
                       >
