@@ -3,7 +3,6 @@
 import {
   ArrowLeft,
   Megaphone,
-  FileText,
   Calendar,
   User,
   Target,
@@ -42,16 +41,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PrestataireCampagne, PaiementPrestataire } from '@prisma/client';
-import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
 import AddMaterielCaseModal from "@/components/prestataires/AddMaterielCaseModal";
-import VerificationMaterielleModal from "./VerificationMaterielleModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
-import EndAssignmentModal from "./EndAssignmentModal";
-import RenewCampaignModal from "@/components/campagnes/RenewCampaignModal";
-
-
 
 // Interfaces (gardées telles quelles)
 interface Client {
@@ -151,13 +143,7 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [fileUpload, setFileUpload] = useState<File | null>(null);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
-  // Incident modal states
-  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
-  const [selectedPrestataireForIncident, setSelectedPrestataireForIncident] = useState<{
-    id: string;
-    nom: string;
-    prenom: string;
-  } | null>(null);
+
 
   // Vérification matériel modal states
   const [isMaterielCaseModalOpen, setIsMaterielCaseModalOpen] = useState(false);
@@ -168,7 +154,7 @@ export default function DetailCampagne({ id }: { id: string }) {
   } | null>(null);
 
   // Verification Materielle states
-  
+
 
   const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
 
@@ -799,7 +785,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
                                     prenom: a.prestataire.prenom || ""
                                   });
                                   setIsMaterielCaseModalOpen(true);
-                                  setIsMaterielCaseModalOpen(true);
                                 }}
                               >
                                 🔧
@@ -864,7 +849,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
                                 prenom: a.prestataire.prenom || ""
                               });
                               setIsMaterielCaseModalOpen(true);
-                              setIsMaterielCaseModalOpen(true);
                             }}
                           >
                             Vérification matériel
@@ -889,50 +873,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
         </CardContent>
       </Card >
 
-      {/* End Assignment Modal */}
-      {
-        selectedPrestataireForEndAssignment && (
-          <EndAssignmentModal
-            isOpen={isEndAssignmentModalOpen}
-            onClose={() => {
-              setIsEndAssignmentModalOpen(false);
-              setSelectedPrestataireForEndAssignment(null);
-            }}
-            onSuccess={() => {
-              fetchCampagne();
-            }}
-            campagneId={id}
-            prestataireId={selectedPrestataireForEndAssignment.id}
-            prestataireName={`${selectedPrestataireForEndAssignment.nom} ${selectedPrestataireForEndAssignment.prenom}`}
-          />
-        )
-      }
 
-      {/* Modal Vérification Matériel */}
-      {
-        selectedPrestataireForIncident && (
-          <AddIncidentModal
-            isOpen={isIncidentModalOpen}
-            onClose={() => {
-              setIsIncidentModalOpen(false);
-              setSelectedPrestataireForIncident(null);
-            }}
-            prestataireId={selectedPrestataireForIncident.id}
-            affectations={[
-              {
-                campagne: {
-                  id_campagne: campagne?.id_campagne || "",
-                  nom_campagne: campagne?.nom_campagne || ""
-                }
-              }
-            ]}
-            onIncidentAdded={() => {
-              fetchCampagne();
-              toast.success("Vérification matériel enregistrée avec succès");
-            }}
-          />
-        )
-      }
 
       {/* Modal Vérification Matériel */}
       {
