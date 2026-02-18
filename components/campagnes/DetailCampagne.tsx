@@ -46,6 +46,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PrestataireCampagne, PaiementPrestataire } from '@prisma/client';
 import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
+import AddMaterielCaseModal from "@/components/prestataires/AddMaterielCaseModal";
 import VerificationMaterielleModal from "./VerificationMaterielleModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
@@ -159,6 +160,14 @@ export default function DetailCampagne({ id }: { id: string }) {
   // Incident modal states
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
   const [selectedPrestataireForIncident, setSelectedPrestataireForIncident] = useState<{
+    id: string;
+    nom: string;
+    prenom: string;
+  } | null>(null);
+
+  // Vérification matériel modal states
+  const [isMaterielCaseModalOpen, setIsMaterielCaseModalOpen] = useState(false);
+  const [selectedPrestataireForMateriel, setSelectedPrestataireForMateriel] = useState<{
     id: string;
     nom: string;
     prenom: string;
@@ -814,15 +823,15 @@ ${selectedPrestataires.includes(p.id_prestataire)
                                 variant="outline"
                                 size="icon"
                                 onClick={() => {
-                                  setSelectedPrestataireForIncident({
+                                  setSelectedPrestataireForMateriel({
                                     id: a.prestataire.id_prestataire,
                                     nom: a.prestataire.nom || "",
                                     prenom: a.prestataire.prenom || ""
                                   });
-                                  setIsIncidentModalOpen(true);
+                                  setIsMaterielCaseModalOpen(true);
                                 }}
                               >
-                                ⚠️
+                                🔧
                               </Button>
 
                               <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
@@ -878,15 +887,15 @@ ${selectedPrestataires.includes(p.id_prestataire)
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setSelectedPrestataireForIncident({
+                              setSelectedPrestataireForMateriel({
                                 id: a.prestataire.id_prestataire,
                                 nom: a.prestataire.nom || "",
                                 prenom: a.prestataire.prenom || ""
                               });
-                              setIsIncidentModalOpen(true);
+                              setIsMaterielCaseModalOpen(true);
                             }}
                           >
-                            Verification / Incident
+                            Vérification matériel
                           </Button>
                         )}
                         {a.prestataire && (
@@ -966,9 +975,34 @@ ${selectedPrestataires.includes(p.id_prestataire)
               }
             ]}
             onIncidentAdded={() => {
-              // Recharger les données de la campagne pour mettre à jour les paiements
               fetchCampagne();
               toast.success("Incident enregistré avec succès");
+            }}
+          />
+        )
+      }
+
+      {/* Modal Vérification Matériel */}
+      {
+        selectedPrestataireForMateriel && (
+          <AddMaterielCaseModal
+            isOpen={isMaterielCaseModalOpen}
+            onClose={() => {
+              setIsMaterielCaseModalOpen(false);
+              setSelectedPrestataireForMateriel(null);
+            }}
+            prestataireId={selectedPrestataireForMateriel.id}
+            affectations={[
+              {
+                campagne: {
+                  id_campagne: campagne?.id_campagne || "",
+                  nom_campagne: campagne?.nom_campagne || ""
+                }
+              }
+            ]}
+            onIncidentAdded={() => {
+              fetchCampagne();
+              toast.success("Vérification matériel enregistrée avec succès");
             }}
           />
         )

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Récupérer et valider les query params
     const { searchParams } = new URL(request.url);
-    const queryParams = {
+    const queryParams: Record<string, string | undefined> = {
       page: searchParams.get('page') || undefined,
       limit: searchParams.get('limit') || undefined,
       id_campagne: searchParams.get('id_campagne') || undefined,
@@ -281,12 +281,10 @@ export async function POST(request: NextRequest) {
           const paiementFinal = Math.max(0, paiementBase - totalPenalites);
 
           // 4. Créer ou mettre à jour le paiement
-          const existingPaiement = await prisma.paiementPrestataire.findUnique({
+          const existingPaiement = await prisma.paiementPrestataire.findFirst({
             where: {
-              id_campagne_id_prestataire: {
-                id_campagne,
-                id_prestataire
-              }
+              id_campagne,
+              id_prestataire
             }
           });
 
@@ -317,7 +315,7 @@ export async function POST(request: NextRequest) {
         }
       } catch (err) {
         // Log l'erreur mais ne pas empêcher la réponse de succès pour la création du matériel
-         
+
         console.error('Erreur lors de la gestion du paiement après création MaterielsCase:', err);
       }
     }

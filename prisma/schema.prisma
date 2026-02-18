@@ -89,6 +89,13 @@ model User {
   @@map("users")
 }
 
+enum StatutPaiement {
+  EN_ATTENTE
+  PARTIEL
+  PAYE
+  ANNULE
+}
+
 model RefreshToken {
   id         String   @id @default(cuid())
   token_hash String
@@ -254,13 +261,6 @@ model PrestataireCampagne {
   @@map("prestataires_campagne")
 }
 
-enum StatutPaiement {
-  EN_ATTENTE
-  PARTIEL
-  PAYE
-  ANNULE
-}
-
 model PaiementPrestataire {
   id_paiement      String              @id @default(cuid())
   id_campagne      String
@@ -298,7 +298,6 @@ model Transaction {
   @@map("transactions")
   @@index([id_paiement])
 }
-
 
 model MaterielsCase {
   id_materiels_case  String       @id @default(cuid())
