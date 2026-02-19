@@ -33,11 +33,13 @@ function getRefreshSecret(): string {
   return secret;
 }
 
-interface TokenPayload {
+export interface TokenPayload {
   userId: string;
   email: string;
   role: string;
   jti?: string; // JWT ID pour la révocation
+  exp?: number;
+  iat?: number;
 }
 
 export function signAccessToken(payload: TokenPayload): string {

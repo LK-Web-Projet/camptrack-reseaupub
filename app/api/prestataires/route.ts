@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { prestataireCreateSchema, validateData } from "@/lib/validation/prestataireSchemas";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
-import { Prisma } from "@prisma/client";
+import { Prisma, TypePanneau } from "@prisma/client";
 
 async function generateNextIdOp(id_service: string, tx: Prisma.TransactionClient): Promise<string> {
   const prestataires = await tx.prestataire.findMany({
@@ -17,6 +17,25 @@ async function generateNextIdOp(id_service: string, tx: Prisma.TransactionClient
 
   const maxId = ids.length > 0 ? Math.max(...ids) : 0;
   return (maxId + 1).toString();
+}
+
+interface PrestataireCreateInput {
+  id_service: string;
+  nom: string;
+  prenom: string;
+  contact: string;
+  disponible?: boolean;
+  type_panneau?: TypePanneau | null;
+  couleur?: string | null;
+  marque?: string | null;
+  modele?: string | null;
+  plaque?: string | null;
+  contrat_valide?: boolean | null;
+  equipe_gps?: boolean | null;
+  etat_vehicule?: number | null;
+  score?: number | null;
+  photos?: string[];
+  fichiers?: { url: string; nom: string; type: string }[];
 }
 
 // GET /api/prestataires - Lister tous les prestataires avec filtres avancés
@@ -38,7 +57,7 @@ export async function GET(request: NextRequest) {
     const dateFin = searchParams.get("dateFin");
 
     // Construction du filtre
-    const where: any = {};
+    const where: Prisma.PrestataireWhereInput = {};
 
     // Filtres simples
     if (disponible !== null) {
@@ -82,6 +101,7 @@ export async function GET(request: NextRequest) {
     // Filtrer par période de campagne
     if (dateDebut || dateFin) {
       where.affectations = where.affectations || { some: {} };
+      // @ts-expect-error -- Complex relation filtering
       where.affectations.some.campagne = {
         AND: [
           dateDebut ? { date_debut: { gte: new Date(dateDebut) } } : {},
@@ -91,10 +111,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Options Prisma dynamiques
-    const prismaOptions: any = {
+    const prismaOptions: Prisma.PrestataireFindManyArgs = {
       where,
       select: {
         id_prestataire: true,
+        id_service: true,
         nom: true,
         prenom: true,
         contact: true,
@@ -107,9 +128,13 @@ export async function GET(request: NextRequest) {
         id_verification: true,
         contrat_valide: true,
         equipe_gps: true,
+        etat_vehicule: true,
+        score: true,
         created_at: true,
+
         service: {
           select: {
+            id_service: true,
             nom: true,
           },
         },
@@ -180,12 +205,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const validation = validateData(prestataireCreateSchema, body);
+    const validation = validateData<PrestataireCreateInput>(prestataireCreateSchema, body);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
     }
 
-    const data = validation.data as any; // Cast explicite pour éviter les erreurs de typage strictement inconnu
+    const data = validation.data;
 
     const {
       id_service,
@@ -200,8 +225,12 @@ export async function POST(request: NextRequest) {
       plaque,
       // id_verification, // Retiré de la validation
       contrat_valide,
-      equipe_gps
+      equipe_gps,
+      etat_vehicule,
+      score,
     } = data;
+
+    console.log("🔍 [POST /api/prestataires] Données validées - etat_vehicule:", etat_vehicule, "score:", score); // DEBUG LOG
 
     // Utilisation d'une transaction pour garantir l'unicité et la cohérence
     const prestataire = await prisma.$transaction(async (tx) => {
@@ -229,20 +258,40 @@ export async function POST(request: NextRequest) {
       // Créer le prestataire
       return tx.prestataire.create({
         data: {
-          id_service,
+          service: { connect: { id_service } },
           nom,
           prenom,
           contact,
           disponible: disponible !== undefined ? disponible : true,
           // CHAMPS VÉHICULE INTÉGRÉS
-          type_panneau,
+          type_panneau: type_panneau || null,
           couleur: couleur || null,
           marque: marque || null,
           modele: modele || null,
           plaque: plaque || null,
           id_verification, // Génération auto sécurisée
           contrat_valide: contrat_valide !== undefined ? contrat_valide : null,
-          equipe_gps: equipe_gps !== undefined ? equipe_gps : null
+          equipe_gps: equipe_gps !== undefined ? equipe_gps : null,
+          etat_vehicule: (() => {
+            const val = etat_vehicule !== undefined ? etat_vehicule : null;
+            console.log("💾 [POST /api/prestataires] Saving etat_vehicule:", val);
+            return val;
+          })(),
+          score: score !== undefined ? score : null,
+          ...(data.photos && data.photos.length > 0 ? {
+            photos: {
+              create: data.photos.map((url) => ({ url }))
+            }
+          } : {}),
+          ...(data.fichiers && data.fichiers.length > 0 ? {
+            fichiers: {
+              create: data.fichiers.map((file) => ({
+                url: file.url,
+                nom: file.nom,
+                type: file.type
+              }))
+            }
+          } : {})
         },
         select: {
           id_prestataire: true,
@@ -259,6 +308,8 @@ export async function POST(request: NextRequest) {
           id_verification: true,
           contrat_valide: true,
           equipe_gps: true,
+          etat_vehicule: true,
+          score: true,
           created_at: true,
           service: {
             select: {

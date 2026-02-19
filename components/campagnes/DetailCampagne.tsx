@@ -3,7 +3,6 @@
 import {
   ArrowLeft,
   Megaphone,
-  FileText,
   Calendar,
   User,
   Target,
@@ -15,6 +14,8 @@ import {
   Paperclip,
   PlusCircle,
   Search,
+  RefreshCw,
+  Link as LinkIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
@@ -23,6 +24,7 @@ import { toast } from "react-toastify";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import RenewCampaignModal from "@/components/campagnes/RenewCampaignModal";
 import {
   Table,
   TableBody,
@@ -42,13 +44,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PrestataireCampagne, PaiementPrestataire } from '@prisma/client';
-import AddIncidentModal from "@/components/prestataires/AddIncidentModal";
-import VerificationMaterielleModal from "./VerificationMaterielleModal";
+import AddMaterielCaseModal from "@/components/prestataires/AddMaterielCaseModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
-
-
 
 // Interfaces (gardées telles quelles)
 interface Client {
@@ -70,11 +68,14 @@ interface Affectation {
     contact?: string;
     service?: { nom?: string } | null;
   };
-  paiement?: {
+  paiement?: Array<{
+    id_paiement?: string;
     paiement_base?: number;
     sanction_montant?: number;
     paiement_final?: number;
-  } | null;
+    date_paiement?: string | null;
+    statut_paiement?: boolean;
+  }> | null;
   date_creation?: string;
   status?: string;
   image_affiche?: string | null;
@@ -101,6 +102,8 @@ interface PrestataireListItem {
 }
 interface Campagne {
   id_campagne: string; nom_campagne?: string; description?: string | null; objectif?: string | null; quantite_service?: number | null; nbr_prestataire?: number | null; type_campagne?: string | null; date_debut?: string | null; date_fin?: string | null; status?: string | null; date_creation?: string | null; updated_at?: string | null; client?: Client | null; lieu?: Lieu | null; service?: Service | null; gestionnaire?: Gestionnaire | null; affectations?: Affectation[] | null; fichiers?: Fichier[] | null; _count?: { affectations?: number; fichiers?: number; dommages?: number };
+  id_campagne_parent?: string | null;
+  campagne_parent?: { id_campagne: string; nom_campagne: string } | null;
 }
 
 // Composant pour afficher une information
@@ -127,6 +130,7 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [campagne, setCampagne] = useState<Campagne | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
 
 
   // Assign prestataire states
@@ -148,17 +152,18 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [fileUpload, setFileUpload] = useState<File | null>(null);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
-  // Incident modal states
-  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
-  const [selectedPrestataireForIncident, setSelectedPrestataireForIncident] = useState<{
+
+
+  // Vérification matériel modal states
+  const [isMaterielCaseModalOpen, setIsMaterielCaseModalOpen] = useState(false);
+  const [selectedPrestataireForMateriel, setSelectedPrestataireForMateriel] = useState<{
     id: string;
     nom: string;
     prenom: string;
   } | null>(null);
 
   // Verification Materielle states
-  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
-  const [selectedPrestataireForVerification, setSelectedPrestataireForVerification] = useState<string | undefined>(undefined);
+
 
   const fileTypes = ["RAPPORT_JOURNALIER", "RAPPORT_FINAL", "PIGE"];
 
@@ -368,9 +373,24 @@ export default function DetailCampagne({ id }: { id: string }) {
         </Link>
         <div className="flex items-center gap-3 text-[#d61353]">
           <Megaphone className="w-7 h-7" />
-          <h1 className="text-3xl font-bold">{campagne.nom_campagne}</h1>
+          <div className="flex flex-col">
+            <h1 className="text-3xl font-bold">{campagne.nom_campagne}</h1>
+            {campagne.id_campagne_parent && campagne.campagne_parent && (
+              <Link href={`/dashboard/campagnes/${campagne.id_campagne_parent}`} className="text-sm text-gray-500 hover:text-[#d61353] flex items-center gap-1 mt-1 transition-colors">
+                <LinkIcon className="w-3 h-3" />
+                Renouvellement de {campagne.campagne_parent.nom_campagne}
+              </Link>
+            )}
+          </div>
         </div>
-        <div />
+        <div>
+          {campagne.status === "TERMINEE" && (
+            <Button onClick={() => setIsRenewModalOpen(true)} className="gap-2 bg-amber-600 hover:bg-amber-700 text-white">
+              <RefreshCw className="w-4 h-4" />
+              Renouveler
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Carte Principale */}
@@ -783,15 +803,15 @@ ${selectedPrestataires.includes(p.id_prestataire)
                                 variant="outline"
                                 size="icon"
                                 onClick={() => {
-                                  setSelectedPrestataireForIncident({
+                                  setSelectedPrestataireForMateriel({
                                     id: a.prestataire.id_prestataire,
                                     nom: a.prestataire.nom || "",
                                     prenom: a.prestataire.prenom || ""
                                   });
-                                  setIsIncidentModalOpen(true);
+                                  setIsMaterielCaseModalOpen(true);
                                 }}
                               >
-                                ⚠️
+                                🔧
                               </Button>
 
                               <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
@@ -822,9 +842,9 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       </TableCell>
 
                       <TableCell>{a.status ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.paiement_base ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.sanction_montant ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.paiement_final ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.[0]?.paiement_base ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.[0]?.sanction_montant ?? "-"}</TableCell>
+                      <TableCell>{a.paiement?.[0]?.paiement_final ?? "-"}</TableCell>
 
                       <TableCell className="max-md:hidden block"
                       >
@@ -847,15 +867,15 @@ ${selectedPrestataires.includes(p.id_prestataire)
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setSelectedPrestataireForIncident({
+                              setSelectedPrestataireForMateriel({
                                 id: a.prestataire.id_prestataire,
                                 nom: a.prestataire.nom || "",
                                 prenom: a.prestataire.prenom || ""
                               });
-                              setIsIncidentModalOpen(true);
+                              setIsMaterielCaseModalOpen(true);
                             }}
                           >
-                            Verification / Incident
+                            Vérification matériel
                           </Button>
                         )}
                         {a.prestataire && (
@@ -875,19 +895,20 @@ ${selectedPrestataires.includes(p.id_prestataire)
             </p>
           )}
         </CardContent>
-      </Card>
+      </Card >
 
-      {/* Modal d'incident */}
 
+
+      {/* Modal Vérification Matériel */}
       {
-        selectedPrestataireForIncident && (
-          <AddIncidentModal
-            isOpen={isIncidentModalOpen}
+        selectedPrestataireForMateriel && (
+          <AddMaterielCaseModal
+            isOpen={isMaterielCaseModalOpen}
             onClose={() => {
-              setIsIncidentModalOpen(false);
-              setSelectedPrestataireForIncident(null);
+              setIsMaterielCaseModalOpen(false);
+              setSelectedPrestataireForMateriel(null);
             }}
-            prestataireId={selectedPrestataireForIncident.id}
+            prestataireId={selectedPrestataireForMateriel.id}
             affectations={[
               {
                 campagne: {
@@ -897,9 +918,8 @@ ${selectedPrestataires.includes(p.id_prestataire)
               }
             ]}
             onIncidentAdded={() => {
-              // Recharger les données de la campagne pour mettre à jour les paiements
               fetchCampagne();
-              toast.success("Incident enregistré avec succès");
+              toast.success("Vérification matériel enregistrée avec succès");
             }}
           />
         )
@@ -924,6 +944,23 @@ ${selectedPrestataires.includes(p.id_prestataire)
         )
       }
 
+      {
+        isRenewModalOpen && campagne && (
+          <RenewCampaignModal
+            isOpen={isRenewModalOpen}
+            onClose={() => setIsRenewModalOpen(false)}
+            campagneId={campagne.id_campagne}
+            nomCampagne={campagne.nom_campagne || ""}
+            prestataires={campagne.affectations?.map((a) => ({
+              id_prestataire: a.prestataire.id_prestataire,
+              nom: a.prestataire.nom || "",
+              prenom: a.prestataire.prenom || "",
+              contact: a.prestataire.contact || "",
+              disponible: true,
+            })) || []}
+          />
+        )
+      }
     </div >
   );
 }

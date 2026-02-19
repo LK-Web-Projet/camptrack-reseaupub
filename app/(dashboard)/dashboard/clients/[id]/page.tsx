@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
-import { ArrowLeft, MapPin, Phone, Mail, Building, User, Calendar, Activity, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Building, User, Calendar, Activity } from "lucide-react";
 import { toast } from "react-toastify";
 
 type Client = {

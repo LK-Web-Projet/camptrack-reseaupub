@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { Prisma, CampagneStatus } from "@prisma/client";
 
 // GET /api/clients/[id]/campagnes - Lister les campagnes d'un client
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const clientId = id;
 
     const client = await prisma.client.findUnique({
@@ -30,9 +31,11 @@ export async function GET(
     const skip = (page - 1) * limit;
     const status = searchParams.get('status');
 
-    const where: any = { id_client: clientId };
+    const where: Prisma.CampagneWhereInput = { id_client: clientId };
     if (status) {
-      where.status = status;
+      if (Object.values(CampagneStatus).includes(status as CampagneStatus)) {
+        where.status = status as CampagneStatus;
+      }
     }
 
     const total = await prisma.campagne.count({ where });

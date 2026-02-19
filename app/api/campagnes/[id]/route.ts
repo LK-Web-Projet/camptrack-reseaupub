@@ -74,6 +74,13 @@ export async function GET(
             type_user: true
           }
         },
+        id_campagne_parent: true,
+        campagne_parent: {
+          select: {
+            id_campagne: true,
+            nom_campagne: true
+          }
+        },
         affectations: {
           select: {
             prestataire: {

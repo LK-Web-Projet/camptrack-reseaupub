@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { Prisma, CampagneStatus } from "@prisma/client";
 
 // GET /api/lieux/[id]/campagnes - Lister les campagnes d'un lieu
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const lieuId = id;
 
     const lieu = await prisma.lieu.findUnique({
@@ -30,9 +31,11 @@ export async function GET(
     const skip = (page - 1) * limit;
     const status = searchParams.get('status');
 
-    const where: any = { id_lieu: lieuId };
+    const where: Prisma.CampagneWhereInput = { id_lieu: lieuId };
     if (status) {
-      where.status = status;
+      if (Object.values(CampagneStatus).includes(status as CampagneStatus)) {
+        where.status = status as CampagneStatus;
+      }
     }
 
     const total = await prisma.campagne.count({ where });

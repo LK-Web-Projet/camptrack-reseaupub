@@ -10,6 +10,7 @@ import {
   UserRound,
   MapPin,
   CreditCard,
+  Archive,
 } from "lucide-react"
 
 // import { SearchForm } from "@/components/search-form"
@@ -20,19 +21,14 @@ import {
 } from "@/components/ui/collapsible"
 import {
   Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 
-import { useIsMobile } from "@/hooks/use-mobile"
+// import { useIsMobile } from "@/hooks/use-mobile"
 import { Logo } from "./ui/logo"
 
 const data = {
@@ -75,10 +71,16 @@ const data = {
       items: [{ title: "Gestion des prestataires", url: "/prestataires" }],
     },
     {
+      title: "Désinstallations",
+      icon: Archive,
+      items: [{ title: "Gestion des Retraits", url: "/desinstallation" }],
+    },
+    {
       title: "Paiements",
       icon: CreditCard,
       items: [{ title: "Gestion des Paiements", url: "/paiements" }],
     },
+    
 
 
   ],

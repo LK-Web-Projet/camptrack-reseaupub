@@ -40,7 +40,7 @@ export function VersionSwitcher({
                 <span className="font-medium">CampTrack</span>
                 {/* <span className="">v{selectedVersion}</span> */}
               </div>
-             
+
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

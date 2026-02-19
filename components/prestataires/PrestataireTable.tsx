@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Pencil, Trash2, Plus, Users, Eye, Search, Filter } from "lucide-react"
+import { Pencil, Trash2, Plus, Users, Eye, Search, Filter, Camera, FileText } from "lucide-react"
 import AddPrestaireModal from "@/components/prestataires/AddPrestataire"
 import EditPrestaireModal from "@/components/prestataires/EditPrestataire"
 import DeletePrestaireModal from "@/components/prestataires/DeletePrestataire"
+import QuickAddPhotoModal from "@/components/prestataires/QuickAddPhotoModal"
+import QuickAddFileModal from "@/components/prestataires/QuickAddFileModal"
 import Link from "next/link"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
@@ -146,8 +148,12 @@ export default function PrestataireTable() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [isFileModalOpen, setIsFileModalOpen] = useState(false)
   const [prestaireToDelete, setPrestaireToDelete] = useState<Prestataire | null>(null)
   const [prestaireToEdit, setPrestaireToEdit] = useState<Prestataire | null>(null)
+  const [prestaireForPhoto, setPrestaireForPhoto] = useState<Prestataire | null>(null)
+  const [prestaireForFile, setPrestaireForFile] = useState<Prestataire | null>(null)
 
   // Handlers
   const handleAddPrestataire = (newPrestataire: Prestataire) => {
@@ -387,7 +393,7 @@ export default function PrestataireTable() {
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm text-center">
                       <div className="flex justify-center gap-3">
                         <Link href={`/prestataires/${prestataire.id_prestataire}`}>
-                          <button className="p-2 rounded-lg cursor-pointer bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 transition">
+                          <button className="p-2 rounded-lg cursor-pointer bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 transition" title="Détails">
                             <Eye className="w-4 h-4" />
                           </button>
                         </Link>
@@ -397,16 +403,37 @@ export default function PrestataireTable() {
                             setIsEditModalOpen(true)
                           }}
                           className="p-2 rounded-lg bg-blue-50 cursor-pointer dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition"
+                          title="Modifier"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
-
+                        <button
+                          onClick={() => {
+                            setPrestaireForPhoto(prestataire)
+                            setIsPhotoModalOpen(true)
+                          }}
+                          className="p-2 rounded-lg bg-purple-50 cursor-pointer dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-800 transition"
+                          title="Ajouter des photos"
+                        >
+                          <Camera className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPrestaireForFile(prestataire)
+                            setIsFileModalOpen(true)
+                          }}
+                          className="p-2 rounded-lg bg-orange-50 cursor-pointer dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-800 transition"
+                          title="Ajouter des documents"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => {
                             setPrestaireToDelete(prestataire)
                             setIsDeleteOpen(true)
                           }}
                           className="p-2 rounded-lg cursor-pointer bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 transition"
+                          title="Supprimer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -435,6 +462,37 @@ export default function PrestataireTable() {
           services={services}
           onClose={() => setIsEditModalOpen(false)}
           onEditPrestataire={handleEditPrestataire}
+        />
+      )}
+
+      {prestaireForPhoto && (
+        <QuickAddPhotoModal
+          isOpen={isPhotoModalOpen}
+          prestataireId={prestaireForPhoto.id_prestataire}
+          onClose={() => {
+            setIsPhotoModalOpen(false)
+            setPrestaireForPhoto(null)
+          }}
+          onPhotosAdded={() => {
+            // Optionnel: rafraîchir la liste si besoin ou juste fermer le modal
+            setIsPhotoModalOpen(false)
+            setPrestaireForPhoto(null)
+          }}
+        />
+      )}
+
+      {prestaireForFile && (
+        <QuickAddFileModal
+          isOpen={isFileModalOpen}
+          prestataireId={prestaireForFile.id_prestataire}
+          onClose={() => {
+            setIsFileModalOpen(false)
+            setPrestaireForFile(null)
+          }}
+          onFilesAdded={() => {
+            setIsFileModalOpen(false)
+            setPrestaireForFile(null)
+          }}
         />
       )}
 

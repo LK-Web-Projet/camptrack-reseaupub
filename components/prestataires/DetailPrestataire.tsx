@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle, FileText, Star, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/app/context/AuthContext"
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import AddMaterielCaseModal from "./AddMaterielCaseModal"
 import AddIncidentModal from "./AddIncidentModal"
+import DeletePhotoModal from "./DeletePhotoModal"
 
 // Interfaces (gardées telles quelles)
 interface Service {
@@ -44,8 +45,18 @@ interface Incident {
   }
   photos: IncidentPhoto[]
 }
+interface PrestatairePhoto {
+  id_photo: string
+  url: string
+}
+interface PrestataireFichier {
+  id_fichier: string
+  url: string
+  nom: string
+  type?: string
+}
 interface Prestataire {
-  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; incidents?: Incident[]; _count?: { affectations: number; dommages: number; incidents: number }
+  id_prestataire: string; nom: string; prenom: string; contact: string; disponible: boolean; type_panneau?: string | null; couleur?: string | null; marque?: string | null; modele?: string | null; plaque?: string | null; id_verification?: string | null; contrat_valide?: boolean | null; equipe_gps?: boolean | null; etat_vehicule?: number | null; score?: number | null; service?: Service; created_at?: string; updated_at?: string; affectations?: Affectation[]; dommages?: Dommage[]; incidents?: Incident[]; photos?: PrestatairePhoto[]; fichiers?: PrestataireFichier[]; _count?: { affectations: number; dommages: number; incidents: number }
 }
 
 // Composant pour afficher une information
@@ -73,6 +84,27 @@ export default function DetailPrestataire({ id }: { id: string }) {
   const [loading, setLoading] = useState(true)
   const [isMaterielCaseModalOpen, setIsMaterielCaseModalOpen] = useState(false)
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false)
+  // Suppression photo
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [photoToDelete, setPhotoToDelete] = useState<string | null>(null)
+  const [loadingDelete, setLoadingDelete] = useState(false)
+  // Suppression d'une photo
+  const openDeleteModal = (photoId: string) => {
+    setPhotoToDelete(photoId);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setPhotoToDelete(null);
+  };
+
+  // confirmDeletePhoto doit être déclaré après fetchPrestataire
+  // (déplacement après toutes les fonctions useCallback)
+
+  // ...existing code...
+
+  // Suppression d'une photo : déjà défini plus bas, on supprime cette déclaration en trop
 
   const fetchPrestataire = useCallback(async () => {
     if (!id) return;
@@ -90,6 +122,26 @@ export default function DetailPrestataire({ id }: { id: string }) {
       setLoading(false)
     }
   }, [id, apiClient]);
+
+  // Suppression d'une photo (après fetchPrestataire)
+  const confirmDeletePhoto = useCallback(async () => {
+    if (!photoToDelete || !prestataire) return;
+    setLoadingDelete(true);
+    try {
+      const res = await apiClient(`/api/prestataires/${prestataire.id_prestataire}/photos/${photoToDelete}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("Erreur suppression photo");
+      toast.success("Photo supprimée");
+      // Recharger le prestataire
+      await fetchPrestataire();
+    } catch (err) {
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setLoadingDelete(false);
+      closeDeleteModal();
+    }
+  }, [photoToDelete, prestataire, apiClient, fetchPrestataire]);
 
   const fetchIncidents = useCallback(async () => {
     if (!id) return;
@@ -163,9 +215,101 @@ export default function DetailPrestataire({ id }: { id: string }) {
           <InfoItem icon={<Fingerprint size={20} />} label="Plaque" value={prestataire.plaque} />
           <InfoItem icon={<ShieldCheck size={20} />} label="Type Panneau" value={prestataire.type_panneau} />
           <InfoItem icon={<Hash size={20} />} label="ID Vérification" value={prestataire.id_verification} />
+          <InfoItem
+            icon={<Star size={20} />}
+            label="État du véhicule"
+            value={
+              prestataire.etat_vehicule ? (
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={i < (prestataire.etat_vehicule || 0) ? "text-yellow-400" : "text-gray-300"}>
+                      ★
+                    </span>
+                  ))}
+                  <span className="ml-1 text-sm">({prestataire.etat_vehicule}/5)</span>
+                </div>
+              ) : "Non évalué"
+            }
+          />
+          {prestataire.score !== null && prestataire.score !== undefined && (
+            <InfoItem
+              icon={<TrendingUp size={20} />}
+              label="Score"
+              value={prestataire.score.toFixed(2)}
+            />
+          )}
           <InfoItem icon={<Calendar size={20} />} label="Date de création" value={prestataire.created_at ? new Date(prestataire.created_at).toLocaleDateString('fr-FR') : '-'} />
         </CardContent>
       </Card>
+
+      {/* PHOTOS DU PRESTATAIRE */}
+      {prestataire.photos && prestataire.photos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Photos du Prestataire / Véhicule</CardTitle>
+            <CardDescription>Images associées à ce prestataire.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {prestataire.photos.map((photo) => (
+                <div key={photo.id_photo} className="relative aspect-square group cursor-pointer overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                  <img
+                    src={photo.url}
+                    alt="Prestataire"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openDeleteModal(photo.id_photo)}
+                    className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/70"
+                    disabled={loadingDelete}
+                  >
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            {/* Modal de suppression */}
+            <DeletePhotoModal
+              isOpen={deleteModalOpen}
+              onClose={closeDeleteModal}
+              onConfirm={confirmDeletePhoto}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* DOCUMENTS ADMINISTRATIFS */}
+      {prestataire.fichiers && prestataire.fichiers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Documents Administratifs</CardTitle>
+            <CardDescription>Documents et fichiers associés à ce prestataire.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {prestataire.fichiers.map((file) => (
+                <div key={file.id_fichier} className="flex items-center p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-decoration-none">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg mr-3">
+                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 truncate block"
+                    >
+                      {file.nom}
+                    </a>
+                    <p className="text-xs text-gray-500 truncate">{file.type || 'Document'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* AFFECTATIONS */}
       <Card>

@@ -18,6 +18,7 @@ export interface PaiementQueryParams {
   id_campagne?: string
   id_prestataire?: string
   statut_paiement?: boolean
+  statut?: string
 }
 
 // Schéma pour créer/mettre à jour un paiement
@@ -44,7 +45,8 @@ export const paiementQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(50),
   id_campagne: Joi.string().optional(),
   id_prestataire: Joi.string().optional(),
-  statut_paiement: Joi.boolean().optional()
+  statut_paiement: Joi.boolean().optional(),
+  statut: Joi.string().valid('EN_ATTENTE', 'PARTIEL', 'PAYE', 'ANNULE').optional().allow('')
 })
 
 // Schéma pour mettre à jour le statut du paiement
@@ -56,6 +58,26 @@ export const paiementUpdateStatusSchema = Joi.object({
     'date.base': 'La date de paiement doit être une date valide',
     'any.required': 'Date de paiement requise'
   })
+})
+
+// Types pour Transaction
+export interface TransactionCreate {
+  montant: number
+  moyen_paiement?: string
+  reference?: string
+  note?: string
+}
+
+// Schéma pour créer une transaction
+export const transactionCreateSchema = Joi.object({
+  montant: Joi.number().greater(0).required().messages({
+    'number.base': 'Le montant doit être un nombre',
+    'number.greater': 'Le montant doit être supérieur à 0',
+    'any.required': 'Montant requis'
+  }),
+  moyen_paiement: Joi.string().optional().allow(''),
+  reference: Joi.string().optional().allow(''),
+  note: Joi.string().optional().allow('')
 })
 
 export { validateData }

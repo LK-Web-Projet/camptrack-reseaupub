@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/middleware/authMiddleware";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
+import { Prisma, TypeFichier } from "@prisma/client";
 
 // GET /api/campagnes/[id]/fichiers - Lister les fichiers d'une campagne
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const campagneId = id;
 
     // Vérifier que la campagne existe
@@ -28,9 +29,13 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const typeFichier = searchParams.get('type');
 
-    const where: any = { id_campagne: campagneId };
+    const where: Prisma.FichierCampagneWhereInput = { id_campagne: campagneId };
     if (typeFichier) {
-      where.type_fichier = typeFichier;
+      if (Object.values(TypeFichier).includes(typeFichier as TypeFichier)) {
+        where.type_fichier = typeFichier as TypeFichier;
+      } else {
+        throw new AppError("Type de fichier invalide", 400);
+      }
     }
 
     const fichiers = await prisma.fichierCampagne.findMany({
@@ -62,17 +67,17 @@ export async function GET(
 // POST /api/campagnes/[id]/fichiers - Ajouter un fichier à une campagne
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    const { id } = await params; 
+    const { id } = await params;
     const campagneId = id;
 
     const body = await request.json();
-    
+
     const { nom_fichier, description, lien_canva_drive, type_fichier } = body;
 
     if (!nom_fichier || !lien_canva_drive || !type_fichier) {
@@ -112,9 +117,9 @@ export async function POST(
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Fichier ajouté à la campagne avec succès",
-      fichier 
+      fichier
     }, { status: 201 });
 
   } catch (error) {

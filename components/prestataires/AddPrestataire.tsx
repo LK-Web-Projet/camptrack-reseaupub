@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useFormik } from "formik"
 import * as Yup from "yup"
-import { X } from "lucide-react"
+import { X, UploadCloud, Camera, Image as ImageIcon } from "lucide-react"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,8 @@ interface Prestataire {
   equipe_gps?: boolean
   service?: { nom?: string }
   disponible: boolean
+  photos?: { url: string }[]
+  etat_vehicule?: number
 }
 
 interface AddPrestaireModalProps {
@@ -48,16 +50,20 @@ const validationSchema = Yup.object().shape({
   marque: Yup.string(),
   modele: Yup.string(),
   plaque: Yup.string(),
-  plaque: Yup.string(),
-  // id_verification removed
   contrat_valide: Yup.boolean(),
   equipe_gps: Yup.boolean(),
+  etat_vehicule: Yup.number().nullable(),
 })
 
 export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }: AddPrestaireModalProps) {
   const { apiClient } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [services, setServices] = useState<Service[]>([])
+
+  // Photo states
+  const [photos, setPhotos] = useState<File[]>([])
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Charger les services au montage ou quand le modal s'ouvre
   useEffect(() => {
@@ -76,8 +82,34 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
 
     if (isOpen) {
       fetchServices()
+      // Reset photos on open
+      setPhotos([])
+      setPreviewUrls(prev => {
+        prev.forEach(url => URL.revokeObjectURL(url));
+        return [];
+      })
     }
   }, [isOpen, apiClient, services.length])
+
+  // --- Photo Handling ---
+  const handleAddPhoto = (file: File) => {
+    setPhotos(prev => [...prev, file])
+    setPreviewUrls(prev => [...prev, URL.createObjectURL(file)])
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      Array.from(e.target.files).forEach(file => handleAddPhoto(file))
+    }
+  }
+
+  const handleRemovePhoto = (indexToRemove: number) => {
+    setPhotos(prev => prev.filter((_, index) => index !== indexToRemove))
+    setPreviewUrls(prev => {
+      URL.revokeObjectURL(prev[indexToRemove])
+      return prev.filter((_, index) => index !== indexToRemove)
+    })
+  }
 
   const formik = useFormik({
     initialValues: {
@@ -91,15 +123,34 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
       marque: "",
       modele: "",
       plaque: "",
-      plaque: "",
-      // id_verification removed
       contrat_valide: false,
       equipe_gps: false,
+      etat_vehicule: 0,
     },
     validationSchema,
     onSubmit: async (values) => {
       setSubmitting(true)
       try {
+        // 1. Upload photos first
+        const uploadedPhotoUrls: string[] = []
+        for (const photoFile of photos) {
+          const formData = new FormData()
+          formData.append("file", photoFile)
+
+          const uploadRes = await apiClient("/api/prestataires/upload", {
+            method: "POST",
+            body: formData,
+          })
+
+          if (!uploadRes.ok) {
+            throw new Error(`Erreur upload photo: ${photoFile.name}`)
+          }
+
+          const uploadJson = await uploadRes.json()
+          uploadedPhotoUrls.push(uploadJson.url)
+        }
+
+        // 2. Create Prestataire
         const body = {
           id_service: values.id_service,
           nom: values.nom,
@@ -111,10 +162,10 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
           marque: values.marque || null,
           modele: values.modele || null,
           plaque: values.plaque || null,
-          plaque: values.plaque || null,
-          // id_verification removed
           contrat_valide: values.contrat_valide,
           equipe_gps: values.equipe_gps,
+          etat_vehicule: values.etat_vehicule || null,
+          photos: uploadedPhotoUrls // Attach photo URLs
         }
 
         const res = await apiClient("/api/prestataires?page=1&limit=50", {
@@ -136,7 +187,7 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
         toast.success(data.message || "Prestataire créé")
         onAddPrestataire(created)
         formik.resetForm()
-        onClose() // Added explicit onClose call
+        onClose()
       } catch (err: unknown) {
         console.error(err)
         const msg = err instanceof Error ? err.message : "Erreur lors de la création"
@@ -320,7 +371,74 @@ export default function AddPrestaireModal({ isOpen, onClose, onAddPrestataire }:
                 placeholder="Ex: AB-123-CD"
               />
             </div>
-            {/* ID Verification input removed */}
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">État général du véhicule (1-5)</label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  type="button"
+                  key={star}
+                  onClick={() => formik.setFieldValue("etat_vehicule", star)}
+                  className={`text-2xl transition-colors ${(formik.values.etat_vehicule || 0) >= star
+                      ? "text-yellow-400"
+                      : "text-gray-300 dark:text-gray-600"
+                    }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* === PHOTOS === */}
+          <h4 className="text-sm font-semibold text-[#d61353] mb-3 border-b pb-2">Photos (Optionnel)</h4>
+          <div className="mb-6">
+            <div className="flex flex-col space-y-2">
+              <div className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
+                <div className="flex justify-center gap-3 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border shadow-sm rounded-lg hover:bg-gray-50 text-sm font-medium transition"
+                  >
+                    <UploadCloud size={16} />
+                    Ajouter des photos
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </div>
+
+                {/* Previews */}
+                <div className="flex flex-wrap gap-2 justify-center max-h-[200px] overflow-y-auto">
+                  {previewUrls.map((url, index) => (
+                    <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                      <img src={url} alt={`Aperçu ${index + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(index)}
+                        className="absolute top-1 right-1 p-0.5 bg-black/50 text-white rounded-full hover:bg-black/70"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {previewUrls.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-4 text-center text-gray-400">
+                      <ImageIcon className="w-8 h-8 mb-1 opacity-50" />
+                      <p className="text-xs">Aucune photo sélectionnée</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* === DISPONIBILITÉ === */}
