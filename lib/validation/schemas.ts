@@ -87,16 +87,19 @@ export const userUpdateSchema = Joi.object({
 // New exports for incident schemas
 export { incidentCreateSchema, incidentUpdateSchema, typeIncidentCreateSchema } from './incidentSchemas';
 
+// Exports for appel schemas
+export { appelCreateSchema, appelUpdateSchema } from './appelSchemas';
+
 export function validateData<T>(schema: Joi.ObjectSchema, data: unknown): { success: true; data: T } | { success: false; error: string } {
-  const { error, value } = schema.validate(data, { 
+  const { error, value } = schema.validate(data, {
     abortEarly: false,
-    stripUnknown: true 
+    stripUnknown: true
   })
-  
+
   if (error) {
     const firstError = error.details[0]
     return { success: false, error: firstError.message }
   }
-  
+
   return { success: true, data: value as T }
 }

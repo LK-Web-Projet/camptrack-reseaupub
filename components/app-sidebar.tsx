@@ -11,6 +11,7 @@ import {
   MapPin,
   CreditCard,
   Archive,
+  Phone,
 } from "lucide-react"
 
 // import { SearchForm } from "@/components/search-form"
@@ -80,7 +81,11 @@ const data = {
       icon: CreditCard,
       items: [{ title: "Gestion des Paiements", url: "/paiements" }],
     },
-    
+    {
+      title: "Appels",
+      icon: Phone,
+      items: [{ title: "Gestion des appels", url: "/dashboard/appels" }],
+    },
 
 
   ],
