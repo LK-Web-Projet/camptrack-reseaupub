@@ -68,6 +68,11 @@ enum NotificationPriority {
   URGENT
 }
 
+enum DirectionAppel {
+  ENTRANT
+  SORTANT
+}
+
 model User {
   id_user               String         @id @default(cuid())
   nom                   String
@@ -184,6 +189,7 @@ model Prestataire {
   photos          PrestatairePhoto[]
   service         Service               @relation(fields: [id_service], references: [id_service])
   affectations    PrestataireCampagne[]
+  appels          Appel[]
 
   @@unique([id_service, id_verification])
   @@map("prestataires")
@@ -412,4 +418,19 @@ model NotificationRule {
   updated_at       DateTime             @updatedAt
 
   @@map("notification_rules")
+}
+
+model Appel {
+  id_appel       String         @id @default(cuid())
+  id_prestataire String
+  date_appel     DateTime
+  duree_minutes  Int?
+  direction      DirectionAppel @default(SORTANT)
+  motif          String
+  commentaire    String?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  prestataire    Prestataire    @relation(fields: [id_prestataire], references: [id_prestataire], onDelete: Cascade)
+
+  @@map("appels")
 }
