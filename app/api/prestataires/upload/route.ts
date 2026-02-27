@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { v4 as uuidv4 } from "uuid";
+import path from "path";
 import { requireAuth } from "@/lib/middleware/authMiddleware";
 
 export async function POST(request: NextRequest) {
@@ -32,35 +32,22 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Création du buffer
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
-        // Définition du chemin de sauvegarde
+        // Définir le sous-dossier selon le type
         const isImage = file.type.startsWith("image/");
         const subDir = isImage ? "photos" : "files";
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "prestataires", subDir);
-
-        // S'assurer que le dossier existe
-        await mkdir(uploadDir, { recursive: true });
 
         // Générer un nom de fichier unique
         const extension = path.extname(file.name) || ".jpg";
-        const filename = `${uuidv4()}${extension}`;
-        const filepath = path.join(uploadDir, filename);
+        const filename = `prestataires/${subDir}/${uuidv4()}${extension}`;
 
-        // Écriture du fichier
-        await writeFile(filepath, buffer);
-
-        // Construire l'URL absolue
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `http://${request.headers.get('host')}`;
-        // Note: Using a consistent URL structure
-        const relativeUrl = `/uploads/prestataires/${subDir}/${filename}`;
-        const absoluteUrl = new URL(relativeUrl, baseUrl).toString();
+        // Upload vers Vercel Blob
+        const blob = await put(filename, file, {
+            access: "public",
+        });
 
         return NextResponse.json({
-            message: "Image uploadée avec succès",
-            url: absoluteUrl
+            message: "Fichier uploadé avec succès",
+            url: blob.url
         }, { status: 201 });
 
     } catch (error) {

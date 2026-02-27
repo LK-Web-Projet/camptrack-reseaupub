@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { v4 as uuidv4 } from "uuid";
+import path from "path";
 import { requireAuth } from "@/lib/middleware/authMiddleware";
 import { handleApiError, AppError } from "@/lib/utils/errorHandler";
 
@@ -33,31 +33,18 @@ export async function POST(request: NextRequest) {
             throw new AppError("L'image ne doit pas dépasser 5MB", 400);
         }
 
-        // Création du buffer
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
-        // Définition du chemin de sauvegarde
-        // Dossier séparé pour les photos de campagne
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "campagnes");
-
-        // S'assurer que le dossier existe
-        await mkdir(uploadDir, { recursive: true });
-
         // Générer un nom de fichier unique
         const extension = path.extname(file.name) || ".jpg";
-        const filename = `${uuidv4()}${extension}`;
-        const filepath = path.join(uploadDir, filename);
+        const filename = `campagnes/${uuidv4()}${extension}`;
 
-        // Écriture du fichier
-        await writeFile(filepath, buffer);
-
-        // Retourner l'URL relative
-        const fileUrl = `/uploads/campagnes/${filename}`;
+        // Upload vers Vercel Blob
+        const blob = await put(filename, file, {
+            access: "public",
+        });
 
         return NextResponse.json({
             message: "Photo de campagne uploadée avec succès",
-            url: fileUrl
+            url: blob.url
         }, { status: 201 });
 
     } catch (error) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { v4 as uuidv4 } from "uuid";
+import path from "path";
 import { requireAuth } from "@/lib/middleware/authMiddleware";
 
 export async function POST(request: NextRequest) {
@@ -21,32 +21,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Le fichier doit être une image" }, { status: 400 });
         }
 
-        // Création du buffer
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
-        // Définition du chemin de sauvegarde
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "incidents");
-
-        // S'assurer que le dossier existe
-        await mkdir(uploadDir, { recursive: true });
-
         // Générer un nom de fichier unique
         const extension = path.extname(file.name) || ".jpg";
-        const filename = `${uuidv4()}${extension}`;
-        const filepath = path.join(uploadDir, filename);
+        const filename = `incidents/${uuidv4()}${extension}`;
 
-        // Écriture du fichier
-        await writeFile(filepath, buffer);
-
-        // Construire l'URL absolue
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `http://${request.headers.get('host')}`;
-        const relativeUrl = `/uploads/incidents/${filename}`;
-        const absoluteUrl = new URL(relativeUrl, baseUrl).toString();
+        // Upload vers Vercel Blob
+        const blob = await put(filename, file, {
+            access: "public",
+        });
 
         return NextResponse.json({
             message: "Image uploadée avec succès",
-            url: absoluteUrl
+            url: blob.url
         }, { status: 201 });
 
     } catch (error) {
@@ -55,4 +41,3 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "Erreur lors de l'upload du fichier.", error: message }, { status: 500 });
     }
 }
-
