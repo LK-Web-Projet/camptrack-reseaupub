@@ -7434,6 +7434,415 @@ const openApi = {
       }
     },
 
+
+    // ==================== ADMIN EXPORT ====================
+    "/admin/export": {
+      get: {
+        tags: ["Admin"],
+        summary: "Exporter toutes les données (ADMIN seulement)",
+        description: "Génère un export Excel de toutes les données du système",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Fichier Excel généré",
+            content: {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                schema: { type: "string", format: "binary" }
+              }
+            }
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    // ==================== APPELS ====================
+    "/appels": {
+      get: {
+        tags: ["Appels"],
+        summary: "Lister les appels",
+        description: "Récupère les appels avec filtres (prestataire, période)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "id_prestataire", in: "query", schema: { type: "string" } },
+          { name: "date_debut", in: "query", schema: { type: "string", format: "date" } },
+          { name: "date_fin", in: "query", schema: { type: "string", format: "date" } }
+        ],
+        responses: {
+          "200": {
+            description: "Liste des appels",
+            content: { "application/json": { schema: { type: "array", items: { type: "object" } } } }
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" }
+        }
+      },
+      post: {
+        tags: ["Appels"],
+        summary: "Enregistrer un appel",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["id_prestataire", "direction_appel", "statut_appel"], properties: { id_prestataire: { type: "string" }, direction_appel: { type: "string" }, statut_appel: { type: "string" }, notes: { type: "string" } } } } }
+        },
+        responses: {
+          "201": { description: "Appel créé", content: { "application/json": { schema: { type: "object" } } } },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/appels/{id}": {
+      get: {
+        tags: ["Appels"],
+        summary: "Détails d'un appel",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "Détails appel", content: { "application/json": { schema: { type: "object" } } } },
+          "404": { $ref: "#/components/responses/NotFound" }
+        }
+      },
+      patch: {
+        tags: ["Appels"],
+        summary: "Modifier un appel",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", properties: { notes: { type: "string" }, statut_appel: { type: "string" } } } } }
+        },
+        responses: {
+          "200": { description: "Appel modifié" },
+          "404": { $ref: "#/components/responses/NotFound" }
+        }
+      },
+      delete: {
+        tags: ["Appels"],
+        summary: "Supprimer un appel (ADMIN uniquement)",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "Appel supprimé" },
+          "403": { $ref: "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    // ==================== CAMPAGNES (Suite) ====================
+    "/campagnes/cron": {
+      get: {
+        tags: ["Cron", "Campagnes"],
+        summary: "Cron job - Vérification des statuts de campagnes",
+        description: "Met à jour automatiquement les statuts EN_COURS ou TERMINEE selon les dates",
+        responses: {
+          "200": { description: "Exécution réussie avec rapport" }
+        }
+      }
+    },
+
+    "/campagnes/desinstallation": {
+      post: {
+        tags: ["Campagnes"],
+        summary: "Marquer la désinstallation de matériels",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["id_campagne", "prestataires"], properties: { id_campagne: { type: "string" }, prestataires: { type: "array", items: { type: "string" } } } } } }
+        },
+        responses: {
+          "200": { description: "Désinstallation enregistrée" },
+          "400": { $ref: "#/components/responses/BadRequest" }
+        }
+      }
+    },
+
+    "/campagnes/finished": {
+      get: {
+        tags: ["Campagnes"],
+        summary: "Lister les campagnes terminées",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Liste des campagnes terminées", content: { "application/json": { schema: { type: "array", items: { type: "object" } } } } }
+        }
+      }
+    },
+
+    "/campagnes/manual": {
+      post: {
+        tags: ["Campagnes"],
+        summary: "Création manuelle d'une campagne avec assignation",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["nom_campagne", "id_client", "date_debut", "prestataires"], properties: { nom_campagne: { type: "string" }, id_client: { type: "string" }, date_debut: { type: "string", format: "date-time" }, prestataires: { type: "array", items: { type: "string" } } } } } }
+        },
+        responses: {
+          "201": { description: "Campagne créée" },
+          "400": { $ref: "#/components/responses/BadRequest" }
+        }
+      }
+    },
+
+    "/campagnes/upload": {
+      post: {
+        tags: ["Campagnes"],
+        summary: "Import de prestataires pour une campagne",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { "multipart/form-data": { schema: { type: "object", properties: { file: { type: "string", format: "binary" }, id_campagne: { type: "string" } } } } }
+        },
+        responses: {
+          "200": { description: "Import réussi" }
+        }
+      }
+    },
+
+    "/campagnes/{id}/renew": {
+      post: {
+        tags: ["Campagnes"],
+        summary: "Renouveler une campagne terminée",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["nom_campagne", "date_debut", "date_fin", "budget_unitaire"], properties: { nom_campagne: { type: "string" }, date_debut: { type: "string", format: "date-time" }, date_fin: { type: "string", format: "date-time" }, budget_unitaire: { type: "number" } } } } }
+        },
+        responses: {
+          "201": { description: "Campagne renouvelée" },
+          "400": { $ref: "#/components/responses/BadRequest" }
+        }
+      }
+    },
+
+    "/campagnes/{id}/superviseur": {
+      patch: {
+        tags: ["Campagnes"],
+        summary: "Assigner ou modifier le superviseur d'une campagne",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["id_superviseur"], properties: { id_superviseur: { type: "string" } } } } }
+        },
+        responses: {
+          "200": { description: "Superviseur assigné" },
+          "404": { $ref: "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    // ==================== CRON CLEANUP ====================
+    "/cron/cleanup": {
+      get: {
+        tags: ["Cron"],
+        summary: "Cron job - Nettoyage base de données",
+        description: "Supprime les données obsolètes (ex: notifications lues anciennes)",
+        responses: {
+          "200": { description: "Nettoyage réussi" }
+        }
+      }
+    },
+
+    // ==================== INCIDENTS ====================
+    "/incidents": {
+      get: {
+        tags: ["Incidents"],
+        summary: "Lister les incidents",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Liste des incidents", content: { "application/json": { schema: { type: "array", items: { type: "object" } } } } }
+        }
+      },
+      post: {
+        tags: ["Incidents"],
+        summary: "Signaler un incident",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["id_prestataire", "id_campagne", "id_type_incident"], properties: { id_prestataire: { type: "string" }, id_campagne: { type: "string" }, id_type_incident: { type: "string" }, description: { type: "string" } } } } }
+        },
+        responses: {
+          "201": { description: "Incident signalé" },
+          "400": { $ref: "#/components/responses/BadRequest" }
+        }
+      }
+    },
+
+    "/incidents/upload": {
+      post: {
+        tags: ["Incidents"],
+        summary: "Ajouter des preuves (fichiers) pour un incident",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { "multipart/form-data": { schema: { type: "object", properties: { files: { type: "array", items: { type: "string", format: "binary" } }, id_incident: { type: "string" } } } } }
+        },
+        responses: {
+          "200": { description: "Fichiers uploadés" }
+        }
+      }
+    },
+
+    "/incidents/{id}": {
+      put: {
+        tags: ["Incidents"],
+        summary: "Mettre à jour un incident (statut, résolution)",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", properties: { statut: { type: "string" }, resolution_notes: { type: "string" } } } } }
+        },
+        responses: {
+          "200": { description: "Incident mis à jour" },
+          "404": { $ref: "#/components/responses/NotFound" }
+        }
+      },
+      delete: {
+        tags: ["Incidents"],
+        summary: "Supprimer un incident",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "Incident supprimé" }
+        }
+      }
+    },
+
+    // ==================== TYPES INCIDENTS ====================
+    "/types-incidents": {
+      get: {
+        tags: ["Types Incidents"],
+        summary: "Lister les types d'incidents",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Liste", content: { "application/json": { schema: { type: "array", items: { type: "object" } } } } }
+        }
+      },
+      post: {
+        tags: ["Types Incidents"],
+        summary: "Créer un type d'incident",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["nom"], properties: { nom: { type: "string" }, gravite: { type: "string" } } } } }
+        },
+        responses: {
+          "201": { description: "Créé" }
+        }
+      }
+    },
+
+    "/types-incidents/{id}": {
+      put: {
+        tags: ["Types Incidents"],
+        summary: "Modifier un type d'incident",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", properties: { nom: { type: "string" }, gravite: { type: "string" } } } } }
+        },
+        responses: {
+          "200": { description: "Modifié" }
+        }
+      },
+      delete: {
+        tags: ["Types Incidents"],
+        summary: "Supprimer un type d'incident",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "Supprimé" }
+        }
+      }
+    },
+
+    // ==================== MATERIELS CASES (Suite) ====================
+    "/materiels-cases/upload": {
+      post: {
+        tags: ["Matériels Cases"],
+        summary: "Uploader une preuve de matériel cassé",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { "multipart/form-data": { schema: { type: "object", properties: { file: { type: "string", format: "binary" }, id_materiel_case: { type: "string" } } } } }
+        },
+        responses: {
+          "200": { description: "Upload réussi" }
+        }
+      }
+    },
+
+    // ==================== NOTIFICATIONS (Suite) ====================
+    "/notifications/generate": {
+      get: {
+        tags: ["Notifications"],
+        summary: "Générer les notifications système (Cron/Manuel)",
+        description: "Vérifie les événements (campagnes qui approchent, etc) et génère des notifications",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Génération terminée" }
+        }
+      }
+    },
+
+    // ==================== PAIEMENTS (Suite) ====================
+    "/paiements/detail/{id}": {
+      get: {
+        tags: ["Paiements"],
+        summary: "Détails complets d'un paiement",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "Détails avec transactions", content: { "application/json": { schema: { type: "object" } } } },
+          "404": { $ref: "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/paiements/detail/{id}/transactions": {
+      post: {
+        tags: ["Paiements", "Transactions"],
+        summary: "Enregistrer une transaction pour un paiement global",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", description: "ID du paiement parent" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object", required: ["montant", "mode_paiement"], properties: { montant: { type: "number" }, mode_paiement: { type: "string" }, notes: { type: "string" } } } } }
+        },
+        responses: {
+          "201": { description: "Transaction enregistrée" },
+          "400": { $ref: "#/components/responses/BadRequest" }
+        }
+      }
+    },
+
+    // ==================== PRESTATAIRES (Suite) ====================
+    "/prestataires/cron": {
+      get: {
+        tags: ["Cron", "Prestataires"],
+        summary: "Cron job - Vérification des contrats prestataires",
+        description: "Met à jour automatiquement les statuts selon les contrats expirés",
+        responses: {
+          "200": { description: "Exécution réussie avec rapport" }
+        }
+      }
+    },
+    
+    "/prestataires/upload": {
+      post: {
+        tags: ["Prestataires"],
+        summary: "Import en masse de prestataires",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          content: { "multipart/form-data": { schema: { type: "object", properties: { file: { type: "string", format: "binary" } } } } }
+        },
+        responses: {
+          "200": { description: "Import réussi" }
+        }
+      }
+    }
+
   },
   components: {
     securitySchemes: {
