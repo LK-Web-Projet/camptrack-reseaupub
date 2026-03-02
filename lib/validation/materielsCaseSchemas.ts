@@ -39,16 +39,13 @@ export const materielsCaseCreateSchema = Joi.object({
     'any.only': 'L\'état doit être BON, MOYEN ou MAUVAIS',
     'any.required': 'État du matériel requis'
   }),
-  description: Joi.string().min(5).trim().required().messages({
-    'string.min': 'La description doit contenir au moins 5 caractères',
-    'any.required': 'Description des dommages requise'
+  description: Joi.string().min(3).trim().optional().allow('', null).messages({
+    'string.min': 'La description doit contenir au moins 3 caractères'
   }),
   photo_url: Joi.string().uri({ allowRelative: true }).optional().allow('', null).messages({
     'string.uri': 'L\'URL de la photo doit être une URL valide'
   }),
-  preuve_media: Joi.string().uri({ allowRelative: true }).optional().allow('', null).messages({
-    'string.uri': 'L\'URL de la preuve média doit être une URL valide'
-  })
+  preuve_media: Joi.string().optional().allow('', null)
 }).custom((value, helpers) => {
   // Validation personnalisée : au moins id_campagne ou id_prestataire doit être fourni
   if (!value.id_campagne && !value.id_prestataire) {
@@ -84,9 +81,7 @@ export const materielsCaseUpdateSchema = Joi.object({
   photo_url: Joi.string().uri({ allowRelative: true }).optional().allow('', null).messages({
     'string.uri': 'L\'URL de la photo doit être une URL valide'
   }),
-  preuve_media: Joi.string().uri({ allowRelative: true }).optional().allow('', null).messages({
-    'string.uri': 'L\'URL de la preuve média doit être une URL valide'
-  })
+  preuve_media: Joi.string().optional().allow('', null)
 }).min(1).messages({
   'object.min': 'Au moins un champ doit être fourni pour la modification'
 }).custom((value, helpers) => {

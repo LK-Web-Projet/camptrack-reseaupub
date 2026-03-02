@@ -25,7 +25,15 @@ interface Affectation {
   status?: string
 }
 interface Dommage {
-  id_materiels_case: string; etat: string; description: string; montant_penalite: number; penalite_appliquer: boolean; date_creation: string; campagne?: { nom_campagne: string }
+  id_materiels_case: string;
+  etat: string;
+  description: string;
+  montant_penalite: number;
+  penalite_appliquer: boolean;
+  date_creation: string;
+  photo_url?: string | null;
+  preuve_media?: string | null;
+  campagne?: { nom_campagne: string };
 }
 interface IncidentPhoto {
   id_photo: string
@@ -264,7 +272,7 @@ export default function DetailPrestataire({ id }: { id: string }) {
                     className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/70"
                     disabled={loadingDelete}
                   >
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12"/></svg>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" /></svg>
                   </button>
                 </div>
               ))}
@@ -414,20 +422,58 @@ export default function DetailPrestataire({ id }: { id: string }) {
         <CardContent>
           {prestataire.dommages && prestataire.dommages.length > 0 ? (
             <div className="space-y-4">
-              {prestataire.dommages.map((dmg) => (
-                <div key={dmg.id_materiels_case} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex justify-between items-start">
-                  <div>
-                    <p className="font-semibold">{dmg.campagne?.nom_campagne ?? "Campagne non spécifiée"}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{dmg.description ?? "Pas de description"}</p>
-                    <p className="text-xs text-gray-500 mt-1">Enregistré le: {new Date(dmg.date_creation).toLocaleDateString("fr-FR")}</p>
+              {prestataire.dommages.map((dmg) => {
+                let photos: string[] = [];
+                if (dmg.preuve_media) {
+                  try {
+                    photos = JSON.parse(dmg.preuve_media);
+                  } catch (e) {
+                    if (dmg.photo_url) photos = [dmg.photo_url];
+                  }
+                } else if (dmg.photo_url) {
+                  photos = [dmg.photo_url];
+                }
+
+                return (
+                  <div key={dmg.id_materiels_case} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-lg">{dmg.campagne?.nom_campagne ?? "Campagne non spécifiée"}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{dmg.description ?? "Pas de description"}</p>
+                        <p className="text-xs text-gray-500 mt-1">Enregistré le: {new Date(dmg.date_creation).toLocaleDateString("fr-FR")}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={dmg.etat === 'MAUVAIS' ? 'destructive' : dmg.etat === 'MOYEN' ? 'warning' : 'success'}>
+                          {dmg.etat}
+                        </Badge>
+                        <p className="text-lg font-bold mt-1">{dmg.montant_penalite ? `${dmg.montant_penalite} FCFA` : ""}</p>
+                        {dmg.penalite_appliquer && <p className="text-xs text-green-600 font-medium">Pénalité appliquée</p>}
+                      </div>
+                    </div>
+
+                    {photos.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
+                          <Camera className="w-3 h-3" />
+                          Photos ({photos.length})
+                        </p>
+                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-200">
+                          {photos.map((url, i) => (
+                            <div key={i} className="relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-100 group">
+                              <img
+                                src={url}
+                                alt={`Dommage photo ${i + 1}`}
+                                className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform"
+                                onClick={() => window.open(url, '_blank')}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <Badge variant={dmg.etat === 'grave' ? 'destructive' : 'warning'}>{dmg.etat}</Badge>
-                    <p className="text-lg font-bold mt-1">{dmg.montant_penalite ? `${dmg.montant_penalite}FCFA` : ""}</p>
-                    {dmg.penalite_appliquer && <p className="text-xs text-green-600">Pénalité appliquée</p>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-center text-gray-500 py-8">Aucun dommage enregistré.</p>
