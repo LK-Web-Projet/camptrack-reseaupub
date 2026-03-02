@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/auth/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Pas de body nécessaire, le cookie est envoyé automatiquement
+        // Le cookie refreshToken est envoyé automatiquement par le navigateur
       });
 
       if (res.ok) {
@@ -55,18 +55,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id_user: payload.userId,
           email: payload.email,
           type_user: payload.role,
-          nom: "", // Manquant dans le token
-          prenom: "", // Manquant dans le token
+          nom: "",
+          prenom: "",
           nom_utilisateur: "",
           contact: ""
         });
-        return data.accessToken; // Return the new token
+        return data.accessToken;
       } else {
+        // 400 = pas de cookie (normal après logout), 401 = token expiré/révoqué
+        // Ces cas sont attendus et ne doivent pas générer d'erreur
         setUser(null);
         setToken(null);
         return null;
       }
     } catch {
+      // Erreur réseau uniquement
       setUser(null);
       setToken(null);
       return null;
@@ -111,7 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" })
+      // On envoie le token dans l'en-tête pour permettre sa révocation côté serveur
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      await fetch("/api/auth/logout", { method: "POST", headers })
     } catch (e) {
       console.error("Logout error", e)
     } finally {
@@ -119,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(null)
       router.push("/")
     }
-  }, [router])
+  }, [router, token])
 
   // Client API qui injecte le token et gère le refresh automatique
   const apiClient = useCallback(async (url: string, options: RequestInit = {}) => {

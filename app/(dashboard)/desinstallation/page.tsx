@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
-import { CheckCircle, AlertCircle, Calendar, Archive, Users, DollarSign } from "lucide-react";
+import { CheckCircle, AlertCircle, Calendar, Archive, Users, DollarSign, Search, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ManualCampaignModal from "@/components/desinstallation/ManualCampaignModal";
@@ -45,6 +45,7 @@ export default function DesinstallationPage() {
     const { apiClient } = useAuth();
     const [campagnes, setCampagnes] = useState<Campagne[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const [isEndAssignmentModalOpen, setIsEndAssignmentModalOpen] = useState(false);
     const [selectedPrestataireForEndAssignment, setSelectedPrestataireForEndAssignment] = useState<{
@@ -53,6 +54,17 @@ export default function DesinstallationPage() {
         nom: string;
         prenom: string;
     } | null>(null);
+
+    // Filtrage par nom/prénom du prestataire
+    const filteredCampagnes = campagnes
+        .map((campagne) => ({
+            ...campagne,
+            affectations: campagne.affectations.filter((aff) => {
+                const fullName = `${aff.prestataire.nom} ${aff.prestataire.prenom}`.toLowerCase();
+                return fullName.includes(searchQuery.toLowerCase().trim());
+            }),
+        }))
+        .filter((campagne) => searchQuery.trim() === "" || campagne.affectations.length > 0);
 
     const fetchCampagnes = async () => {
         try {
@@ -88,22 +100,49 @@ export default function DesinstallationPage() {
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                        <Archive className="w-8 h-8 text-[#d61353]" />
-                        Gestion des Désinstallations
-                    </h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">
-                        Gérez le retrait des panneaux et les paiements associés pour les campagnes terminées.
-                    </p>
+            <div className="flex flex-col gap-4 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                            <Archive className="w-8 h-8 text-[#d61353]" />
+                            Gestion des Désinstallations
+                        </h1>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1">
+                            Gérez le retrait des panneaux et les paiements associés pour les campagnes terminées.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsManualModalOpen(true)}
+                        className="mt-4 sm:mt-0 px-4 py-2 bg-[#d61353] text-white rounded-lg hover:bg-[#b01044] transition flex items-center gap-2 shadow-lg shadow-pink-500/20 whitespace-nowrap"
+                    >
+                        <span>+ Ajouter Campagne Manuelle</span>
+                    </button>
                 </div>
-                <button
-                    onClick={() => setIsManualModalOpen(true)}
-                    className="mt-4 sm:mt-0 px-4 py-2 bg-[#d61353] text-white rounded-lg hover:bg-[#b01044] transition flex items-center gap-2 shadow-lg shadow-pink-500/20"
-                >
-                    <span>+ Ajouter Campagne Manuelle</span>
-                </button>
+
+                {/* Barre de recherche */}
+                <div className="relative w-full sm:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Rechercher un prestataire..."
+                        className="w-full pl-10 pr-9 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d61353]/40 focus:border-[#d61353] transition"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+                {searchQuery.trim() !== "" && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
+                        {filteredCampagnes.reduce((acc, c) => acc + c.affectations.length, 0)} prestataire(s) trouvé(s) pour &laquo;&nbsp;{searchQuery}&nbsp;&raquo;
+                    </p>
+                )}
             </div>
 
             {campagnes.length === 0 ? (
@@ -112,9 +151,16 @@ export default function DesinstallationPage() {
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">Aucune campagne terminée</h3>
                     <p className="text-gray-500">Toutes les campagnes sont en cours ou ont déjà été traitées.</p>
                 </div>
+            ) : filteredCampagnes.length === 0 ? (
+                <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-100 dark:border-gray-800">
+                    <Search className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Aucun résultat</h3>
+                    <p className="text-gray-500">Aucun prestataire ne correspond à &laquo;&nbsp;{searchQuery}&nbsp;&raquo;.</p>
+                    <button onClick={() => setSearchQuery("")} className="mt-4 text-sm text-[#d61353] hover:underline">Effacer la recherche</button>
+                </div>
             ) : (
                 <div className="grid gap-6">
-                    {campagnes.map((campagne) => (
+                    {filteredCampagnes.map((campagne) => (
                         <div key={campagne.id_campagne} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
                             <div className="p-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-start sm:items-center flex-col sm:flex-row gap-4">
                                 <div>

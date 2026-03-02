@@ -17,7 +17,9 @@ export async function POST(req: Request) {
         .find(c => c.trim().startsWith("refreshToken="));
 
       if (refreshTokenCookie) {
-        refreshToken = refreshTokenCookie.split("=")[1];
+        // Utiliser indexOf pour éviter de couper le JWT qui peut contenir des "="
+        const eqIndex = refreshTokenCookie.indexOf("=");
+        refreshToken = refreshTokenCookie.substring(eqIndex + 1).trim();
       }
     }
 
