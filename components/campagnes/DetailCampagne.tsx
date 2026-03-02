@@ -785,34 +785,40 @@ ${selectedPrestataires.includes(p.id_prestataire)
                           {/* Actions MOBILE */}
                           {a.prestataire && (
                             <div className="flex gap-1 md:hidden">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => {
-                                  setSelectedPrestataireForPhoto({
-                                    id: a.prestataire.id_prestataire,
-                                    photo_url: a.image_affiche || null
-                                  });
-                                  setIsPhotoModalOpen(true);
-                                }}
-                              >
-                                📷
-                              </Button>
+                              {/* Bouton Photo : masqué si image_affiche existe déjà */}
+                              {!a.image_affiche && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedPrestataireForPhoto({
+                                      id: a.prestataire.id_prestataire,
+                                      photo_url: a.image_affiche || null
+                                    });
+                                    setIsPhotoModalOpen(true);
+                                  }}
+                                >
+                                  📷
+                                </Button>
+                              )}
 
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => {
-                                  setSelectedPrestataireForMateriel({
-                                    id: a.prestataire.id_prestataire,
-                                    nom: a.prestataire.nom || "",
-                                    prenom: a.prestataire.prenom || ""
-                                  });
-                                  setIsMaterielCaseModalOpen(true);
-                                }}
-                              >
-                                🔧
-                              </Button>
+                              {/* Bouton Vérification matériel : masqué si un paiement existe */}
+                              {(!a.paiement || a.paiement.length === 0) && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedPrestataireForMateriel({
+                                      id: a.prestataire.id_prestataire,
+                                      nom: a.prestataire.nom || "",
+                                      prenom: a.prestataire.prenom || ""
+                                    });
+                                    setIsMaterielCaseModalOpen(true);
+                                  }}
+                                >
+                                  🔧
+                                </Button>
+                              )}
 
                               <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
                                 <Button variant="outline" size="icon">
@@ -846,43 +852,49 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       <TableCell>{a.paiement?.[0]?.sanction_montant ?? "-"}</TableCell>
                       <TableCell>{a.paiement?.[0]?.paiement_final ?? "-"}</TableCell>
 
-                      <TableCell className="max-md:hidden block"
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedPrestataireForPhoto({
-                              id: a.prestataire.id_prestataire,
-                              photo_url: a.image_affiche || null
-                            });
-                            setIsPhotoModalOpen(true);
-                          }}
-                        >
-                          Photo
-                        </Button>
+                      <TableCell className="max-md:hidden block">
+                        <div className="flex gap-2 flex-wrap">
+                          {/* Bouton Photo : masqué si image_affiche existe déjà */}
+                          {!a.image_affiche && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPrestataireForPhoto({
+                                  id: a.prestataire.id_prestataire,
+                                  photo_url: a.image_affiche || null
+                                });
+                                setIsPhotoModalOpen(true);
+                              }}
+                            >
+                              Photo
+                            </Button>
+                          )}
 
-                        {a.prestataire && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedPrestataireForMateriel({
-                                id: a.prestataire.id_prestataire,
-                                nom: a.prestataire.nom || "",
-                                prenom: a.prestataire.prenom || ""
-                              });
-                              setIsMaterielCaseModalOpen(true);
-                            }}
-                          >
-                            Vérification matériel
-                          </Button>
-                        )}
-                        {a.prestataire && (
-                          <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
-                            <Button variant="outline" size="sm">Voir</Button>
-                          </Link>
-                        )}
+                          {/* Bouton Vérification matériel : masqué si un paiement existe */}
+                          {a.prestataire && (!a.paiement || a.paiement.length === 0) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPrestataireForMateriel({
+                                  id: a.prestataire.id_prestataire,
+                                  nom: a.prestataire.nom || "",
+                                  prenom: a.prestataire.prenom || ""
+                                });
+                                setIsMaterielCaseModalOpen(true);
+                              }}
+                            >
+                              Vérification matériel
+                            </Button>
+                          )}
+
+                          {a.prestataire && (
+                            <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                              <Button variant="outline" size="sm">Voir</Button>
+                            </Link>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
