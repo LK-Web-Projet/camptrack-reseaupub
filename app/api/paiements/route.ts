@@ -43,8 +43,11 @@ export async function GET(request: NextRequest) {
       validation.data as PaiementQueryParams;
     const skip = (page - 1) * limit;
 
-    // Paramètre de recherche
+    // Paramètres de filtre supplémentaires (hors schema Zod)
     const search = searchParams.get("search")?.trim() || "";
+    const campagneSearch = searchParams.get("campagne")?.trim() || "";
+    const dateDebut = searchParams.get("date_debut") || "";
+    const dateFin = searchParams.get("date_fin") || "";
 
     // Construire le filtre WHERE
     const baseWhere: Record<string, unknown> = {};
@@ -53,18 +56,33 @@ export async function GET(request: NextRequest) {
     if (statut_paiement !== undefined) baseWhere.statut_paiement = statut_paiement;
     if (statut && statut !== 'all') baseWhere.statut = statut;
 
-    // Filtre de recherche sur les relations
-    const where = search
-      ? {
-        ...baseWhere,
-        OR: [
-          { affectation: { prestataire: { nom: { contains: search, mode: 'insensitive' as const } } } },
-          { affectation: { prestataire: { prenom: { contains: search, mode: 'insensitive' as const } } } },
-          { affectation: { prestataire: { contact: { contains: search, mode: 'insensitive' as const } } } },
-          { affectation: { campagne: { nom_campagne: { contains: search, mode: 'insensitive' as const } } } },
-          { affectation: { campagne: { client: { nom: { contains: search, mode: 'insensitive' as const } } } } },
-        ],
-      }
+    // Filtre sur la date de création du paiement
+    if (dateDebut || dateFin) {
+      baseWhere.created_at = {
+        ...(dateDebut ? { gte: new Date(dateDebut) } : {}),
+        ...(dateFin ? { lte: new Date(`${dateFin}T23:59:59.999Z`) } : {}),
+      };
+    }
+
+    // Construire les critères OR de recherche (texte libre + campagne)
+    const orConditions: object[] = [];
+    if (search) {
+      orConditions.push(
+        { affectation: { prestataire: { nom: { contains: search, mode: 'insensitive' as const } } } },
+        { affectation: { prestataire: { prenom: { contains: search, mode: 'insensitive' as const } } } },
+        { affectation: { prestataire: { contact: { contains: search, mode: 'insensitive' as const } } } },
+        { affectation: { campagne: { nom_campagne: { contains: search, mode: 'insensitive' as const } } } },
+        { affectation: { campagne: { client: { nom: { contains: search, mode: 'insensitive' as const } } } } },
+      );
+    }
+    if (campagneSearch) {
+      orConditions.push(
+        { affectation: { campagne: { nom_campagne: { contains: campagneSearch, mode: 'insensitive' as const } } } }
+      );
+    }
+
+    const where = orConditions.length > 0
+      ? { ...baseWhere, OR: orConditions }
       : baseWhere;
 
     // Compter le total
