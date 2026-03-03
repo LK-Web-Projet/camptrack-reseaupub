@@ -42,13 +42,13 @@ export async function DELETE(
       throw new AppError("Cette affectation n'existe pas", 404);
     }
 
-    // Vérifier si le prestataire est déjà retiré
-    if (affectation.date_fin !== null) {
+    // Vérifier si le prestataire est déjà retiré (basé sur le statut, pas date_fin)
+    if (affectation.status === "TERMINE" || affectation.status === "ANNULE") {
       throw new AppError("Ce prestataire a déjà été retiré de cette campagne", 400);
     }
 
     // Vérifier s'il y a un paiement finalisé associé
-    if (affectation.paiement && affectation.paiement.statut_paiement) {
+    if (affectation.paiement && affectation.paiement.some(p => p.statut === "PAYE")) {
       throw new AppError(
         "Impossible de retirer ce prestataire car son paiement a déjà été finalisé",
         400
@@ -70,17 +70,26 @@ export async function DELETE(
     }
 
 
-    await prisma.prestataireCampagne.update({
-      where: {
-        id_campagne_id_prestataire: {
-          id_campagne: id,
-          id_prestataire: prestataireId
+    await prisma.$transaction(async (tx) => {
+      // Mettre à jour l'affectation
+      await tx.prestataireCampagne.update({
+        where: {
+          id_campagne_id_prestataire: {
+            id_campagne: id,
+            id_prestataire: prestataireId
+          }
+        },
+        data: {
+          date_fin: new Date(),
+          status: "TERMINE"
         }
-      },
-      data: {
-        date_fin: new Date(),
-        status: "TERMINE"
-      }
+      });
+
+      // Remettre le prestataire comme disponible
+      await tx.prestataire.update({
+        where: { id_prestataire: prestataireId },
+        data: { disponible: true }
+      });
     });
 
     return NextResponse.json({
