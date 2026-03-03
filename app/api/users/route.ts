@@ -20,17 +20,32 @@ export async function GET(request: NextRequest) {
     const authCheck = await requireAdmin(request);
     if (!authCheck.ok) return authCheck.response;
 
-    // Récupérer les query params pour la pagination
+    // Récupérer les query params pour la pagination et la recherche
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const search = searchParams.get('search') || '';
     const skip = (page - 1) * limit;
 
-    // Compter le total d'utilisateurs
-    const total = await prisma.user.count();
+    // Construire le filtre de recherche (insensible à la casse)
+    const where = search
+      ? {
+        OR: [
+          { nom: { contains: search, mode: 'insensitive' as const } },
+          { prenom: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } },
+          { contact: { contains: search, mode: 'insensitive' as const } },
+          { nom_utilisateur: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
+      : {};
 
-    // Récupérer les utilisateurs avec pagination
+    // Compter le total (avec filtre si recherche active)
+    const total = await prisma.user.count({ where });
+
+    // Récupérer les utilisateurs avec pagination et filtre
     const users = await prisma.user.findMany({
+      where,
       select: {
         id_user: true,
         email: true,
@@ -71,7 +86,7 @@ export async function POST(request: NextRequest) {
     if (!authCheck.ok) return authCheck.response;
 
     const body = await request.json();
-    
+
     // Validation des données
     const validation = validateData<RegisterData>(userCreateSchema, body);
     if (!validation.success) {
@@ -81,10 +96,10 @@ export async function POST(request: NextRequest) {
     const { email, password, nom, prenom, type_user, contact } = validation.data;
 
     // Vérifier si l'email existe déjà
-    const existingUser = await prisma.user.findUnique({ 
-      where: { email } 
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
     });
-    
+
     if (existingUser) {
       throw new AppError("Un utilisateur avec cet email existe déjà", 409);
     }
@@ -118,9 +133,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Utilisateur créé avec succès",
-      user 
+      user
     }, { status: 201 });
 
   } catch (error) {

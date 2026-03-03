@@ -10,7 +10,7 @@ import EditUserModal from "@/components/user/EditUser"
 import DeleteUserModal from "@/components/user/DeleteUser"
 import { Paginate } from "../Paginate"
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 interface User {
   id_user: string
@@ -48,21 +48,44 @@ export default function TableUser() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [userToEdit, setUserToEdit] = useState<User | null>(null)
   const [totalPages, setTotalPages] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("")
 
-
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
+  const searchFromUrl = searchParam?.get("search") || "";
+
+  // État local de la searchbar (pour l'affichage immédiat)
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+
+  // Debounce : mettre à jour l'URL 400ms après la dernière frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParam?.toString());
+      if (searchInput) {
+        params.set("search", searchInput);
+      } else {
+        params.delete("search");
+      }
+      params.set("page", "1"); // Réinitialiser à la page 1
+      router.push(`${pathname}?${params.toString()}`);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true)
       try {
-        const res = await apiClient("/api/users?page=" + page + "&limit=7")
+        const params = new URLSearchParams();
+        params.set("page", String(page));
+        params.set("limit", "7");
+        if (searchFromUrl) params.set("search", searchFromUrl);
+        const res = await apiClient(`/api/users?${params.toString()}`)
         if (!res.ok) throw new Error("Erreur lors du chargement des utilisateurs")
         const data = await res.json()
         setUsers(Array.isArray(data) ? data : data?.users || [])
-        setTotalPages(data?.pagination.totalPages || 1);
+        setTotalPages(data?.pagination?.totalPages || 1);
       } catch (e) {
         setError("Impossible de charger les utilisateurs")
         toast.error("Impossible de charger les utilisateurs")
@@ -71,17 +94,7 @@ export default function TableUser() {
       }
     }
     fetchUsers()
-  }, [apiClient, page])
-
-  const filteredUsers = users.filter((user) => {
-    const search = searchQuery.toLowerCase()
-    return (
-      user.nom.toLowerCase().includes(search) ||
-      user.prenom.toLowerCase().includes(search) ||
-      user.email.toLowerCase().includes(search) ||
-      user.contact.toLowerCase().includes(search)
-    )
-  })
+  }, [apiClient, page, searchFromUrl])
 
   const handleAddUser = async (newUser: User) => {
     try {
@@ -159,8 +172,8 @@ export default function TableUser() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9 bg-white dark:bg-gray-800"
           />
         </div>
@@ -195,14 +208,14 @@ export default function TableUser() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {!loading && filteredUsers.length === 0 && (
+                {!loading && users.length === 0 && (
                   <tr>
                     <td colSpan={5} className="text-center py-6 text-gray-500">
                       Aucun utilisateur trouvé.
                     </td>
                   </tr>
                 )}
-                {filteredUsers.map((user, index) => (
+                {users.map((user, index) => (
                   <tr
                     key={user.id_user}
                     className={`transition hover:bg-gray-100 dark:hover:bg-gray-800 ${index % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-950"

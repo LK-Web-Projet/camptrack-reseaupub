@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/app/context/AuthContext";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import {
     CreditCard,
@@ -54,8 +54,7 @@ export default function PaiementTable() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Filtres
-    const [filterStatut, setFilterStatut] = useState<string>("all");
+    const [filterStatut, setFilterStatutState] = useState<string>("all");
 
     // Modal de détails
     const [selectedPaiementId, setSelectedPaiementId] = useState<string | null>(null);
@@ -64,12 +63,43 @@ export default function PaiementTable() {
     // Modal de transaction
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
-    // Search
-    const [searchQuery, setSearchQuery] = useState("");
-
+    const router = useRouter();
+    const pathname = usePathname();
     const searchParam = useSearchParams();
     const page = parseInt(searchParam?.get("page") || "1");
+    const searchFromUrl = searchParam?.get("search") || "";
+    const statutFromUrl = searchParam?.get("statut") || "all";
     const [totalPages, setTotalPages] = useState(1);
+
+    // État local pour l'input
+    const [searchInput, setSearchInput] = useState(searchFromUrl);
+
+    // Debounce : mettre à jour l'URL 400ms après la dernière frappe
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const params = new URLSearchParams(searchParam?.toString());
+            if (searchInput) {
+                params.set("search", searchInput);
+            } else {
+                params.delete("search");
+            }
+            params.set("page", "1");
+            router.push(`${pathname}?${params.toString()}`);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    // Changement du filtre statut
+    const setFilterStatut = (value: string) => {
+        const params = new URLSearchParams(searchParam?.toString());
+        if (value && value !== "all") {
+            params.set("statut", value);
+        } else {
+            params.delete("statut");
+        }
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`);
+    };
 
     const fetchPaiements = useCallback(async () => {
         setLoading(true);
@@ -80,8 +110,11 @@ export default function PaiementTable() {
                 page: String(page)
             });
 
-            if (filterStatut !== "all") {
-                params.append("statut", filterStatut);
+            if (statutFromUrl !== "all") {
+                params.append("statut", statutFromUrl);
+            }
+            if (searchFromUrl) {
+                params.append("search", searchFromUrl);
             }
 
             const res = await apiClient(`/api/paiements?${params.toString()}`);
@@ -101,7 +134,7 @@ export default function PaiementTable() {
         } finally {
             setLoading(false);
         }
-    }, [apiClient, filterStatut, page]);
+    }, [apiClient, statutFromUrl, page, searchFromUrl]);
 
     useEffect(() => {
         fetchPaiements();
@@ -130,15 +163,7 @@ export default function PaiementTable() {
         return Math.max(0, paiement.paiement_final - totalPaye);
     };
 
-    const filteredPaiements = paiements.filter((p) => {
-        const search = searchQuery.toLowerCase();
-        return (
-            p.affectation.prestataire.nom.toLowerCase().includes(search) ||
-            p.affectation.prestataire.prenom.toLowerCase().includes(search) ||
-            p.affectation.campagne.nom_campagne.toLowerCase().includes(search) ||
-            p.affectation.campagne.client.nom.toLowerCase().includes(search)
-        );
-    });
+    // Plus de filtre local - la recherche est faite côté serveur
 
     const getStatusStyle = (statut: string) => {
         switch (statut) {
@@ -179,7 +204,7 @@ export default function PaiementTable() {
                     <Filter className="w-4 h-4 text-gray-500" />
                     <span className="text-sm font-medium">Filtrer par statut:</span>
                     <select
-                        value={filterStatut}
+                        value={statutFromUrl}
                         onChange={(e) => setFilterStatut(e.target.value)}
                         className="text-sm border-gray-300 rounded-md shadow-sm focus:border-[#d61353] focus:ring focus:ring-[#d61353] focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700"
                     >
@@ -196,8 +221,8 @@ export default function PaiementTable() {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
                             placeholder="Rechercher..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
                             className="pl-9 bg-white dark:bg-gray-800"
                         />
                     </div>
@@ -236,7 +261,7 @@ export default function PaiementTable() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {filteredPaiements.map((paiement) => {
+                                {paiements.map((paiement) => {
                                     const reste = getResteAPayer(paiement);
                                     return (
                                         <tr key={paiement.id_paiement} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">

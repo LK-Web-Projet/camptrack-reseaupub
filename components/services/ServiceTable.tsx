@@ -8,7 +8,7 @@ import DeleteService from "@/components/services/DeleteService";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
 import { Paginate } from "../Paginate";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input"
 
 interface Service {
@@ -33,12 +33,37 @@ export default function ServiceTable() {
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
+  const searchFromUrl = searchParam?.get("search") || "";
   const [totalPages, setTotalPages] = useState(1);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // État local de la searchbar
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+
+  // Debounce : mettre à jour l'URL 400ms après la dernière frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParam?.toString());
+      if (searchInput) {
+        params.set("search", searchInput);
+      } else {
+        params.delete("search");
+      }
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const res = await apiClient(`/api/services?page=${page}&limit=7`);
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", "7");
+      if (searchFromUrl) params.set("search", searchFromUrl);
+      const res = await apiClient(`/api/services?${params.toString()}`);
 
       if (!res.ok) throw new Error("Erreur API");
 
@@ -56,15 +81,9 @@ export default function ServiceTable() {
 
   useEffect(() => {
     fetchServices();
-  }, [apiClient, page]);
+  }, [apiClient, page, searchFromUrl]);
 
-  const filteredServices = services.filter((s) => {
-    const search = searchQuery.toLowerCase()
-    return (
-      s.nom.toLowerCase().includes(search) ||
-      (s.description || "").toLowerCase().includes(search)
-    )
-  })
+
 
   return (
     <div className="p-6 text-gray-900 dark:text-white">
@@ -88,8 +107,8 @@ export default function ServiceTable() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9 bg-white dark:bg-gray-800"
           />
         </div>
@@ -119,14 +138,14 @@ export default function ServiceTable() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredServices.length === 0 ? (
+                {services.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center py-6 text-gray-500">
                       Aucun service trouvé.
                     </td>
                   </tr>
                 ) : (
-                  filteredServices.map((service) => (
+                  services.map((service) => (
                     <tr key={service.id_service} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm font-medium">{service.nom}</td>
                       <td className="px-3 md:px-6 py-3 text-xs md:text-sm">{service.description || "-"}</td>

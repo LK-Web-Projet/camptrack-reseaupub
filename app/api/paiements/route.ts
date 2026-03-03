@@ -43,12 +43,29 @@ export async function GET(request: NextRequest) {
       validation.data as PaiementQueryParams;
     const skip = (page - 1) * limit;
 
+    // Paramètre de recherche
+    const search = searchParams.get("search")?.trim() || "";
+
     // Construire le filtre WHERE
-    const where: Record<string, unknown> = {};
-    if (id_campagne) where.id_campagne = id_campagne;
-    if (id_prestataire) where.id_prestataire = id_prestataire;
-    if (statut_paiement !== undefined) where.statut_paiement = statut_paiement;
-    if (statut && statut !== 'all') where.statut = statut;
+    const baseWhere: Record<string, unknown> = {};
+    if (id_campagne) baseWhere.id_campagne = id_campagne;
+    if (id_prestataire) baseWhere.id_prestataire = id_prestataire;
+    if (statut_paiement !== undefined) baseWhere.statut_paiement = statut_paiement;
+    if (statut && statut !== 'all') baseWhere.statut = statut;
+
+    // Filtre de recherche sur les relations
+    const where = search
+      ? {
+        ...baseWhere,
+        OR: [
+          { affectation: { prestataire: { nom: { contains: search, mode: 'insensitive' as const } } } },
+          { affectation: { prestataire: { prenom: { contains: search, mode: 'insensitive' as const } } } },
+          { affectation: { prestataire: { contact: { contains: search, mode: 'insensitive' as const } } } },
+          { affectation: { campagne: { nom_campagne: { contains: search, mode: 'insensitive' as const } } } },
+          { affectation: { campagne: { client: { nom: { contains: search, mode: 'insensitive' as const } } } } },
+        ],
+      }
+      : baseWhere;
 
     // Compter le total
     const total = await prisma.paiementPrestataire.count({ where });

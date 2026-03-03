@@ -7,7 +7,7 @@ import EditCampagneModal from "@/components/campagnes/EditCampagne"
 import DeleteCampagneModal from "@/components/campagnes/DeleteCampagne"
 import Link from "next/link"
 import { Paginate } from "../Paginate"
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input"
 
 import { useAuth } from "@/app/context/AuthContext"
@@ -52,12 +52,34 @@ export default function CampagneTable() {
 
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
+  const searchFromUrl = searchParam?.get("search") || "";
   const [totalPages, setTotalPages] = useState(1);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // État local de la searchbar
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+
+  // Debounce : mettre à jour l'URL 400ms après la dernière frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParam?.toString());
+      if (searchInput) {
+        params.set("search", searchInput);
+      } else {
+        params.delete("search");
+      }
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const fetchCampagnes = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({ page: String(page), limit: '7' })
+      if (searchFromUrl) params.set('search', searchFromUrl);
       const res = await apiClient(`/api/campagnes?${params.toString()}`)
 
       if (!res.ok) {
@@ -74,7 +96,7 @@ export default function CampagneTable() {
     } finally {
       setLoading(false)
     }
-  }, [apiClient, page])
+  }, [apiClient, page, searchFromUrl])
 
   useEffect(() => {
     fetchCampagnes()
@@ -83,16 +105,6 @@ export default function CampagneTable() {
   // handlers passed to modals: they simply refresh the list
   const handleAddCampagne = () => fetchCampagnes()
   const handleEditCampagne = () => fetchCampagnes()
-
-  const filteredCampagnes = campagnes.filter((c) => {
-    const search = searchQuery.toLowerCase()
-    return (
-      c.nom_campagne.toLowerCase().includes(search) ||
-      (c.type_campagne || "").toLowerCase().includes(search) ||
-      (c.status || "").toLowerCase().includes(search) ||
-      (c.service?.nom || "").toLowerCase().includes(search)
-    )
-  })
 
   return (
     <div className="p-6 text-gray-900 dark:text-white">
@@ -116,8 +128,8 @@ export default function CampagneTable() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9 bg-white dark:bg-gray-800"
           />
         </div>
@@ -158,13 +170,13 @@ export default function CampagneTable() {
                   </tr>
                 )}
 
-                {!loading && filteredCampagnes.length === 0 && (
+                {!loading && campagnes.length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-4 text-center text-sm text-gray-500">Aucune campagne trouvée</td>
                   </tr>
                 )}
 
-                {filteredCampagnes.map((campagne) => (
+                {campagnes.map((campagne) => (
                   <tr key={campagne.id_campagne} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{campagne.nom_campagne}</td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{campagne.type_campagne ?? '-'}</td>

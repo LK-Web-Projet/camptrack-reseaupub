@@ -13,11 +13,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const search = searchParams.get('search') || '';
     const skip = (page - 1) * limit;
 
-    const total = await prisma.lieu.count();
+    // Construire le filtre de recherche
+    const where = search
+      ? {
+        OR: [
+          { nom: { contains: search, mode: 'insensitive' as const } },
+          { ville: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
+      : {};
+
+    const total = await prisma.lieu.count({ where });
 
     const lieux = await prisma.lieu.findMany({
+      where,
       select: {
         id_lieu: true,
         nom: true,
@@ -56,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (!authCheck.ok) return authCheck.response;
 
     const body = await request.json();
-    
+
     const validation = validateData(lieuCreateSchema, body);
     if (!validation.success) {
       throw new AppError(validation.error, 400);
@@ -66,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier si un lieu avec le même nom et ville existe déjà
     const existingLieu = await prisma.lieu.findFirst({
-      where: { 
+      where: {
         nom: {
           equals: nom,
           mode: 'insensitive'
@@ -75,9 +87,9 @@ export async function POST(request: NextRequest) {
           equals: ville,
           mode: 'insensitive'
         }
-      } 
+      }
     });
-    
+
     if (existingLieu) {
       throw new AppError("Un lieu avec ce nom et cette ville existe déjà", 409);
     }
@@ -95,9 +107,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Lieu créé avec succès",
-      lieu 
+      lieu
     }, { status: 201 });
 
   } catch (error) {

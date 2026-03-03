@@ -29,12 +29,26 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const clientId = searchParams.get('clientId');
     const lieuId = searchParams.get('lieuId');
+    const search = searchParams.get('search') || '';
 
     // Construction du filtre
     const where: any = {};
     if (status) where.status = status;
     if (clientId) where.id_client = clientId;
     if (lieuId) where.id_lieu = lieuId;
+
+    // Filtre de recherche textuelle
+    if (search) {
+      where.OR = [
+        { nom_campagne: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { client: { nom: { contains: search, mode: 'insensitive' } } },
+        { client: { entreprise: { contains: search, mode: 'insensitive' } } },
+        { lieu: { nom: { contains: search, mode: 'insensitive' } } },
+        { lieu: { ville: { contains: search, mode: 'insensitive' } } },
+        { service: { nom: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
 
     const total = await prisma.campagne.count({ where });
 

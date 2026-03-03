@@ -9,20 +9,32 @@ export async function GET(request: NextRequest) {
   try {
     // Vérifier les permissions (Admin ou Superviseur)
     const authCheck = await requireAdmin(request);
-    
+
     if (!authCheck.ok) return authCheck.response;
 
     // Récupérer les query params
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const search = searchParams.get('search') || '';
     const skip = (page - 1) * limit;
 
+    // Construire le filtre de recherche
+    const where = search
+      ? {
+        OR: [
+          { nom: { contains: search, mode: 'insensitive' as const } },
+          { description: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
+      : {};
+
     // Compter le total
-    const total = await prisma.service.count();
+    const total = await prisma.service.count({ where });
 
     // Récupérer les services avec pagination et statistiques
     const services = await prisma.service.findMany({
+      where,
       select: {
         id_service: true,
         nom: true,
@@ -63,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (!authCheck.ok) return authCheck.response;
 
     const body = await request.json();
-    
+
     // Validation des données
     const validation = validateData(serviceCreateSchema, body);
     if (!validation.success) {
@@ -74,14 +86,14 @@ export async function POST(request: NextRequest) {
 
     // Vérifier si un service avec le même nom existe déjà
     const existingService = await prisma.service.findFirst({
-      where: { 
+      where: {
         nom: {
           equals: nom,
           mode: 'insensitive'
         }
-      } 
+      }
     });
-    
+
     if (existingService) {
       throw new AppError("Un service avec ce nom existe déjà", 409);
     }
@@ -100,9 +112,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Service créé avec succès",
-      service 
+      service
     }, { status: 201 });
 
   } catch (error) {
