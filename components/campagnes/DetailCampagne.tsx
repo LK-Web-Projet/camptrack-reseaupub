@@ -146,6 +146,9 @@ export default function DetailCampagne({ id }: { id: string }) {
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [selectedPrestataireForPhoto, setSelectedPrestataireForPhoto] = useState<{ id: string, photo_url: string | null } | null>(null);
 
+  /* State: Lightbox */
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
 
   // Upload fichier states
   const [fileType, setFileType] = useState("");
@@ -833,9 +836,17 @@ ${selectedPrestataires.includes(p.id_prestataire)
 
                       <TableCell>
                         {a.image_affiche ? (
-                          <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
-                            <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover" />
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setLightboxUrl(a.image_affiche!)}
+                            className="group relative h-10 w-10 rounded overflow-hidden border bg-gray-100 block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-[#d61353]"
+                            title="Voir en grand"
+                          >
+                            <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover transition-opacity group-hover:opacity-70" />
+                            <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs">
+                              🔍
+                            </span>
+                          </button>
                         ) : (
                           <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
                             <span className="text-[10px]">N/A</span>
@@ -955,6 +966,37 @@ ${selectedPrestataires.includes(p.id_prestataire)
           />
         )
       }
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightboxUrl(null)}
+          onKeyDown={(e) => e.key === 'Escape' && setLightboxUrl(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Aperçu de l'image"
+          tabIndex={-1}
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute -top-10 right-0 text-white text-3xl font-bold leading-none hover:text-gray-300 transition-colors"
+              aria-label="Fermer"
+            >
+              &times;
+            </button>
+            <img
+              src={lightboxUrl}
+              alt="Aperçu"
+              className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain"
+            />
+          </div>
+        </div>
+      )}
 
       {
         isRenewModalOpen && campagne && (
