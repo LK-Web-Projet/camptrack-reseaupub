@@ -47,7 +47,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import AddMaterielCaseModal from "@/components/prestataires/AddMaterielCaseModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
-
+import UnassignPrestataireModal from "@/components/campagnes/UnassignPrestataireModal";
+  // Désassignation modal states
+  
 // Interfaces (gardées telles quelles)
 interface Client {
   id_client?: string;
@@ -129,6 +131,10 @@ export default function DetailCampagne({ id }: { id: string }) {
   const { apiClient } = useAuth();
   const [campagne, setCampagne] = useState<Campagne | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isUnassignModalOpen, setIsUnassignModalOpen] = useState(false);
+  const [unassignLoading, setUnassignLoading] = useState(false);
+  const [selectedPrestataireToUnassign, setSelectedPrestataireToUnassign] = useState<{ id: string; nom: string; prenom: string } | null>(null);
+
   const [isAssigning, setIsAssigning] = useState(false);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
 
@@ -863,10 +869,10 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       <TableCell>{a.paiement?.[0]?.sanction_montant ?? "-"}</TableCell>
                       <TableCell>{a.paiement?.[0]?.paiement_final ?? "-"}</TableCell>
 
-                      <TableCell className="max-md:hidden block">
-                        <div className="flex gap-2 flex-wrap">
-                          {/* Bouton Photo : masqué si image_affiche existe déjà */}
-                          {!a.image_affiche && (
+                      <TableCell className="max-md:hidden block"
+                      >
+                        {a.prestataire && (
+                          <div className="flex flex-row gap-2">
                             <Button
                               variant="outline"
                               size="sm"
@@ -880,10 +886,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
                             >
                               Photo
                             </Button>
-                          )}
-
-                          {/* Bouton Vérification matériel : masqué si un paiement existe */}
-                          {a.prestataire && (!a.paiement || a.paiement.length === 0) && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -898,14 +900,51 @@ ${selectedPrestataires.includes(p.id_prestataire)
                             >
                               Vérification matériel
                             </Button>
-                          )}
-
-                          {a.prestataire && (
                             <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
                               <Button variant="outline" size="sm">Voir</Button>
                             </Link>
-                          )}
-                        </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPrestataireToUnassign({
+                                  id: a.prestataire.id_prestataire,
+                                  nom: a.prestataire.nom || "",
+                                  prenom: a.prestataire.prenom || ""
+                                });
+                                setIsUnassignModalOpen(true);
+                              }}
+                            >
+                              Désassigner
+                            </Button>
+                                {/* Modal Désassignation (hors table) */}
+                                <UnassignPrestataireModal
+                                  isOpen={isUnassignModalOpen}
+                                  onClose={() => setIsUnassignModalOpen(false)}
+                                  prestataire={selectedPrestataireToUnassign}
+                                  onUnassigned={() => {
+                                    setIsUnassignModalOpen(false);
+                                    setSelectedPrestataireToUnassign(null);
+                                    fetchCampagne();
+                                  }}
+                                  onUnassign={async (prestataireId) => {
+                                    setUnassignLoading(true);
+                                    try {
+                                      const res = await apiClient(`/api/campagnes/${id}/prestataires/${prestataireId}`, {
+                                        method: 'DELETE',
+                                      });
+                                      const data = await res.json();
+                                      if (!res.ok) throw new Error(data.message || 'Erreur lors de la désassignation');
+                                      toast.success('Prestataire désassigné avec succès');
+                                    } catch (error) {
+                                      toast.error(error instanceof Error ? error.message : 'Erreur lors de la désassignation');
+                                    } finally {
+                                      setUnassignLoading(false);
+                                    }
+                                  }}
+                                />
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -1015,6 +1054,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
           />
         )
       }
-    </div >
+²    </div >
   );
 }
