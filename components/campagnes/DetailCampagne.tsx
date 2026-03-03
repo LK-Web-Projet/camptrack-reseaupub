@@ -48,8 +48,7 @@ import AddMaterielCaseModal from "@/components/prestataires/AddMaterielCaseModal
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
 import UnassignPrestataireModal from "@/components/campagnes/UnassignPrestataireModal";
-  // Désassignation modal states
-  
+
 // Interfaces (gardées telles quelles)
 interface Client {
   id_client?: string;
@@ -869,10 +868,9 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       <TableCell>{a.paiement?.[0]?.sanction_montant ?? "-"}</TableCell>
                       <TableCell>{a.paiement?.[0]?.paiement_final ?? "-"}</TableCell>
 
-                      <TableCell className="max-md:hidden block"
-                      >
+                      <TableCell className="max-md:hidden">
                         {a.prestataire && (
-                          <div className="flex flex-row gap-2">
+                          <div className="flex flex-row gap-2 flex-wrap">
                             <Button
                               variant="outline"
                               size="sm"
@@ -898,7 +896,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                                 setIsMaterielCaseModalOpen(true);
                               }}
                             >
-                              Vérification matériel
+                              Vérification
                             </Button>
                             <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
                               <Button variant="outline" size="sm">Voir</Button>
@@ -917,32 +915,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
                             >
                               Désassigner
                             </Button>
-                                {/* Modal Désassignation (hors table) */}
-                                <UnassignPrestataireModal
-                                  isOpen={isUnassignModalOpen}
-                                  onClose={() => setIsUnassignModalOpen(false)}
-                                  prestataire={selectedPrestataireToUnassign}
-                                  onUnassigned={() => {
-                                    setIsUnassignModalOpen(false);
-                                    setSelectedPrestataireToUnassign(null);
-                                    fetchCampagne();
-                                  }}
-                                  onUnassign={async (prestataireId) => {
-                                    setUnassignLoading(true);
-                                    try {
-                                      const res = await apiClient(`/api/campagnes/${id}/prestataires/${prestataireId}`, {
-                                        method: 'DELETE',
-                                      });
-                                      const data = await res.json();
-                                      if (!res.ok) throw new Error(data.message || 'Erreur lors de la désassignation');
-                                      toast.success('Prestataire désassigné avec succès');
-                                    } catch (error) {
-                                      toast.error(error instanceof Error ? error.message : 'Erreur lors de la désassignation');
-                                    } finally {
-                                      setUnassignLoading(false);
-                                    }
-                                  }}
-                                />
                           </div>
                         )}
                       </TableCell>
@@ -1006,6 +978,34 @@ ${selectedPrestataires.includes(p.id_prestataire)
         )
       }
 
+      {/* Modal Désassignation */}
+      <UnassignPrestataireModal
+        isOpen={isUnassignModalOpen}
+        onClose={() => {
+          setIsUnassignModalOpen(false);
+          setSelectedPrestataireToUnassign(null);
+        }}
+        prestataire={selectedPrestataireToUnassign}
+        onUnassigned={() => {
+          setIsUnassignModalOpen(false);
+          setSelectedPrestataireToUnassign(null);
+          fetchCampagne();
+        }}
+        onUnassign={async (prestataireId) => {
+          try {
+            const res = await apiClient(`/api/campagnes/${id}/prestataires/${prestataireId}`, {
+              method: 'DELETE',
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erreur lors de la désassignation');
+            toast.success('Prestataire désassigné avec succès');
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Erreur lors de la désassignation');
+            throw error;
+          }
+        }}
+      />
+
       {/* Lightbox */}
       {lightboxUrl && (
         <div
@@ -1054,6 +1054,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
           />
         )
       }
-²    </div >
+    </div>
   );
 }

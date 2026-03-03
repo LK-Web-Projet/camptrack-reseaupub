@@ -15,7 +15,7 @@ export async function DELETE(
 
     const { id, prestataireId } = await params;
 
-    // Vérifier que l'affectation existe
+    // 1. Vérifier que l'affectation existe
     const affectation = await prisma.prestataireCampagne.findUnique({
       where: {
         id_campagne_id_prestataire: {
@@ -24,17 +24,7 @@ export async function DELETE(
         }
       },
       include: {
-        paiement: true,
-        prestataire: {
-          include: {
-            dommages: {
-              where: {
-                id_campagne: id,
-                penalite_appliquer: false
-              }
-            }
-          }
-        }
+        paiement: true
       }
     });
 
@@ -42,46 +32,23 @@ export async function DELETE(
       throw new AppError("Cette affectation n'existe pas", 404);
     }
 
-    // Vérifier si le prestataire est déjà retiré (basé sur le statut, pas date_fin)
-    if (affectation.status === "TERMINE" || affectation.status === "ANNULE") {
-      throw new AppError("Ce prestataire a déjà été retiré de cette campagne", 400);
-    }
-
-    // Vérifier s'il y a un paiement finalisé associé
-    if (affectation.paiement && affectation.paiement.some(p => p.statut === "PAYE")) {
+    // 2. Bloquer si un paiement existe pour ce prestataire dans cette campagne
+    if (affectation.paiement && affectation.paiement.length > 0) {
       throw new AppError(
-        "Impossible de retirer ce prestataire car son paiement a déjà été finalisé",
+        "Impossible de désassigner ce prestataire : un paiement est associé à cette affectation. Veuillez d'abord supprimer le paiement.",
         400
       );
     }
 
-    // Vérifier s'il y a des dommages non résolus
-    if (affectation.prestataire.dommages && affectation.prestataire.dommages.length > 0) {
-      const dommagesNonResolus = affectation.prestataire.dommages.filter(
-        d => !d.penalite_appliquer
-      );
-
-      if (dommagesNonResolus.length > 0) {
-        throw new AppError(
-          "Impossible de retirer ce prestataire car des dommages non résolus sont associés à cette campagne",
-          400
-        );
-      }
-    }
-
-
+    // 3. Supprimer l'affectation et remettre le prestataire disponible (transaction)
     await prisma.$transaction(async (tx) => {
-      // Mettre à jour l'affectation
-      await tx.prestataireCampagne.update({
+      // Supprimer la ligne PrestataireCampagne
+      await tx.prestataireCampagne.delete({
         where: {
           id_campagne_id_prestataire: {
             id_campagne: id,
             id_prestataire: prestataireId
           }
-        },
-        data: {
-          date_fin: new Date(),
-          status: "TERMINE"
         }
       });
 
@@ -93,7 +60,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({
-      message: "Prestataire retiré de la campagne avec succès"
+      message: "Prestataire désassigné et retiré de la campagne avec succès"
     });
 
   } catch (error) {
