@@ -871,50 +871,68 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       <TableCell className="max-md:hidden">
                         {a.prestataire && (
                           <div className="flex flex-row gap-2 flex-wrap">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedPrestataireForPhoto({
-                                  id: a.prestataire.id_prestataire,
-                                  photo_url: a.image_affiche || null
-                                });
-                                setIsPhotoModalOpen(true);
-                              }}
-                            >
-                              Photo
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedPrestataireForMateriel({
-                                  id: a.prestataire.id_prestataire,
-                                  nom: a.prestataire.nom || "",
-                                  prenom: a.prestataire.prenom || ""
-                                });
-                                setIsMaterielCaseModalOpen(true);
-                              }}
-                            >
-                              Vérification
-                            </Button>
+                            {/* Bouton Photo : masqué si une photo existe déjà */}
+                            {!a.image_affiche && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPrestataireForPhoto({
+                                    id: a.prestataire.id_prestataire,
+                                    photo_url: a.image_affiche || null
+                                  });
+                                  setIsPhotoModalOpen(true);
+                                }}
+                              >
+                                Photo
+                              </Button>
+                            )}
+                            {/* Bouton Vérification : masqué si un paiement existe */}
+                            {(!a.paiement || a.paiement.length === 0) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPrestataireForMateriel({
+                                    id: a.prestataire.id_prestataire,
+                                    nom: a.prestataire.nom || "",
+                                    prenom: a.prestataire.prenom || ""
+                                  });
+                                  setIsMaterielCaseModalOpen(true);
+                                }}
+                              >
+                                Vérification
+                              </Button>
+                            )}
                             <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
                               <Button variant="outline" size="sm">Voir</Button>
                             </Link>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedPrestataireToUnassign({
-                                  id: a.prestataire.id_prestataire,
-                                  nom: a.prestataire.nom || "",
-                                  prenom: a.prestataire.prenom || ""
-                                });
-                                setIsUnassignModalOpen(true);
-                              }}
-                            >
-                              Désassigner
-                            </Button>
+                            {/* Bouton Désassigner : visible seulement si < 24h, pas de photo, pas de paiement */}
+                            {(() => {
+                              const heuresDepuisAssign = a.date_creation
+                                ? (Date.now() - new Date(a.date_creation).getTime()) / (1000 * 60 * 60)
+                                : Infinity;
+                              const peutDesassigner =
+                                heuresDepuisAssign <= 24 &&
+                                !a.image_affiche &&
+                                (!a.paiement || a.paiement.length === 0);
+                              return peutDesassigner ? (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedPrestataireToUnassign({
+                                      id: a.prestataire.id_prestataire,
+                                      nom: a.prestataire.nom || "",
+                                      prenom: a.prestataire.prenom || ""
+                                    });
+                                    setIsUnassignModalOpen(true);
+                                  }}
+                                >
+                                  Désassigner
+                                </Button>
+                              ) : null;
+                            })()}
                           </div>
                         )}
                       </TableCell>

@@ -32,7 +32,26 @@ export async function DELETE(
       throw new AppError("Cette affectation n'existe pas", 404);
     }
 
-    // 2. Bloquer si un paiement existe pour ce prestataire dans cette campagne
+    // 2. Bloquer si l'affectation a plus de 24h
+    const now = new Date();
+    const createdAt = new Date(affectation.date_creation);
+    const diffHeures = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    if (diffHeures > 24) {
+      throw new AppError(
+        "Impossible de désassigner ce prestataire : le délai de 24h pour annuler une affectation est dépassé.",
+        400
+      );
+    }
+
+    // 3. Bloquer si une photo d'affiche a été uploadée
+    if (affectation.image_affiche) {
+      throw new AppError(
+        "Impossible de désassigner ce prestataire : une photo d'affiche a déjà été associée à cette affectation.",
+        400
+      );
+    }
+
+    // 4. Bloquer si un paiement existe pour ce prestataire dans cette campagne
     if (affectation.paiement && affectation.paiement.length > 0) {
       throw new AppError(
         "Impossible de désassigner ce prestataire : un paiement est associé à cette affectation. Veuillez d'abord supprimer le paiement.",
