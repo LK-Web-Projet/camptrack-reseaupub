@@ -11,7 +11,7 @@ import Link from "next/link"
 import { useAuth } from "@/app/context/AuthContext"
 import { toast } from "react-toastify"
 import { Paginate } from "../Paginate";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input"
 
 interface Prestataire {
@@ -57,9 +57,30 @@ export default function PrestataireTable() {
   const [filterContratValide, setFilterContratValide] = useState<string>("")
   const [filterDisponible, setFilterDisponible] = useState<string>("")
 
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
+  const searchFromUrl = searchParam?.get("search") || "";
   const [totalPages, setTotalPages] = useState(1);
+
+  // État local de l'input
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+
+  // Debounce : mettre à jour l'URL 400ms après la dernière frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParam?.toString());
+      if (searchInput) {
+        params.set("search", searchInput);
+      } else {
+        params.delete("search");
+      }
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   // Charger les campagnes et les services au montage
   useEffect(() => {
@@ -98,7 +119,7 @@ export default function PrestataireTable() {
       const params = new URLSearchParams({
         page: String(page),
         limit: '7',
-        ...(searchQuery && { search: searchQuery }),
+        ...(searchFromUrl && { search: searchFromUrl }),
         ...(selectedCampagne && { campagne: selectedCampagne }),
         ...(dateDebut && { dateDebut }),
         ...(dateFin && { dateFin }),
@@ -122,28 +143,13 @@ export default function PrestataireTable() {
     } finally {
       setLoading(false)
     }
-  }, [apiClient, page, searchQuery, selectedCampagne, dateDebut, dateFin, filterContratValide, filterDisponible])
+  }, [apiClient, page, searchFromUrl, selectedCampagne, dateDebut, dateFin, filterContratValide, filterDisponible])
 
   useEffect(() => {
     fetchPrestataires()
   }, [fetchPrestataires])
 
-  // Recherche améliorée - local filtering (pour démo)
-  const filteredPrestataires = prestataires.filter((p) => {
-    const search = searchQuery.toLowerCase()
-    return (
-      p.nom.toLowerCase().includes(search) ||
-      p.prenom.toLowerCase().includes(search) ||
-      (p.contact || "").toLowerCase().includes(search) ||
-      (p.service?.nom || "").toLowerCase().includes(search) ||
-      (p.type_panneau || "").toLowerCase().includes(search) ||
-      (p.modele || "").toLowerCase().includes(search) ||
-      (p.marque || "").toLowerCase().includes(search) ||
-      (p.plaque || "").toLowerCase().includes(search) ||
-      (p.couleur || "").toLowerCase().includes(search) ||
-      (p.id_verification || "").toLowerCase().includes(search)
-    )
-  })
+  // Plus de filtre local - la recherche est faite côté serveur via l'URL
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -175,12 +181,14 @@ export default function PrestataireTable() {
   }
 
   const handleResetFilters = () => {
-    setSearchQuery("")
+    setSearchInput("")
     setSelectedCampagne("")
     setDateDebut("")
     setDateFin("")
     setFilterContratValide("")
     setFilterDisponible("")
+    // Réinitialiser l'URL
+    router.push(pathname);
   }
 
   return (
@@ -205,8 +213,8 @@ export default function PrestataireTable() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9 w-[200px] bg-white dark:bg-gray-800"
           />
         </div>
@@ -357,13 +365,13 @@ export default function PrestataireTable() {
                   </tr>
                 )}
 
-                {!loading && filteredPrestataires.length === 0 && (
+                {!loading && prestataires.length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-4 text-center text-sm text-gray-500">Aucun prestataire trouvé</td>
                   </tr>
                 )}
 
-                {filteredPrestataires.map((prestataire) => (
+                {prestataires.map((prestataire) => (
                   <tr key={prestataire.id_prestataire} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.nom}</td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{prestataire.prenom}</td>

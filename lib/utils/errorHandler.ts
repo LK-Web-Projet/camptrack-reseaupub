@@ -14,8 +14,6 @@ export class AppError extends Error {
 }
 
 export function handleApiError(error: unknown): NextResponse {
-  console.error('🔴 API Error:', error)
-
   // Erreur de validation Joi
   function isJoiError(err: unknown): err is { isJoi: boolean; details?: unknown } {
     return typeof err === 'object' && err !== null && 'isJoi' in err
@@ -49,8 +47,11 @@ export function handleApiError(error: unknown): NextResponse {
     }
   }
 
-  // Erreurs métier personnalisées
+  // Erreurs métier personnalisées (4xx) : attendues, pas besoin d'un log d'erreur rouge
   if (error instanceof AppError) {
+    if (error.statusCode >= 500) {
+      console.error('🔴 API Error (serveur):', error.message)
+    }
     return NextResponse.json(
       {
         error: error.message,
@@ -60,6 +61,8 @@ export function handleApiError(error: unknown): NextResponse {
     )
   }
 
+  // Erreur inattendue — log complet
+  console.error('🔴 API Error:', error)
   return NextResponse.json(
     { error: "Erreur interne du serveur" },
     { status: 500 }

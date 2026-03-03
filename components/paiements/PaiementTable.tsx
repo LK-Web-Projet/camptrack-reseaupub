@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/app/context/AuthContext";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import {
     CreditCard,
@@ -14,7 +14,8 @@ import {
     Eye,
     DollarSign,
     Clock,
-    Ban
+    Ban,
+    X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Paginate } from "@/components/Paginate";
@@ -54,9 +55,6 @@ export default function PaiementTable() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Filtres
-    const [filterStatut, setFilterStatut] = useState<string>("all");
-
     // Modal de détails
     const [selectedPaiementId, setSelectedPaiementId] = useState<string | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -64,12 +62,86 @@ export default function PaiementTable() {
     // Modal de transaction
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
-    // Search
-    const [searchQuery, setSearchQuery] = useState("");
-
+    const router = useRouter();
+    const pathname = usePathname();
     const searchParam = useSearchParams();
     const page = parseInt(searchParam?.get("page") || "1");
+    const searchFromUrl = searchParam?.get("search") || "";
+    const statutFromUrl = searchParam?.get("statut") || "all";
+    const campagneFromUrl = searchParam?.get("campagne") || "";
+    const dateDebutFromUrl = searchParam?.get("date_debut") || "";
+    const dateFinFromUrl = searchParam?.get("date_fin") || "";
     const [totalPages, setTotalPages] = useState(1);
+
+    // États locaux des inputs
+    const [searchInput, setSearchInput] = useState(searchFromUrl);
+    const [campagneInput, setCampagneInput] = useState(campagneFromUrl);
+
+    // Debounce recherche texte libre
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const params = new URLSearchParams(searchParam?.toString());
+            if (searchInput) {
+                params.set("search", searchInput);
+            } else {
+                params.delete("search");
+            }
+            params.set("page", "1");
+            router.push(`${pathname}?${params.toString()}`);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    // Debounce filtre campagne
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const params = new URLSearchParams(searchParam?.toString());
+            if (campagneInput) {
+                params.set("campagne", campagneInput);
+            } else {
+                params.delete("campagne");
+            }
+            params.set("page", "1");
+            router.push(`${pathname}?${params.toString()}`);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [campagneInput]);
+
+    // Changement du filtre statut
+    const setFilterStatut = (value: string) => {
+        const params = new URLSearchParams(searchParam?.toString());
+        if (value && value !== "all") {
+            params.set("statut", value);
+        } else {
+            params.delete("statut");
+        }
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
+    // Changement d'une date
+    const setDateFilter = (key: "date_debut" | "date_fin", value: string) => {
+        const params = new URLSearchParams(searchParam?.toString());
+        if (value) {
+            params.set(key, value);
+        } else {
+            params.delete(key);
+        }
+        params.set("page", "1");
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
+    // Réinitialiser tous les filtres
+    const clearAllFilters = () => {
+        const params = new URLSearchParams();
+        params.set("page", "1");
+        setSearchInput("");
+        setCampagneInput("");
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
+    const hasActiveFilters =
+        searchFromUrl || campagneFromUrl || dateDebutFromUrl || dateFinFromUrl || statutFromUrl !== "all";
 
     const fetchPaiements = useCallback(async () => {
         setLoading(true);
@@ -80,9 +152,11 @@ export default function PaiementTable() {
                 page: String(page)
             });
 
-            if (filterStatut !== "all") {
-                params.append("statut", filterStatut);
-            }
+            if (statutFromUrl !== "all") params.append("statut", statutFromUrl);
+            if (searchFromUrl) params.append("search", searchFromUrl);
+            if (campagneFromUrl) params.append("campagne", campagneFromUrl);
+            if (dateDebutFromUrl) params.append("date_debut", dateDebutFromUrl);
+            if (dateFinFromUrl) params.append("date_fin", dateFinFromUrl);
 
             const res = await apiClient(`/api/paiements?${params.toString()}`);
 
@@ -101,7 +175,7 @@ export default function PaiementTable() {
         } finally {
             setLoading(false);
         }
-    }, [apiClient, filterStatut, page]);
+    }, [apiClient, statutFromUrl, page, searchFromUrl, campagneFromUrl, dateDebutFromUrl, dateFinFromUrl]);
 
     useEffect(() => {
         fetchPaiements();
@@ -130,22 +204,12 @@ export default function PaiementTable() {
         return Math.max(0, paiement.paiement_final - totalPaye);
     };
 
-    const filteredPaiements = paiements.filter((p) => {
-        const search = searchQuery.toLowerCase();
-        return (
-            p.affectation.prestataire.nom.toLowerCase().includes(search) ||
-            p.affectation.prestataire.prenom.toLowerCase().includes(search) ||
-            p.affectation.campagne.nom_campagne.toLowerCase().includes(search) ||
-            p.affectation.campagne.client.nom.toLowerCase().includes(search)
-        );
-    });
-
     const getStatusStyle = (statut: string) => {
         switch (statut) {
             case "PAYE": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
             case "PARTIEL": return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
             case "ANNULE": return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400";
-            default: return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"; // EN_ATTENTE
+            default: return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
         }
     };
 
@@ -160,6 +224,7 @@ export default function PaiementTable() {
 
     return (
         <div className="p-6 text-gray-900 dark:text-white space-y-6">
+            {/* Header */}
             <div className="flex flex-col sm:flex-row items-center justify-between bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-2 text-[#d61353]">
                     <CreditCard className="w-6 h-6" />
@@ -174,36 +239,92 @@ export default function PaiementTable() {
                 </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium">Filtrer par statut:</span>
-                    <select
-                        value={filterStatut}
-                        onChange={(e) => setFilterStatut(e.target.value)}
-                        className="text-sm border-gray-300 rounded-md shadow-sm focus:border-[#d61353] focus:ring focus:ring-[#d61353] focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700"
-                    >
-                        <option value="all">Tous</option>
-                        <option value="EN_ATTENTE">En attente</option>
-                        <option value="PARTIEL">Partiel</option>
-                        <option value="PAYE">Payés</option>
-                        <option value="ANNULE">Annulés</option>
-                    </select>
-                </div>
+            {/* Filtres */}
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-3">
+                {/* Ligne 1 : Statut + Campagne */}
+                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                    {/* Filtre Statut */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Filter className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-medium whitespace-nowrap">Statut :</span>
+                        <select
+                            value={statutFromUrl}
+                            onChange={(e) => setFilterStatut(e.target.value)}
+                            className="text-sm border border-gray-300 rounded-md shadow-sm px-2 py-1.5 focus:border-[#d61353] focus:ring focus:ring-[#d61353]/20 dark:bg-gray-800 dark:border-gray-700"
+                        >
+                            <option value="all">Tous</option>
+                            <option value="EN_ATTENTE">En attente</option>
+                            <option value="PARTIEL">Partiel</option>
+                            <option value="PAYE">Payés</option>
+                            <option value="ANNULE">Annulés</option>
+                        </select>
+                    </div>
 
-                <div className="flex-1 flex justify-end">
-                    <div className="relative w-full md:w-72">
+                    {/* Filtre Campagne */}
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                        <Input
+                            placeholder="Filtrer par campagne..."
+                            value={campagneInput}
+                            onChange={(e) => setCampagneInput(e.target.value)}
+                            className="pl-9 bg-white dark:bg-gray-800"
+                        />
+                    </div>
+
+                    {/* Recherche globale */}
+                    <div className="relative flex-1 min-w-[200px]">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Rechercher..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Rechercher prestataire, client..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
                             className="pl-9 bg-white dark:bg-gray-800"
                         />
                     </div>
                 </div>
+
+                {/* Ligne 2 : Filtre par date de paiement */}
+                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap shrink-0">
+                        Date de paiement :
+                    </span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500">Du</span>
+                            <input
+                                type="date"
+                                value={dateDebutFromUrl}
+                                onChange={(e) => setDateFilter("date_debut", e.target.value)}
+                                className="text-sm border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1.5 bg-white dark:bg-gray-800 focus:border-[#d61353] focus:ring focus:ring-[#d61353]/20 focus:outline-none"
+                            />
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500">au</span>
+                            <input
+                                type="date"
+                                value={dateFinFromUrl}
+                                min={dateDebutFromUrl || undefined}
+                                onChange={(e) => setDateFilter("date_fin", e.target.value)}
+                                className="text-sm border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1.5 bg-white dark:bg-gray-800 focus:border-[#d61353] focus:ring focus:ring-[#d61353]/20 focus:outline-none"
+                            />
+                        </div>
+
+                        {/* Bouton reset si des filtres actifs */}
+                        {hasActiveFilters && (
+                            <button
+                                onClick={clearAllFilters}
+                                className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#d61353] transition ml-2"
+                                title="Effacer tous les filtres"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                                Effacer les filtres
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
 
+            {/* Tableau */}
             <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-12">
@@ -236,7 +357,7 @@ export default function PaiementTable() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {filteredPaiements.map((paiement) => {
+                                {paiements.map((paiement) => {
                                     const reste = getResteAPayer(paiement);
                                     return (
                                         <tr key={paiement.id_paiement} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">

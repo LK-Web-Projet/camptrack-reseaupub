@@ -8,7 +8,7 @@ import DeleteLieuModal from "./DeleteLieu";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
 import { Paginate } from "../Paginate";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input"
 
 export type Lieu = {
@@ -35,14 +35,38 @@ export default function LieuTable() {
 
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
+  const searchFromUrl = searchParam?.get("search") || "";
   const [totalPages, setTotalPages] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter();
+  const pathname = usePathname();
 
-  // ✅ Recharger les lieux
+  // État local de la searchbar
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+
+  // Debounce : mettre à jour l'URL 400ms après la dernière frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParam?.toString());
+      if (searchInput) {
+        params.set("search", searchInput);
+      } else {
+        params.delete("search");
+      }
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Recharger les lieux depuis l'API
   const fetchLieux = async () => {
     setLoading(true);
     try {
-      const res = await apiClient(`/api/lieux?page=${page}&limit=7`);
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", "7");
+      if (searchFromUrl) params.set("search", searchFromUrl);
+      const res = await apiClient(`/api/lieux?${params.toString()}`);
 
       if (!res.ok) throw new Error("Erreur API");
 
@@ -60,15 +84,9 @@ export default function LieuTable() {
 
   useEffect(() => {
     fetchLieux();
-  }, [apiClient, page]);
+  }, [apiClient, page, searchFromUrl]);
 
-  const filteredLieux = lieux.filter((l) => {
-    const search = searchQuery.toLowerCase()
-    return (
-      l.nom.toLowerCase().includes(search) ||
-      l.ville.toLowerCase().includes(search)
-    )
-  })
+
 
   return (
     <div className="p-6 text-gray-900 dark:text-white">
@@ -93,8 +111,8 @@ export default function LieuTable() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9 bg-white dark:bg-gray-800"
           />
         </div>
@@ -127,14 +145,14 @@ export default function LieuTable() {
               </thead>
 
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {!loading && filteredLieux.length === 0 && (
+                {!loading && lieux.length === 0 && (
                   <tr>
                     <td colSpan={5} className="text-center py-6 text-gray-500">
                       Aucun lieu trouvé.
                     </td>
                   </tr>
                 )}
-                {filteredLieux.map((lieu) => (
+                {lieux.map((lieu) => (
                   <tr key={lieu.id_lieu}>
                     <td className="px-6 py-3">{lieu.nom}</td>
                     <td className="px-6 py-3">{lieu.ville}</td>

@@ -15,7 +15,7 @@ export async function DELETE(
 
     const { id, prestataireId } = await params;
 
-    // Vérifier que l'affectation existe
+    // 1. Vérifier que l'affectation existe
     const affectation = await prisma.prestataireCampagne.findUnique({
       where: {
         id_campagne_id_prestataire: {
@@ -24,17 +24,7 @@ export async function DELETE(
         }
       },
       include: {
-        paiement: true,
-        prestataire: {
-          include: {
-            dommages: {
-              where: {
-                id_campagne: id,
-                penalite_appliquer: false
-              }
-            }
-          }
-        }
+        paiement: true
       }
     });
 
@@ -42,49 +32,54 @@ export async function DELETE(
       throw new AppError("Cette affectation n'existe pas", 404);
     }
 
-    // Vérifier si le prestataire est déjà retiré
-    if (affectation.date_fin !== null) {
-      throw new AppError("Ce prestataire a déjà été retiré de cette campagne", 400);
-    }
-
-    // Vérifier s'il y a un paiement finalisé associé
-    if (affectation.paiement && affectation.paiement.statut_paiement) {
+    // 2. Bloquer si l'affectation a plus de 24h
+    const now = new Date();
+    const createdAt = new Date(affectation.date_creation);
+    const diffHeures = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    if (diffHeures > 24) {
       throw new AppError(
-        "Impossible de retirer ce prestataire car son paiement a déjà été finalisé",
+        "Impossible de désassigner ce prestataire : le délai de 24h pour annuler une affectation est dépassé.",
         400
       );
     }
 
-    // Vérifier s'il y a des dommages non résolus
-    if (affectation.prestataire.dommages && affectation.prestataire.dommages.length > 0) {
-      const dommagesNonResolus = affectation.prestataire.dommages.filter(
-        d => !d.penalite_appliquer
+    // 3. Bloquer si une photo d'affiche a été uploadée
+    if (affectation.image_affiche) {
+      throw new AppError(
+        "Impossible de désassigner ce prestataire : une photo d'affiche a déjà été associée à cette affectation.",
+        400
       );
-
-      if (dommagesNonResolus.length > 0) {
-        throw new AppError(
-          "Impossible de retirer ce prestataire car des dommages non résolus sont associés à cette campagne",
-          400
-        );
-      }
     }
 
+    // 4. Bloquer si un paiement existe pour ce prestataire dans cette campagne
+    if (affectation.paiement && affectation.paiement.length > 0) {
+      throw new AppError(
+        "Impossible de désassigner ce prestataire : un paiement est associé à cette affectation. Veuillez d'abord supprimer le paiement.",
+        400
+      );
+    }
 
-    await prisma.prestataireCampagne.update({
-      where: {
-        id_campagne_id_prestataire: {
-          id_campagne: id,
-          id_prestataire: prestataireId
+    // 3. Supprimer l'affectation et remettre le prestataire disponible (transaction)
+    await prisma.$transaction(async (tx) => {
+      // Supprimer la ligne PrestataireCampagne
+      await tx.prestataireCampagne.delete({
+        where: {
+          id_campagne_id_prestataire: {
+            id_campagne: id,
+            id_prestataire: prestataireId
+          }
         }
-      },
-      data: {
-        date_fin: new Date(),
-        status: "TERMINE"
-      }
+      });
+
+      // Remettre le prestataire comme disponible
+      await tx.prestataire.update({
+        where: { id_prestataire: prestataireId },
+        data: { disponible: true }
+      });
     });
 
     return NextResponse.json({
-      message: "Prestataire retiré de la campagne avec succès"
+      message: "Prestataire désassigné et retiré de la campagne avec succès"
     });
 
   } catch (error) {

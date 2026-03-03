@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "@/app/context/AuthContext";
 import { Paginate } from "../Paginate";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input"
 
 type Client = {
@@ -39,18 +39,41 @@ export default function ClientTable() {
   const [error, setError] = useState<string | null>(null);
   const { apiClient } = useAuth()
   const [clients, setClients] = useState<Client[]>([]);
-  const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter();
+  const pathname = usePathname();
 
   const searchParam = useSearchParams();
   const page = parseInt(searchParam?.get("page") || "1");
+  const searchFromUrl = searchParam?.get("search") || "";
   const [totalPages, setTotalPages] = useState(1);
+
+  // État local de la searchbar
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+
+  // Debounce : mettre à jour l'URL 400ms après la dernière frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParam?.toString());
+      if (searchInput) {
+        params.set("search", searchInput);
+      } else {
+        params.delete("search");
+      }
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     const fetchClients = async () => {
       setLoading(true);
       try {
-        const res = await apiClient(`/api/clients?page=${page}&limit=7`);
+        const params = new URLSearchParams();
+        params.set("page", String(page));
+        params.set("limit", "7");
+        if (searchFromUrl) params.set("search", searchFromUrl);
+        const res = await apiClient(`/api/clients?${params.toString()}`);
 
         if (!res.ok) throw new Error("Erreur lors du chargement des clients");
 
@@ -66,7 +89,7 @@ export default function ClientTable() {
     };
 
     fetchClients();
-  }, [apiClient, page]);
+  }, [apiClient, page, searchFromUrl]);
 
   const handleAddClient = async (newUser: Client) => {
     try {
@@ -132,15 +155,7 @@ export default function ClientTable() {
     }
   }
 
-  const filteredClients = clients.filter((c) => {
-    const search = searchQuery.toLowerCase()
-    return (
-      (c.nom || "").toLowerCase().includes(search) ||
-      (c.prenom || "").toLowerCase().includes(search) ||
-      (c.entreprise || "").toLowerCase().includes(search) ||
-      (c.mail || "").toLowerCase().includes(search)
-    )
-  })
+  // Plus de filter() local - la recherche est faite côté serveur
 
   return (
     <div className="p-6 text-gray-900 dark:text-white">
@@ -164,8 +179,8 @@ export default function ClientTable() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9 bg-white dark:bg-gray-800"
           />
         </div>
@@ -199,12 +214,12 @@ export default function ClientTable() {
               </thead>
 
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {!loading && filteredClients.length === 0 && (
+                {!loading && clients.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-4 text-center text-sm text-gray-500">Aucun client trouvé</td>
                   </tr>
                 )}
-                {filteredClients.map((c, i) => (
+                {clients.map((c, i) => (
                   <tr
                     key={c.id_client}
                     className={`transition hover:bg-gray-50 dark:hover:bg-gray-800 ${i % 2 === 0

@@ -13,11 +13,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const search = searchParams.get('search') || '';
     const skip = (page - 1) * limit;
 
-    const total = await prisma.client.count();
+    // Construire le filtre de recherche
+    const where = search
+      ? {
+        OR: [
+          { nom: { contains: search, mode: 'insensitive' as const } },
+          { prenom: { contains: search, mode: 'insensitive' as const } },
+          { entreprise: { contains: search, mode: 'insensitive' as const } },
+          { mail: { contains: search, mode: 'insensitive' as const } },
+          { contact: { contains: search, mode: 'insensitive' as const } },
+          { adresse: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
+      : {};
+
+    const total = await prisma.client.count({ where });
 
     const clients = await prisma.client.findMany({
+      where,
       select: {
         id_client: true,
         nom: true,

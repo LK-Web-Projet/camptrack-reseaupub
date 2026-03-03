@@ -47,6 +47,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import AddMaterielCaseModal from "@/components/prestataires/AddMaterielCaseModal";
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
+import UnassignPrestataireModal from "@/components/campagnes/UnassignPrestataireModal";
 
 // Interfaces (gardées telles quelles)
 interface Client {
@@ -129,6 +130,10 @@ export default function DetailCampagne({ id }: { id: string }) {
   const { apiClient } = useAuth();
   const [campagne, setCampagne] = useState<Campagne | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isUnassignModalOpen, setIsUnassignModalOpen] = useState(false);
+  const [unassignLoading, setUnassignLoading] = useState(false);
+  const [selectedPrestataireToUnassign, setSelectedPrestataireToUnassign] = useState<{ id: string; nom: string; prenom: string } | null>(null);
+
   const [isAssigning, setIsAssigning] = useState(false);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
 
@@ -145,6 +150,9 @@ export default function DetailCampagne({ id }: { id: string }) {
   /* State: Update Campaign Photo */
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [selectedPrestataireForPhoto, setSelectedPrestataireForPhoto] = useState<{ id: string, photo_url: string | null } | null>(null);
+
+  /* State: Lightbox */
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
 
   // Upload fichier states
@@ -785,34 +793,40 @@ ${selectedPrestataires.includes(p.id_prestataire)
                           {/* Actions MOBILE */}
                           {a.prestataire && (
                             <div className="flex gap-1 md:hidden">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => {
-                                  setSelectedPrestataireForPhoto({
-                                    id: a.prestataire.id_prestataire,
-                                    photo_url: a.image_affiche || null
-                                  });
-                                  setIsPhotoModalOpen(true);
-                                }}
-                              >
-                                📷
-                              </Button>
+                              {/* Bouton Photo : masqué si image_affiche existe déjà */}
+                              {!a.image_affiche && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedPrestataireForPhoto({
+                                      id: a.prestataire.id_prestataire,
+                                      photo_url: a.image_affiche || null
+                                    });
+                                    setIsPhotoModalOpen(true);
+                                  }}
+                                >
+                                  📷
+                                </Button>
+                              )}
 
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => {
-                                  setSelectedPrestataireForMateriel({
-                                    id: a.prestataire.id_prestataire,
-                                    nom: a.prestataire.nom || "",
-                                    prenom: a.prestataire.prenom || ""
-                                  });
-                                  setIsMaterielCaseModalOpen(true);
-                                }}
-                              >
-                                🔧
-                              </Button>
+                              {/* Bouton Vérification matériel : masqué si un paiement existe */}
+                              {(!a.paiement || a.paiement.length === 0) && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedPrestataireForMateriel({
+                                      id: a.prestataire.id_prestataire,
+                                      nom: a.prestataire.nom || "",
+                                      prenom: a.prestataire.prenom || ""
+                                    });
+                                    setIsMaterielCaseModalOpen(true);
+                                  }}
+                                >
+                                  🔧
+                                </Button>
+                              )}
 
                               <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
                                 <Button variant="outline" size="icon">
@@ -827,9 +841,17 @@ ${selectedPrestataires.includes(p.id_prestataire)
 
                       <TableCell>
                         {a.image_affiche ? (
-                          <div className="h-10 w-10 relative rounded overflow-hidden border bg-gray-100">
-                            <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover" />
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setLightboxUrl(a.image_affiche!)}
+                            className="group relative h-10 w-10 rounded overflow-hidden border bg-gray-100 block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-[#d61353]"
+                            title="Voir en grand"
+                          >
+                            <img src={a.image_affiche} alt="Affiche" className="h-full w-full object-cover transition-opacity group-hover:opacity-70" />
+                            <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs">
+                              🔍
+                            </span>
+                          </button>
                         ) : (
                           <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
                             <span className="text-[10px]">N/A</span>
@@ -846,42 +868,72 @@ ${selectedPrestataires.includes(p.id_prestataire)
                       <TableCell>{a.paiement?.[0]?.sanction_montant ?? "-"}</TableCell>
                       <TableCell>{a.paiement?.[0]?.paiement_final ?? "-"}</TableCell>
 
-                      <TableCell className="max-md:hidden block"
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedPrestataireForPhoto({
-                              id: a.prestataire.id_prestataire,
-                              photo_url: a.image_affiche || null
-                            });
-                            setIsPhotoModalOpen(true);
-                          }}
-                        >
-                          Photo
-                        </Button>
-
+                      <TableCell className="max-md:hidden">
                         {a.prestataire && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedPrestataireForMateriel({
-                                id: a.prestataire.id_prestataire,
-                                nom: a.prestataire.nom || "",
-                                prenom: a.prestataire.prenom || ""
-                              });
-                              setIsMaterielCaseModalOpen(true);
-                            }}
-                          >
-                            Vérification matériel
-                          </Button>
-                        )}
-                        {a.prestataire && (
-                          <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
-                            <Button variant="outline" size="sm">Voir</Button>
-                          </Link>
+                          <div className="flex flex-row gap-2 flex-wrap">
+                            {/* Bouton Photo : masqué si une photo existe déjà */}
+                            {!a.image_affiche && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPrestataireForPhoto({
+                                    id: a.prestataire.id_prestataire,
+                                    photo_url: a.image_affiche || null
+                                  });
+                                  setIsPhotoModalOpen(true);
+                                }}
+                              >
+                                Photo
+                              </Button>
+                            )}
+                            {/* Bouton Vérification : masqué si un paiement existe */}
+                            {(!a.paiement || a.paiement.length === 0) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedPrestataireForMateriel({
+                                    id: a.prestataire.id_prestataire,
+                                    nom: a.prestataire.nom || "",
+                                    prenom: a.prestataire.prenom || ""
+                                  });
+                                  setIsMaterielCaseModalOpen(true);
+                                }}
+                              >
+                                Vérification
+                              </Button>
+                            )}
+                            <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
+                              <Button variant="outline" size="sm">Voir</Button>
+                            </Link>
+                            {/* Bouton Désassigner : visible seulement si < 24h, pas de photo, pas de paiement */}
+                            {(() => {
+                              const heuresDepuisAssign = a.date_creation
+                                ? (Date.now() - new Date(a.date_creation).getTime()) / (1000 * 60 * 60)
+                                : Infinity;
+                              const peutDesassigner =
+                                heuresDepuisAssign <= 24 &&
+                                !a.image_affiche &&
+                                (!a.paiement || a.paiement.length === 0);
+                              return peutDesassigner ? (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedPrestataireToUnassign({
+                                      id: a.prestataire.id_prestataire,
+                                      nom: a.prestataire.nom || "",
+                                      prenom: a.prestataire.prenom || ""
+                                    });
+                                    setIsUnassignModalOpen(true);
+                                  }}
+                                >
+                                  Désassigner
+                                </Button>
+                              ) : null;
+                            })()}
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
@@ -944,6 +996,65 @@ ${selectedPrestataires.includes(p.id_prestataire)
         )
       }
 
+      {/* Modal Désassignation */}
+      <UnassignPrestataireModal
+        isOpen={isUnassignModalOpen}
+        onClose={() => {
+          setIsUnassignModalOpen(false);
+          setSelectedPrestataireToUnassign(null);
+        }}
+        prestataire={selectedPrestataireToUnassign}
+        onUnassigned={() => {
+          setIsUnassignModalOpen(false);
+          setSelectedPrestataireToUnassign(null);
+          fetchCampagne();
+        }}
+        onUnassign={async (prestataireId) => {
+          try {
+            const res = await apiClient(`/api/campagnes/${id}/prestataires/${prestataireId}`, {
+              method: 'DELETE',
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erreur lors de la désassignation');
+            toast.success('Prestataire désassigné avec succès');
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Erreur lors de la désassignation');
+            throw error;
+          }
+        }}
+      />
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightboxUrl(null)}
+          onKeyDown={(e) => e.key === 'Escape' && setLightboxUrl(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Aperçu de l'image"
+          tabIndex={-1}
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute -top-10 right-0 text-white text-3xl font-bold leading-none hover:text-gray-300 transition-colors"
+              aria-label="Fermer"
+            >
+              &times;
+            </button>
+            <img
+              src={lightboxUrl}
+              alt="Aperçu"
+              className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       {
         isRenewModalOpen && campagne && (
           <RenewCampaignModal
@@ -961,6 +1072,6 @@ ${selectedPrestataires.includes(p.id_prestataire)
           />
         )
       }
-    </div >
+    </div>
   );
 }

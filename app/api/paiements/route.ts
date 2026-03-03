@@ -43,12 +43,47 @@ export async function GET(request: NextRequest) {
       validation.data as PaiementQueryParams;
     const skip = (page - 1) * limit;
 
+    // Paramètres de filtre supplémentaires (hors schema Zod)
+    const search = searchParams.get("search")?.trim() || "";
+    const campagneSearch = searchParams.get("campagne")?.trim() || "";
+    const dateDebut = searchParams.get("date_debut") || "";
+    const dateFin = searchParams.get("date_fin") || "";
+
     // Construire le filtre WHERE
-    const where: Record<string, unknown> = {};
-    if (id_campagne) where.id_campagne = id_campagne;
-    if (id_prestataire) where.id_prestataire = id_prestataire;
-    if (statut_paiement !== undefined) where.statut_paiement = statut_paiement;
-    if (statut && statut !== 'all') where.statut = statut;
+    const baseWhere: Record<string, unknown> = {};
+    if (id_campagne) baseWhere.id_campagne = id_campagne;
+    if (id_prestataire) baseWhere.id_prestataire = id_prestataire;
+    if (statut_paiement !== undefined) baseWhere.statut_paiement = statut_paiement;
+    if (statut && statut !== 'all') baseWhere.statut = statut;
+
+    // Filtre sur la date de création du paiement
+    if (dateDebut || dateFin) {
+      baseWhere.created_at = {
+        ...(dateDebut ? { gte: new Date(dateDebut) } : {}),
+        ...(dateFin ? { lte: new Date(`${dateFin}T23:59:59.999Z`) } : {}),
+      };
+    }
+
+    // Construire les critères OR de recherche (texte libre + campagne)
+    const orConditions: object[] = [];
+    if (search) {
+      orConditions.push(
+        { affectation: { prestataire: { nom: { contains: search, mode: 'insensitive' as const } } } },
+        { affectation: { prestataire: { prenom: { contains: search, mode: 'insensitive' as const } } } },
+        { affectation: { prestataire: { contact: { contains: search, mode: 'insensitive' as const } } } },
+        { affectation: { campagne: { nom_campagne: { contains: search, mode: 'insensitive' as const } } } },
+        { affectation: { campagne: { client: { nom: { contains: search, mode: 'insensitive' as const } } } } },
+      );
+    }
+    if (campagneSearch) {
+      orConditions.push(
+        { affectation: { campagne: { nom_campagne: { contains: campagneSearch, mode: 'insensitive' as const } } } }
+      );
+    }
+
+    const where = orConditions.length > 0
+      ? { ...baseWhere, OR: orConditions }
+      : baseWhere;
 
     // Compter le total
     const total = await prisma.paiementPrestataire.count({ where });
