@@ -901,40 +901,34 @@ ${selectedPrestataires.includes(p.id_prestataire)
 
                       <TableCell className="max-md:hidden">
                         {a.prestataire && (
-                          <div className="flex flex-row gap-2 flex-wrap">
-                            {/* Bouton Photo : masqué si une photo existe déjà */}
-                            {!a.image_affiche && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedPrestataireForPhoto({
-                                    id: a.prestataire.id_prestataire,
-                                    photo_url: a.image_affiche || null
-                                  });
-                                  setIsPhotoModalOpen(true);
-                                }}
-                              >
-                                Photo
-                              </Button>
-                            )}
-                            {/* Bouton Vérification : masqué si un paiement existe */}
-                            {(!a.paiement || a.paiement.length === 0) && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedPrestataireForMateriel({
-                                    id: a.prestataire.id_prestataire,
-                                    nom: a.prestataire.nom || "",
-                                    prenom: a.prestataire.prenom || ""
-                                  });
-                                  setIsMaterielCaseModalOpen(true);
-                                }}
-                              >
-                                Vérification
-                              </Button>
-                            )}
+                          <div className="flex ">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPrestataireForPhoto({
+                                  id: a.prestataire.id_prestataire,
+                                  photo_url: a.image_affiche || null
+                                });
+                                setIsPhotoModalOpen(true);
+                              }}
+                            >
+                              Photo
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPrestataireForMateriel({
+                                  id: a.prestataire.id_prestataire,
+                                  nom: a.prestataire.nom || "",
+                                  prenom: a.prestataire.prenom || ""
+                                });
+                                setIsMaterielCaseModalOpen(true);
+                              }}
+                            >
+                              Vérification
+                            </Button>
                             <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
                               <Button variant="outline" size="sm">Voir</Button>
                             </Link>
