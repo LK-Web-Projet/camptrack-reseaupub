@@ -870,7 +870,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
 
                       <TableCell className="max-md:hidden">
                         {a.prestataire && (
-                          <div className="flex flex-row gap-2 flex-wrap">
+                          <div className="flex ">
                             <Button
                               variant="outline"
                               size="sm"
