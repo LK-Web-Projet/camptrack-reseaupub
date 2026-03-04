@@ -394,6 +394,7 @@ export default function PaiementTable() {
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Montant Base</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Pénalités</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Net à Payer</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Date Paiement</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Reste</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Statut</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Actions</th>
@@ -429,6 +430,13 @@ export default function PaiementTable() {
                                             </td>
                                             <td className="px-6 py-4 text-sm font-bold text-right text-gray-900 dark:text-white">
                                                 {formatMoney(paiement.paiement_final)}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-right text-gray-600 dark:text-gray-400">
+                                                {paiement.transactions?.length > 0
+                                                    ? new Date(paiement.transactions[0].date_transaction).toLocaleDateString("fr-FR")
+                                                    : paiement.date_paiement
+                                                        ? new Date(paiement.date_paiement).toLocaleDateString("fr-FR")
+                                                        : "-"}
                                             </td>
                                             <td className={`px-6 py-4 text-sm font-bold text-right ${reste > 0 ? "text-[#d61353]" : "text-green-600"}`}>
                                                 {formatMoney(reste)}

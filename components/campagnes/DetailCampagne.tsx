@@ -771,6 +771,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
                   <TableHead>Prestataire</TableHead>
                   <TableHead>Image</TableHead>
                   <TableHead>Date d&apos;assignation</TableHead>
+                  <TableHead>Date de fin</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Montant à Payer</TableHead>
                   <TableHead>Pénalité</TableHead>
@@ -883,6 +884,10 @@ ${selectedPrestataires.includes(p.id_prestataire)
 
                       <TableCell>
                         {a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : "-"}
+                      </TableCell>
+
+                      <TableCell>
+                        {a.date_fin ? new Date(a.date_fin).toLocaleDateString("fr-FR") : "-"}
                       </TableCell>
 
                       <TableCell>{a.status ?? "-"}</TableCell>
