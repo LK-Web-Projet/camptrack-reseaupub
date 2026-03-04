@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     // Compter le total
     const total = await prisma.paiementPrestataire.count({ where });
 
-    // Récupérer les paiements avec les relations
+    // Récupérer les paiements paginés
     const paiements = await prisma.paiementPrestataire.findMany({
       where,
       include: {
@@ -133,6 +133,32 @@ export async function GET(request: NextRequest) {
       take: limit,
     });
 
+    // Calculer les totaux agrégés sur TOUS les résultats (sans pagination)
+    // Pour totalAPayer : somme de paiement_final
+    const aggregatePaiement = await prisma.paiementPrestataire.aggregate({
+      where,
+      _sum: {
+        paiement_final: true,
+        sanction_montant: true,
+      },
+    });
+
+    // Pour totalPaye : somme des transactions liées
+    const allPaiementIds = await prisma.paiementPrestataire.findMany({
+      where,
+      select: { id_paiement: true },
+    });
+    const ids = allPaiementIds.map(p => p.id_paiement);
+
+    const aggregateTransactions = await prisma.transaction.aggregate({
+      where: { id_paiement: { in: ids } },
+      _sum: { montant: true },
+    });
+
+    const totalAPayer = aggregatePaiement._sum.paiement_final ?? 0;
+    const totalPaye = aggregateTransactions._sum.montant ?? 0;
+    const totalReste = Math.max(0, totalAPayer - totalPaye);
+
     return NextResponse.json({
       paiements,
       pagination: {
@@ -140,6 +166,12 @@ export async function GET(request: NextRequest) {
         limit,
         total,
         totalPages: Math.ceil(total / limit),
+      },
+      totaux: {
+        totalAPayer,
+        totalPaye,
+        totalReste,
+        count: total,
       },
     });
   } catch (error) {

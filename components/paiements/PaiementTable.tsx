@@ -54,6 +54,7 @@ export default function PaiementTable() {
     const [paiements, setPaiements] = useState<Paiement[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [totaux, setTotaux] = useState<{ totalAPayer: number; totalPaye: number; totalReste: number; count: number } | null>(null);
 
     // Modal de détails
     const [selectedPaiementId, setSelectedPaiementId] = useState<string | null>(null);
@@ -167,6 +168,7 @@ export default function PaiementTable() {
             const data = await res.json();
             setPaiements(data.paiements || []);
             setTotalPages(data?.pagination?.totalPages || 1);
+            setTotaux(data.totaux || null);
         } catch (err) {
             console.error("Erreur fetch paiements:", err);
             const message = err instanceof Error ? err.message : "Erreur inconnue";
@@ -323,6 +325,47 @@ export default function PaiementTable() {
                     </div>
                 </div>
             </div>
+
+            {/* Bloc totaux — visible quand un filtre campagne est actif et données chargées */}
+            {campagneFromUrl && !loading && totaux && totaux.count > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Montant à Payer */}
+                    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 flex items-center gap-4">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                            <DollarSign className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">Total à Payer</p>
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">{formatMoney(totaux.totalAPayer)}</p>
+                            <p className="text-xs text-gray-400">{totaux.count} paiement(s) · filtre : <span className="font-medium text-gray-600 dark:text-gray-300">{campagneFromUrl}</span></p>
+                        </div>
+                    </div>
+
+                    {/* Montant Payé */}
+                    <div className="bg-white dark:bg-gray-900 rounded-xl border border-green-100 dark:border-green-900/40 shadow-sm p-4 flex items-center gap-4">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-green-600 dark:text-green-400 uppercase tracking-wide font-medium">Total Payé</p>
+                            <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatMoney(totaux.totalPaye)}</p>
+                            <p className="text-xs text-gray-400">{totaux.totalAPayer > 0 ? Math.round((totaux.totalPaye / totaux.totalAPayer) * 100) : 0}% du total (toutes pages)</p>
+                        </div>
+                    </div>
+
+                    {/* Reste à Payer */}
+                    <div className={`bg-white dark:bg-gray-900 rounded-xl border shadow-sm p-4 flex items-center gap-4 ${totaux.totalReste > 0 ? "border-red-100 dark:border-red-900/40" : "border-green-100 dark:border-green-900/40"}`}>
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${totaux.totalReste > 0 ? "bg-red-50 dark:bg-red-900/20" : "bg-green-50 dark:bg-green-900/20"}`}>
+                            <CreditCard className={`w-5 h-5 ${totaux.totalReste > 0 ? "text-[#d61353]" : "text-green-600"}`} />
+                        </div>
+                        <div>
+                            <p className={`text-xs uppercase tracking-wide font-medium ${totaux.totalReste > 0 ? "text-[#d61353]" : "text-green-600"}`}>Reste à Payer</p>
+                            <p className={`text-lg font-bold ${totaux.totalReste > 0 ? "text-[#d61353]" : "text-green-700 dark:text-green-400"}`}>{formatMoney(totaux.totalReste)}</p>
+                            <p className="text-xs text-gray-400">{totaux.totalReste === 0 ? "✓ Entièrement soldé" : `${Math.round((totaux.totalReste / totaux.totalAPayer) * 100)}% restant`}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Tableau */}
             <div className="overflow-x-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
