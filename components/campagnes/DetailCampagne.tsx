@@ -901,20 +901,32 @@ ${selectedPrestataires.includes(p.id_prestataire)
                             <Link href={`/prestataires/${a.prestataire.id_prestataire}`}>
                               <Button variant="outline" size="sm">Voir</Button>
                             </Link>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedPrestataireToUnassign({
-                                  id: a.prestataire.id_prestataire,
-                                  nom: a.prestataire.nom || "",
-                                  prenom: a.prestataire.prenom || ""
-                                });
-                                setIsUnassignModalOpen(true);
-                              }}
-                            >
-                              Désassigner
-                            </Button>
+                            {/* Bouton Désassigner : visible seulement si < 24h, pas de photo, pas de paiement */}
+                            {(() => {
+                              const heuresDepuisAssign = a.date_creation
+                                ? (Date.now() - new Date(a.date_creation).getTime()) / (1000 * 60 * 60)
+                                : Infinity;
+                              const peutDesassigner =
+                                heuresDepuisAssign <= 24 &&
+                                !a.image_affiche &&
+                                (!a.paiement || a.paiement.length === 0);
+                              return peutDesassigner ? (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedPrestataireToUnassign({
+                                      id: a.prestataire.id_prestataire,
+                                      nom: a.prestataire.nom || "",
+                                      prenom: a.prestataire.prenom || ""
+                                    });
+                                    setIsUnassignModalOpen(true);
+                                  }}
+                                >
+                                  Désassigner
+                                </Button>
+                              ) : null;
+                            })()}
                           </div>
                         )}
                       </TableCell>
