@@ -110,6 +110,7 @@ export async function GET(
               }
             },
             date_creation: true,
+            date_fin: true,
             status: true,
             image_affiche: true
           }

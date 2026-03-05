@@ -771,16 +771,39 @@ ${selectedPrestataires.includes(p.id_prestataire)
                   <TableHead>Prestataire</TableHead>
                   <TableHead>Image</TableHead>
                   <TableHead>Date d&apos;assignation</TableHead>
+                  <TableHead>Date de fin</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Montant Initial</TableHead>
+                  <TableHead>Montant à Payer</TableHead>
                   <TableHead>Pénalité</TableHead>
-                  <TableHead>Montant payé</TableHead>
+                  <TableHead>Montant Payé</TableHead>
+                  <TableHead>Reste à Payer</TableHead>
                   <TableHead className="hidden md:table-cell">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAssignments.map((a, idx) => {
                   if (!a) return null;
+
+                  // Calculs pour les paiements
+                  const paiementBase = a.paiement?.[0]?.paiement_base ?? 0;
+                  const penalite = a.paiement?.[0]?.sanction_montant ?? 0;
+                  const montantAPayer = a.paiement?.[0]?.paiement_final ?? 0;
+
+                  // Calcul du total payé via les transactions
+                  const totalPaye = a.paiement?.[0]?.transactions?.reduce((sum, t) => sum + t.montant, 0) ?? 0;
+
+                  // Calcul du reste
+                  const resteAPayer = Math.max(0, montantAPayer - totalPaye);
+
+                  // Format money helper
+                  const formatMoney = (amount: number) => {
+                    return new Intl.NumberFormat("fr-FR", {
+                      style: "currency",
+                      currency: "XOF",
+                      minimumFractionDigits: 0,
+                    }).format(amount);
+                  };
+
                   return (
                     <TableRow key={idx}>
                       <TableCell className="font-medium">
@@ -863,10 +886,23 @@ ${selectedPrestataires.includes(p.id_prestataire)
                         {a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : "-"}
                       </TableCell>
 
+                      <TableCell>
+                        {a.date_fin ? new Date(a.date_fin).toLocaleDateString("fr-FR") : "-"}
+                      </TableCell>
+
                       <TableCell>{a.status ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.[0]?.paiement_base ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.[0]?.sanction_montant ?? "-"}</TableCell>
-                      <TableCell>{a.paiement?.[0]?.paiement_final ?? "-"}</TableCell>
+
+                      {/* Colonnes Financières */}
+                      <TableCell className="font-semibold text-gray-900 dark:text-gray-100">
+                        {a.paiement && a.paiement.length > 0 ? formatMoney(montantAPayer) : "-"}
+                      </TableCell>
+                      <TableCell className="text-red-500">{a.paiement && a.paiement.length > 0 ? `-${formatMoney(penalite)}` : "-"}</TableCell>
+                      <TableCell className="font-medium text-blue-600 dark:text-blue-400">
+                        {a.paiement && a.paiement.length > 0 ? formatMoney(totalPaye) : "-"}
+                      </TableCell>
+                      <TableCell className={`font-bold ${a.paiement && a.paiement.length > 0 ? (resteAPayer > 0 ? "text-[#d61353]" : "text-green-600") : ""}`}>
+                        {a.paiement && a.paiement.length > 0 ? formatMoney(resteAPayer) : "-"}
+                      </TableCell>
 
                       <TableCell className="max-md:hidden">
                         {a.prestataire && (
