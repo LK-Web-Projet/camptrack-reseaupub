@@ -48,6 +48,7 @@ import AddMaterielCaseModal from "@/components/prestataires/AddMaterielCaseModal
 import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhotoModal";
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
 import UnassignPrestataireModal from "@/components/campagnes/UnassignPrestataireModal";
+import DownloadReportButton from "@/components/reports/DownloadReportButton";
 
 // Interfaces (gardées telles quelles)
 interface Client {
@@ -76,6 +77,7 @@ interface Affectation {
     paiement_final?: number;
     date_paiement?: string | null;
     statut_paiement?: boolean;
+    transactions?: Array<{ montant: number }>;
   }> | null;
   date_creation?: string;
   status?: string;
@@ -391,7 +393,12 @@ export default function DetailCampagne({ id }: { id: string }) {
             )}
           </div>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
+          <DownloadReportButton
+            campagneId={id}
+            campagneName={campagne.nom_campagne || "campagne"}
+            apiClient={apiClient}
+          />
           {campagne.status === "TERMINEE" && (
             <Button onClick={() => setIsRenewModalOpen(true)} className="gap-2 bg-amber-600 hover:bg-amber-700 text-white">
               <RefreshCw className="w-4 h-4" />
