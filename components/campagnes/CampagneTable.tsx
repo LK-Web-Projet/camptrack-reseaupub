@@ -25,6 +25,7 @@ interface Campagne {
   service?: { nom?: string; id_service?: string }
   gestionnaire?: { nom?: string; prenom?: string; email?: string; id_user?: string; type_user?: string }
   quantite_service?: number
+  nbr_prestataire?: number
   _count?: { affectations?: number }
 }
 
@@ -159,7 +160,7 @@ export default function CampagneTable() {
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Date début</th>
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Date fin</th>
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Service</th>
-                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Quantité</th>
+                  <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold">Assignations</th>
                   <th className="px-3 md:px-6 py-3 text-xs md:text-sm font-semibold text-center">Actions</th>
                 </tr>
               </thead>
@@ -188,7 +189,30 @@ export default function CampagneTable() {
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{campagne.date_debut ? new Date(campagne.date_debut).toLocaleDateString('fr-FR') : '-'}</td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{campagne.date_fin ? new Date(campagne.date_fin).toLocaleDateString('fr-FR') : '-'}</td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{campagne.service?.nom ?? '-'}</td>
-                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">{campagne.quantite_service ?? campagne._count?.affectations ?? '-'}</td>
+                    <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm">
+                      {(() => {
+                        const assigned = campagne._count?.affectations || 0;
+                        const total = campagne.nbr_prestataire || 0;
+                        if (total > 0) {
+                          const percentage = Math.round((assigned / total) * 100);
+                          return (
+                            <div className="flex flex-col gap-1 w-full min-w-[100px] max-w-[140px]">
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600 dark:text-gray-300">{assigned} / {total}</span>
+                                <span className="font-semibold text-gray-800 dark:text-gray-100">{percentage}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                <div
+                                  className={`h-1.5 rounded-full ${percentage >= 100 ? 'bg-green-500' : 'bg-[#d61353]'}`}
+                                  style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return campagne.quantite_service ?? assigned ?? '-';
+                      })()}
+                    </td>
                     <td className="px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm text-center">
                       <div className="flex justify-center gap-3">
                         <Link href={`/dashboard/campagnes/${campagne.id_campagne}`}>

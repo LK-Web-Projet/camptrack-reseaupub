@@ -106,7 +106,12 @@ export async function GET(
                 sanction_montant: true,
                 date_paiement: true,
                 statut_paiement: true,
-                created_at: true
+                created_at: true,
+                transactions: {
+                  select: {
+                    montant: true
+                  }
+                }
               }
             },
             date_creation: true,

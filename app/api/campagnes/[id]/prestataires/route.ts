@@ -73,7 +73,7 @@ export async function GET(
                 nom_campagne: campagne.nom_campagne,
                 nbr_prestataire: campagne.nbr_prestataire,
                 // Ajout du comptage des affectations actives
-                affectations_actuelles: affectations.filter(a => a.date_fin === null).length
+                affectations_actuelles: affectations.filter(a => a.status === "ACTIF").length
             },
             affectations
         });
@@ -207,7 +207,7 @@ export async function POST(
             const currentCount = await prisma.prestataireCampagne.count({
                 where: {
                     id_campagne: campagneId,
-                    date_fin: null
+                    status: "ACTIF"
                 }
             });
 

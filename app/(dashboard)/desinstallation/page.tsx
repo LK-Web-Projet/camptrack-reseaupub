@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
-import { CheckCircle, AlertCircle, Calendar, Archive, Users, DollarSign, Search, X } from "lucide-react";
+import { CheckCircle, AlertCircle, Calendar, Archive, Users, DollarSign, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ManualCampaignModal from "@/components/desinstallation/ManualCampaignModal";
@@ -54,6 +54,19 @@ export default function DesinstallationPage() {
         nom: string;
         prenom: string;
     } | null>(null);
+    const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set());
+
+    const toggleCampaign = (id: string) => {
+        setExpandedCampaigns((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
 
     // Filtrage par nom/prénom du prestataire
     const filteredCampagnes = campagnes
@@ -159,81 +172,95 @@ export default function DesinstallationPage() {
                     <button onClick={() => setSearchQuery("")} className="mt-4 text-sm text-[#d61353] hover:underline">Effacer la recherche</button>
                 </div>
             ) : (
-                <div className="grid gap-6">
-                    {filteredCampagnes.map((campagne) => (
-                        <div key={campagne.id_campagne} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-                            <div className="p-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-start sm:items-center flex-col sm:flex-row gap-4">
-                                <div>
-                                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">{campagne.nom_campagne}</h3>
-                                    <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-                                        <span className="font-medium text-gray-700 dark:text-gray-300">{campagne.client.nom || campagne.client.entreprise}</span>
-                                        <span>•</span>
-                                        <span className="flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
-                                            Fin: {new Date(campagne.date_fin).toLocaleDateString()}
+                <div className="grid gap-4">
+                    {filteredCampagnes.map((campagne) => {
+                        const isExpanded = expandedCampaigns.has(campagne.id_campagne);
+
+                        return (
+                            <div key={campagne.id_campagne} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-200">
+                                {/* Accordion Header */}
+                                <div
+                                    className="p-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-750 transition"
+                                    onClick={() => toggleCampaign(campagne.id_campagne)}
+                                >
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3">
+                                            {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                                            <h3 className="font-bold text-lg text-gray-900 dark:text-white">{campagne.nom_campagne}</h3>
+                                        </div>
+                                        <div className="text-sm text-gray-500 flex items-center gap-2 mt-1 ml-8">
+                                            <span className="font-medium text-gray-700 dark:text-gray-300">{campagne.client.nom || campagne.client.entreprise}</span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" />
+                                                Fin: {new Date(campagne.date_fin).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                            {campagne.affectations.length} Prestataire(s)
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                                        {campagne.affectations.length} Prestataire(s)
-                                    </span>
-                                </div>
-                            </div>
 
-                            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                                {campagne.affectations.map((aff) => {
-                                    const isDone = !!aff.date_desinstallation;
-                                    // On vérifie si un paiement de désinstallation existe
-                                    const hasPayment = aff.paiement?.some(p => p.type === "DESINSTALLATION");
+                                {/* Accordion Content */}
+                                {isExpanded && (
+                                    <div className="divide-y divide-gray-100 dark:divide-gray-800 animate-in slide-in-from-top-2 fade-in duration-200">
+                                        {campagne.affectations.map((aff) => {
+                                            const isDone = !!aff.date_desinstallation;
+                                            // On vérifie si un paiement de désinstallation existe
+                                            const hasPayment = aff.paiement?.some(p => p.type === "DESINSTALLATION");
 
-                                    return (
-                                        <div key={aff.id_prestataire} className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                                            <div className="flex items-center gap-3 w-full sm:w-auto">
-                                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold
-                                    ${isDone ? 'bg-green-500' : 'bg-gray-400'}`}>
-                                                    {aff.prestataire.nom.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-gray-900 dark:text-white">{aff.prestataire.nom} {aff.prestataire.prenom}</p>
-                                                    <p className="text-xs text-gray-500">{aff.prestataire.contact}</p>
-                                                </div>
-                                            </div>
+                                            return (
+                                                <div key={aff.id_prestataire} className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition pl-8">
+                                                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold
+                                            ${isDone ? 'bg-green-500' : 'bg-gray-400'}`}>
+                                                            {aff.prestataire.nom.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-gray-900 dark:text-white">{aff.prestataire.nom} {aff.prestataire.prenom}</p>
+                                                            <p className="text-xs text-gray-500">{aff.prestataire.contact}</p>
+                                                        </div>
+                                                    </div>
 
-                                            <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                                                {isDone ? (
-                                                    <div className="flex items-center gap-4">
-                                                        <span className="text-xs text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
-                                                            <CheckCircle className="w-3 h-3" />
-                                                            Désinstallé le {new Date(aff.date_desinstallation!).toLocaleDateString()}
-                                                        </span>
-                                                        {hasPayment && (
-                                                            <span className="text-xs text-blue-600 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded" title="Paiement généré">
-                                                                <DollarSign className="w-3 h-3" />
-                                                                2000 FCFA
-                                                            </span>
+                                                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                                                        {isDone ? (
+                                                            <div className="flex items-center gap-4">
+                                                                <span className="text-xs text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                                                                    <CheckCircle className="w-3 h-3" />
+                                                                    Désinstallé le {new Date(aff.date_desinstallation!).toLocaleDateString()}
+                                                                </span>
+                                                                {hasPayment && (
+                                                                    <span className="text-xs text-blue-600 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded" title="Paiement généré">
+                                                                        <DollarSign className="w-3 h-3" />
+                                                                        2000 FCFA
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => openEndAssignmentModal(
+                                                                    campagne.id_campagne,
+                                                                    aff.id_prestataire,
+                                                                    aff.prestataire.nom,
+                                                                    aff.prestataire.prenom
+                                                                )}
+                                                                className="text-sm px-4 py-2 bg-white border border-[#d61353] text-[#d61353] rounded-lg hover:bg-[#d61353] hover:text-white transition w-full sm:w-auto flex items-center justify-center gap-2"
+                                                            >
+                                                                Fin de Mission
+                                                            </button>
                                                         )}
                                                     </div>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => openEndAssignmentModal(
-                                                            campagne.id_campagne,
-                                                            aff.id_prestataire,
-                                                            aff.prestataire.nom,
-                                                            aff.prestataire.prenom
-                                                        )}
-                                                        className="text-sm px-4 py-2 bg-white border border-[#d61353] text-[#d61353] rounded-lg hover:bg-[#d61353] hover:text-white transition w-full sm:w-auto flex items-center justify-center gap-2"
-                                                    >
-                                                        Fin de Mission
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
             {/* End Assignment Modal */}
