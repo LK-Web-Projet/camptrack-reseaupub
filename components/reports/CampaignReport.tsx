@@ -8,6 +8,7 @@ import {
     StyleSheet,
     Image,
 } from "@react-pdf/renderer";
+import { IMG_LOGO_MIXTE, IMG_TRICYCLES } from "@/lib/pdf-assets";
 
 // ============================================================
 // DESIGN SYSTEM — Moderne & Contrasté
@@ -619,7 +620,7 @@ const Header = ({ title }: { title: string }) => (
                 <Text style={S.headerSub}>ReseauPub — Rapport Campagne Tricycles</Text>
             </View>
         </View>
-        <Image src="/images/logo_mixte.webp" style={S.headerLogo} />
+        <Image src={IMG_LOGO_MIXTE} style={S.headerLogo} />
     </View>
 );
 
@@ -646,7 +647,7 @@ const CoverSlide = ({ campagneNom }: { campagneNom: string }) => (
             {/* Colonne gauche noire */}
             <View style={S.coverLeft}>
                 <View style={S.coverLogoBox}>
-                    <Image src="/images/logo_mixte.webp" style={S.coverLogo} />
+                    <Image src={IMG_LOGO_MIXTE} style={S.coverLogo} />
                 </View>
 
                 <View style={S.coverTextBlock}>
@@ -670,7 +671,7 @@ const CoverSlide = ({ campagneNom }: { campagneNom: string }) => (
 
             {/* Colonne droite — image */}
             <View style={S.coverRight}>
-                <Image src="/images/tricycles.avif" style={S.coverImage} />
+                <Image src={IMG_TRICYCLES} style={S.coverImage} />
                 <View style={S.coverImageOverlay} />
                 <View style={S.coverTag}>
                     <Text style={S.coverTagText}>Campagne terrain</Text>
@@ -913,7 +914,7 @@ const ConclusionSlide = () => (
                         rapidement et rigoureusement vos dispositifs publicitaires.
                     </Text>
                 </View>
-                <Image src="/images/logo_mixte.webp" style={S.conclusionLogo} />
+                <Image src={IMG_LOGO_MIXTE} style={S.conclusionLogo} />
             </View>
 
             {/* Droite rouge — contacts */}

@@ -17,6 +17,11 @@ export async function GET(
 
         const { id } = await params;
 
+        // Construire l'URL de base pour les images (react-pdf nécessite des URLs absolues)
+        const protocol = request.headers.get("x-forwarded-proto") || "http";
+        const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
+        const baseUrl = `${protocol}://${host}`;
+
         const campagne = await prisma.campagne.findUnique({
             where: { id_campagne: id },
             select: {
@@ -115,18 +120,25 @@ export async function GET(
                 : null;
 
         // Collecte des preuves visuelles (images d'affiches + photos terrain)
+        // Les URLs sont converties en absolues pour react-pdf
         const visualEvidence: Array<{ url: string; caption: string; date: string | null }> = [];
         for (const a of affectations) {
             if (a.image_affiche) {
+                const url = a.image_affiche.startsWith("http")
+                    ? a.image_affiche
+                    : `${baseUrl}${a.image_affiche.startsWith("/") ? "" : "/"}${a.image_affiche}`;
                 visualEvidence.push({
-                    url: a.image_affiche,
+                    url,
                     caption: `Affiche — ${a.prestataire.prenom} ${a.prestataire.nom}`,
                     date: a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : null,
                 });
             }
             for (const photo of a.prestataire.photos ?? []) {
+                const url = photo.url.startsWith("http")
+                    ? photo.url
+                    : `${baseUrl}${photo.url.startsWith("/") ? "" : "/"}${photo.url}`;
                 visualEvidence.push({
-                    url: photo.url,
+                    url,
                     caption: photo.description || `Photo — ${a.prestataire.prenom} ${a.prestataire.nom}`,
                     date: photo.created_at ? new Date(photo.created_at).toLocaleDateString("fr-FR") : null,
                 });
