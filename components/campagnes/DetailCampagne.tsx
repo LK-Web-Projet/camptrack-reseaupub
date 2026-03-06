@@ -16,6 +16,7 @@ import {
   Search,
   RefreshCw,
   Link as LinkIcon,
+  Camera,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
@@ -576,6 +577,60 @@ export default function DetailCampagne({ id }: { id: string }) {
         </CardContent>
       </Card>
 
+{/* Section Album Photos */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Album Photos</CardTitle>
+            <CardDescription>
+              Preuves visuelles des affichages réalisés par les prestataires.
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {campagne.affectations && campagne.affectations.filter(a => !!a.image_affiche).length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {campagne.affectations
+                .filter(a => !!a.image_affiche)
+                .map((a, idx) => (
+                  <div key={idx} className="flex flex-col border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden group bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all">
+                    <button
+                      type="button"
+                      onClick={() => setLightboxUrl(a.image_affiche!)}
+                      className="relative w-full aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden cursor-zoom-in"
+                    >
+                      <img
+                        src={a.image_affiche!}
+                        alt={`Affiche de ${a.prestataire?.nom} ${a.prestataire?.prenom}`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Search className="w-8 h-8 text-white drop-shadow-md" />
+                      </div>
+                    </button>
+                    <div className="p-3">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+                        {a.prestataire?.nom ?? "-"} {a.prestataire?.prenom ?? ""}
+                      </p>
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-1.5">
+                        <Calendar className="w-3 h-3" />
+                        {a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : "-"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+              <Camera className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Aucune photo d'affichage pour cette campagne.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Section Prestataires */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -990,9 +1045,7 @@ ${selectedPrestataires.includes(p.id_prestataire)
             </p>
           )}
         </CardContent>
-      </Card >
-
-
+      </Card>
 
       {/* Modal Vérification Matériel */}
       {
