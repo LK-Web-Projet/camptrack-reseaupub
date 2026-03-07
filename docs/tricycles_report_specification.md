@@ -14,7 +14,7 @@ Ce document définit la structure exacte, les attentes en matière de chemins de
    - **Mise en page :** Centrée ou placée verticalement au centre/haut de la page. Cette image doit occuper une part importante pour donner le contexte (illustration d'un tricycle en affichage).
    - *Note technique* : Les bibliothèques PDF comme React-PDF ou jsPDF ne supportent parfois pas nativement le format AVIF. Il peut être nécessaire de prévoir une conversion à la volée en JPG/PNG ou de s'assurer de sa compatibilité.
 2. **Logo de l'Entreprise (Image 2) :**
-   - **Chemin attendu :** `public/images/logo_mixte.webp`
+   - **Chemin attendu :** `public/images/logo_mixte2.webp`
    - **Mise en page :** Généralement placé en haut à gauche, en haut au centre, ou en pied de page.
    - *Note technique* : Le format WEBP doit également être vérifié selon le moteur de génération PDF. 
 3. **Titre Principal :**

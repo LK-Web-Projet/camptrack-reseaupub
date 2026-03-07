@@ -15,7 +15,7 @@ function readB64(relPath, mime) {
     return `data:${mime};base64,${b64}`;
 }
 
-const logoMixte = readB64("public/images/logo_mixte.webp", "image/webp");
+const logoMixte = readB64("public/images/logo_mixte2.png", "image/png");
 const tricycles = readB64("public/images/tricycles.png", "image/png");
 
 const lines = [

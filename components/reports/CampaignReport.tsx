@@ -447,17 +447,19 @@ const S = StyleSheet.create({
     // ─────────────────────────────────────────────────────────
     photoGrid: {
         flexDirection: "row",
-        gap: 16,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 32,
         flex: 1,
         paddingBottom: 0,
     },
     photoCard: {
-        flex: 1,
-        height: "100%",
+        width: "45%",
+        height: 350,
         flexDirection: "column",
-        borderRadius: 6,
+        borderRadius: 8,
         overflow: "hidden",
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: C.gray200,
     },
     photoImg: {
@@ -509,7 +511,8 @@ const S = StyleSheet.create({
         width: "36%",
         backgroundColor: C.red,
         padding: 40,
-        justifyContent: "space-between",
+        justifyContent: "center",
+        gap: 32,
     },
     conclusionEyebrow: {
         fontFamily: F.bold,

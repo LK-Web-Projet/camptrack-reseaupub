@@ -121,16 +121,20 @@ export async function GET(
 
         // Collecte des preuves visuelles (images d'affiches + photos terrain)
         // Les URLs sont converties en absolues pour react-pdf
-        const visualEvidence: Array<{ url: string; caption: string; date: string | null }> = [];
+        const visualEvidence: Array<{ url: string; caption: string; date: string | null; prestataire: string; plaque: string | null }> = [];
         for (const a of affectations) {
+            const nomComplet = `${a.prestataire.prenom || ""} ${a.prestataire.nom || ""}`.trim();
+            const numPlaque = a.prestataire.plaque || null;
             if (a.image_affiche) {
                 const url = a.image_affiche.startsWith("http")
                     ? a.image_affiche
                     : `${baseUrl}${a.image_affiche.startsWith("/") ? "" : "/"}${a.image_affiche}`;
                 visualEvidence.push({
                     url,
-                    caption: `Affiche — ${a.prestataire.prenom} ${a.prestataire.nom}`,
+                    caption: `Affiche — ${nomComplet}`,
                     date: a.date_creation ? new Date(a.date_creation).toLocaleDateString("fr-FR") : null,
+                    prestataire: nomComplet,
+                    plaque: numPlaque,
                 });
             }
             for (const photo of a.prestataire.photos ?? []) {
@@ -139,8 +143,10 @@ export async function GET(
                     : `${baseUrl}${photo.url.startsWith("/") ? "" : "/"}${photo.url}`;
                 visualEvidence.push({
                     url,
-                    caption: photo.description || `Photo — ${a.prestataire.prenom} ${a.prestataire.nom}`,
+                    caption: photo.description || `Photo — ${nomComplet}`,
                     date: photo.created_at ? new Date(photo.created_at).toLocaleDateString("fr-FR") : null,
+                    prestataire: nomComplet,
+                    plaque: numPlaque,
                 });
             }
         }

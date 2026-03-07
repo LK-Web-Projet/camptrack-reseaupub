@@ -20,7 +20,16 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import { AlertTriangle, Info, Camera, X, Image as ImageIcon, Upload } from "lucide-react";
+import { AlertTriangle, Info, Camera, X, Image as ImageIcon, Upload, Check } from "lucide-react";
+
+const INCIDENT_CASES = [
+    { id: "tout_bon", label: "TOUT BON (État Bon)", baseEtat: "BON", color: "bg-green-100 text-green-800 border-green-300" },
+    { id: "panneau_casse", label: "Panneau Cassé (État Mauvais)", baseEtat: "MAUVAIS", color: "bg-red-100 text-red-800 border-red-300" },
+    { id: "cadran_casse", label: "Cadran Cassé (État Moyen)", baseEtat: "MOYEN", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+    { id: "affiche_dechiree", label: "Affiche Déchirée ou Manquante (État Moyen)", baseEtat: "MOYEN", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+    { id: "materiel_sale", label: "Matériel Sale / Poussiéreux (État Moyen)", baseEtat: "MOYEN", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+    { id: "fixation_defaillante", label: "Fixation Défaillante (État Moyen)", baseEtat: "MOYEN", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+] as const;
 
 interface Affectation {
     campagne: {
@@ -49,8 +58,28 @@ export default function AddMaterielCaseModal({
 
     // Form states
     const [selectedCampagne, setSelectedCampagne] = useState<string>("");
-    const [etat, setEtat] = useState<"BON" | "MOYEN" | "MAUVAIS">("MAUVAIS");
+    const [etat, setEtat] = useState<"BON" | "MOYEN" | "MAUVAIS">("BON");
+    const [selectedCases, setSelectedCases] = useState<string[]>([]);
     const [description, setDescription] = useState("");
+
+    // Calcul automatique de l'état selon les cas sélectionnés
+    useEffect(() => {
+        if (selectedCases.length === 0) return;
+
+        let maxGravite = 1; // 1: BON, 2: MOYEN, 3: MAUVAIS
+
+        selectedCases.forEach(caseId => {
+            const cas = INCIDENT_CASES.find(c => c.id === caseId);
+            if (cas) {
+                if (cas.baseEtat === "MAUVAIS") maxGravite = Math.max(maxGravite, 3);
+                if (cas.baseEtat === "MOYEN") maxGravite = Math.max(maxGravite, 2);
+            }
+        });
+
+        if (maxGravite === 3) setEtat("MAUVAIS");
+        else if (maxGravite === 2) setEtat("MOYEN");
+        else setEtat("BON");
+    }, [selectedCases]);
 
     // Photo state
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -80,7 +109,8 @@ export default function AddMaterielCaseModal({
             if (affectations.length > 0) {
                 setSelectedCampagne(affectations[0].campagne.id_campagne);
             }
-            setEtat("MAUVAIS");
+            setEtat("BON");
+            setSelectedCases(["tout_bon"]); // Défaut
             setDescription("");
             clearPhotos();
         }
@@ -193,13 +223,18 @@ export default function AddMaterielCaseModal({
                 }
             }
 
-            // 2. Créer l'enregistrement
+            // 2. Format final description
+            const casesTextArray = selectedCases.map(id => INCIDENT_CASES.find(c => c.id === id)?.label.split(" (")[0]).filter(Boolean);
+            const casesStr = casesTextArray.join(", ");
+            const finalDescription = [casesStr, description.trim()].filter(Boolean).join(" - Observations: ");
+
+            // 3. Créer l'enregistrement
             const payload = {
                 id_prestataire: prestataireId,
                 id_campagne: selectedCampagne,
                 nom_materiel: "Matériel Publicitaire",
                 etat,
-                description: description.trim() || null,
+                description: finalDescription || null,
                 photo_url: uploadedUrls[0] || null,
                 preuve_media: uploadedUrls.length > 0 ? JSON.stringify(uploadedUrls) : null
             };
@@ -264,26 +299,61 @@ export default function AddMaterielCaseModal({
                                 </Select>
                             </div>
 
-                            {/* État */}
+                            {/* Sélection des cas */}
+                            <div className="space-y-2">
+                                <Label className="block text-sm font-medium text-gray-700">
+                                    Constat sur le matériel <span className="text-red-500">*</span>
+                                </Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {INCIDENT_CASES.map((cas) => {
+                                        const isSelected = selectedCases.includes(cas.id);
+                                        return (
+                                            <button
+                                                key={cas.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedCases(prev => {
+                                                        // Règle: Si on clique sur "TOUT BON", on force la sélection unique à "TOUT BON"
+                                                        if (cas.id === "tout_bon") return ["tout_bon"];
+
+                                                        // Sinon (clic sur un cas négatif)
+                                                        const noToutBon = prev.filter(id => id !== "tout_bon");
+                                                        if (noToutBon.includes(cas.id)) {
+                                                            const newCases = noToutBon.filter(id => id !== cas.id);
+                                                            return newCases.length === 0 ? ["tout_bon"] : newCases;
+                                                        } else {
+                                                            return [...noToutBon, cas.id];
+                                                        }
+                                                    });
+                                                }}
+                                                className={`px-3 py-1.5 rounded-full text-xs font-medium border flex items-center gap-1.5 transition-all ${isSelected ? cas.color + ' ring-2 ring-offset-1' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}`}
+                                            >
+                                                {isSelected && <Check size={14} />}
+                                                {cas.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* État (ReadOnly) */}
                             <div className="space-y-1">
                                 <Label className="block text-sm font-medium text-gray-700">
-                                    État du Matériel <span className="text-red-500">*</span>
+                                    État Calculé (Automatique)
                                 </Label>
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-3 gap-2 opacity-80 cursor-not-allowed">
                                     {(["BON", "MOYEN", "MAUVAIS"] as const).map((e) => (
-                                        <button
+                                        <div
                                             key={e}
-                                            type="button"
-                                            onClick={() => setEtat(e)}
-                                            className={`py-2 rounded-lg text-sm font-medium border transition ${etat === e
+                                            className={`py-2 text-center rounded-lg text-sm font-medium border ${etat === e
                                                 ? (e === 'BON' ? 'bg-green-100 border-green-300 text-green-800 ring-2 ring-green-500' :
                                                     e === 'MOYEN' ? 'bg-yellow-100 border-yellow-300 text-yellow-800 ring-2 ring-yellow-500' :
                                                         'bg-red-100 border-red-300 text-red-800 ring-2 ring-red-500')
-                                                : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                                                : 'bg-white border-gray-300 text-gray-400'
                                                 }`}
                                         >
                                             {e}
-                                        </button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -530,6 +600,6 @@ export default function AddMaterielCaseModal({
                     </Button>
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
