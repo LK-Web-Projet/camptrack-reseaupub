@@ -69,13 +69,13 @@ const S = StyleSheet.create({
     },
     headerTitle: {
         fontFamily: F.bold,
-        fontSize: 11,
+        fontSize: 13,
         color: C.ink,
         textTransform: "uppercase",
         letterSpacing: 2,
     },
     headerSub: {
-        fontSize: 8,
+        fontSize: 10,
         color: C.gray400,
         letterSpacing: 1,
         marginTop: 2,
@@ -100,12 +100,12 @@ const S = StyleSheet.create({
         paddingHorizontal: 48,
     },
     footerText: {
-        fontSize: 7,
+        fontSize: 9,
         color: C.gray400,
         letterSpacing: 0.8,
     },
     footerPageNum: {
-        fontSize: 7,
+        fontSize: 9,
         color: C.white,
         fontFamily: F.bold,
         letterSpacing: 1,
@@ -128,7 +128,7 @@ const S = StyleSheet.create({
     // ── SECTION TITLE ──────────────────────────────────────────
     sectionTitle: {
         fontFamily: F.bold,
-        fontSize: 9,
+        fontSize: 11,
         color: C.red,
         textTransform: "uppercase",
         letterSpacing: 3,
@@ -176,7 +176,7 @@ const S = StyleSheet.create({
     },
     coverEyebrow: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 10,
         color: C.red,
         textTransform: "uppercase",
         letterSpacing: 3,
@@ -184,19 +184,19 @@ const S = StyleSheet.create({
     },
     coverTitle: {
         fontFamily: F.bold,
-        fontSize: 28,
+        fontSize: 32,
         color: C.white,
         lineHeight: 1.25,
         marginBottom: 10,
     },
     coverCampaignName: {
         fontFamily: F.bold,
-        fontSize: 16,
+        fontSize: 18,
         color: C.red,
         marginBottom: 16,
     },
     coverDesc: {
-        fontSize: 9,
+        fontSize: 11,
         color: C.gray400,
         lineHeight: 1.6,
     },
@@ -212,7 +212,7 @@ const S = StyleSheet.create({
         backgroundColor: C.red,
     },
     coverMetaText: {
-        fontSize: 7,
+        fontSize: 9,
         color: C.gray600,
         letterSpacing: 0.8,
     },
@@ -247,7 +247,7 @@ const S = StyleSheet.create({
     },
     coverTagText: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 10,
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 2,
@@ -274,13 +274,13 @@ const S = StyleSheet.create({
     },
     statHeroVal: {
         fontFamily: F.bold,
-        fontSize: 52,
+        fontSize: 56,
         color: C.white,
         lineHeight: 1,
     },
     statHeroLabel: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 10,
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 2,
@@ -308,12 +308,12 @@ const S = StyleSheet.create({
     },
     statSmallVal: {
         fontFamily: F.bold,
-        fontSize: 18,
+        fontSize: 20,
         color: C.ink,
         marginBottom: 4,
     },
     statSmallLabel: {
-        fontSize: 7,
+        fontSize: 9,
         color: C.gray400,
         textTransform: "uppercase",
         letterSpacing: 1.5,
@@ -337,7 +337,7 @@ const S = StyleSheet.create({
     },
     tableHeaderText: {
         fontFamily: F.bold,
-        fontSize: 7,
+        fontSize: 9,
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 2,
@@ -363,7 +363,7 @@ const S = StyleSheet.create({
     },
     tableCellText: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 10,
         color: C.ink,
         letterSpacing: 0.5,
     },
@@ -382,7 +382,7 @@ const S = StyleSheet.create({
         borderLeftColor: C.red,
     },
     tableNoteText: {
-        fontSize: 8,
+        fontSize: 10,
         color: C.gray600,
         flex: 1,
         lineHeight: 1.6,
@@ -420,7 +420,7 @@ const S = StyleSheet.create({
     },
     dividerEyebrow: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 10,
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 4,
@@ -435,7 +435,7 @@ const S = StyleSheet.create({
         letterSpacing: 1,
     },
     dividerSub: {
-        fontSize: 10,
+        fontSize: 12,
         color: C.white,
         opacity: 0.5,
         marginTop: 16,
@@ -454,8 +454,8 @@ const S = StyleSheet.create({
         paddingBottom: 0,
     },
     photoCard: {
-        width: "45%",
-        height: 350,
+        width: "38%",
+        height: 260,
         flexDirection: "column",
         borderRadius: 8,
         overflow: "hidden",
@@ -482,7 +482,7 @@ const S = StyleSheet.create({
         backgroundColor: C.red,
     },
     photoCaptionLabel: {
-        fontSize: 7,
+        fontSize: 9,
         color: C.gray400,
         textTransform: "uppercase",
         letterSpacing: 1.5,
@@ -490,7 +490,7 @@ const S = StyleSheet.create({
     },
     photoCaptionValue: {
         fontFamily: F.bold,
-        fontSize: 9,
+        fontSize: 11,
         color: C.white,
     },
 
@@ -516,7 +516,7 @@ const S = StyleSheet.create({
     },
     conclusionEyebrow: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 10,
         color: C.red,
         textTransform: "uppercase",
         letterSpacing: 3,
@@ -524,13 +524,13 @@ const S = StyleSheet.create({
     },
     conclusionTitle: {
         fontFamily: F.bold,
-        fontSize: 26,
+        fontSize: 28,
         color: C.white,
         lineHeight: 1.3,
         marginBottom: 20,
     },
     conclusionBody: {
-        fontSize: 10,
+        fontSize: 12,
         color: C.gray400,
         lineHeight: 1.8,
     },
@@ -541,7 +541,7 @@ const S = StyleSheet.create({
     },
     contactSectionTitle: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 10,
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 3,
@@ -552,7 +552,7 @@ const S = StyleSheet.create({
         marginBottom: 20,
     },
     contactItemLabel: {
-        fontSize: 7,
+        fontSize: 9,
         color: C.white,
         opacity: 0.5,
         textTransform: "uppercase",
@@ -561,11 +561,11 @@ const S = StyleSheet.create({
     },
     contactItemValue: {
         fontFamily: F.bold,
-        fontSize: 11,
+        fontSize: 13,
         color: C.white,
     },
     conclusionTagline: {
-        fontSize: 8,
+        fontSize: 10,
         color: C.white,
         opacity: 0.4,
         fontFamily: F.obl,
@@ -774,6 +774,7 @@ const RecapPlaquesSlide = ({
                                         {row.map((p, cIdx) => {
                                             const has = p.plaque && p.plaque.trim().length > 0;
                                             const isAlt = rIdx % 2 === 1;
+                                            const globalIndex = pageIdx * CELLS_PER_PAGE_DYNAMIC + rIdx * COLS + cIdx + 1;
                                             return (
                                                 <View
                                                     key={cIdx}
@@ -785,7 +786,7 @@ const RecapPlaquesSlide = ({
                                                     ]}
                                                 >
                                                     <Text style={[S.tableCellText, !has ? S.tableCellTextMissing : {}]}>
-                                                        {has ? p.plaque : "—"}
+                                                        {globalIndex}. {has ? p.plaque : "—"}
                                                     </Text>
                                                 </View>
                                             );
@@ -834,7 +835,7 @@ const AlbumDividerSlide = () => (
                 </View>
             </View>
             <View style={S.dividerRight}>
-                <Text style={{ fontFamily: F.bold, fontSize: 9, color: C.gray400, textTransform: "uppercase", letterSpacing: 2 }}>
+                <Text style={{ fontFamily: F.bold, fontSize: 11, color: C.gray400, textTransform: "uppercase", letterSpacing: 2 }}>
                     Ce que vous allez voir
                 </Text>
                 {[
@@ -844,7 +845,7 @@ const AlbumDividerSlide = () => (
                 ].map((item, i) => (
                     <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 16 }}>
                         <View style={{ width: 20, height: 1, backgroundColor: C.red }} />
-                        <Text style={{ fontSize: 9, color: C.gray400, flex: 1 }}>{item}</Text>
+                        <Text style={{ fontSize: 11, color: C.gray400, flex: 1 }}>{item}</Text>
                     </View>
                 ))}
             </View>
