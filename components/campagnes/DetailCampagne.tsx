@@ -50,6 +50,7 @@ import UpdateCampaignPhotoModal from "@/components/campagnes/UpdateCampaignPhoto
 import QuickAddPrestataireModal from "./QuickAddPrestataireModal";
 import UnassignPrestataireModal from "@/components/campagnes/UnassignPrestataireModal";
 import DownloadReportButton from "@/components/reports/DownloadReportButton";
+import DownloadPhotosButton from "@/components/reports/DownloadPhotosButton";
 
 // Interfaces (gardées telles quelles)
 interface Client {
@@ -395,6 +396,10 @@ export default function DetailCampagne({ id }: { id: string }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <DownloadPhotosButton
+            campagneNom={campagne.nom_campagne || "campagne"}
+            affectations={campagne.affectations || []}
+          />
           <DownloadReportButton
             campagneId={id}
             campagneName={campagne.nom_campagne || "campagne"}
@@ -577,7 +582,7 @@ export default function DetailCampagne({ id }: { id: string }) {
         </CardContent>
       </Card>
 
-{/* Section Album Photos */}
+      {/* Section Album Photos */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
