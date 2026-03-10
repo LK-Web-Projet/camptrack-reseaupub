@@ -77,7 +77,8 @@ export async function GET(
               }
             },
             date_creation: true,
-            status: true
+            status: true,
+            image_affiche: true
           },
           orderBy: { date_creation: 'desc' }
         },
@@ -89,6 +90,8 @@ export async function GET(
             montant_penalite: true,
             penalite_appliquer: true,
             date_creation: true,
+            photo_url: true,
+            preuve_media: true,
             campagne: {
               select: {
                 nom_campagne: true

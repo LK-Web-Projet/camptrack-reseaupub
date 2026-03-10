@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle, FileText, Star, TrendingUp } from "lucide-react"
+import { ArrowLeft, Users, User, Phone, Briefcase, Car, Palette, Fingerprint, ShieldCheck, Wrench, Calendar, Hash, AlertTriangle, FileText, Star, TrendingUp, Camera, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/app/context/AuthContext"
@@ -23,6 +23,7 @@ interface Affectation {
   campagne: { id_campagne: string; nom_campagne: string; date_debut: string; date_fin: string; status: string }
   date_creation: string
   status?: string
+  image_affiche?: string | null
 }
 interface Dommage {
   id_materiels_case: string;
@@ -334,6 +335,7 @@ export default function DetailPrestataire({ id }: { id: string }) {
                   <TableHead>Début</TableHead>
                   <TableHead>Fin</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Photo Vérification</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -343,6 +345,21 @@ export default function DetailPrestataire({ id }: { id: string }) {
                     <TableCell>{new Date(aff.campagne.date_debut).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>{aff.campagne.date_fin ? new Date(aff.campagne.date_fin).toLocaleDateString("fr-FR") : "-"}</TableCell>
                     <TableCell><Badge variant="secondary">{aff.campagne.status}</Badge></TableCell>
+                    <TableCell>
+                      {aff.image_affiche ? (
+                        <div
+                          className="relative w-12 h-12 rounded overflow-hidden border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => window.open(aff.image_affiche!, '_blank')}
+                        >
+                          <img src={aff.image_affiche} alt="Vérification matériel" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs flex items-center gap-1">
+                          <ImageIcon className="w-3 h-3" />
+                          Aucune photo
+                        </span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

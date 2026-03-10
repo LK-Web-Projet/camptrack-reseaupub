@@ -11,33 +11,32 @@ import {
 import { IMG_LOGO_MIXTE, IMG_TRICYCLES } from "@/lib/pdf-assets";
 
 // ============================================================
-// DESIGN SYSTEM — Moderne & Contrasté
-// Blanc pur · Noir profond · Rouge #d61353 (accent unique)
+// DESIGN SYSTEM — Refonte moderne
 // ============================================================
 const C = {
     white: "#ffffff",
-    offwhite: "#f9f9f9",
-    gray100: "#f2f2f2",
+    offwhite: "#fafafa",
+    gray100: "#f0f0f0",
     gray200: "#e0e0e0",
-    gray400: "#9b9b9b",
-    gray600: "#555555",
-    ink: "#111111",
+    gray400: "#a0a0a0",
+    gray600: "#6b6b6b",
+    ink: "#1a1a1a",
     red: "#d61353",
-    redDark: "#a50e3f",
-    redSoft: "#fff0f4",
+    redDark: "#b00f45",
+    redLight: "#ffe6ed",
 };
 
 const F = {
-    bold: "Helvetica-Bold" as const,
-    reg: "Helvetica" as const,
-    obl: "Helvetica-Oblique" as const,
+    bold: "Helvetica-Bold",
+    reg: "Helvetica",
+    light: "Helvetica-Light",
+    obl: "Helvetica-Oblique",
 };
 
 // ============================================================
 // STYLES
 // ============================================================
 const S = StyleSheet.create({
-
     page: {
         fontFamily: F.reg,
         backgroundColor: C.white,
@@ -45,13 +44,13 @@ const S = StyleSheet.create({
         padding: 0,
     },
 
-    // ── HEADER ─────────────────────────────────────────────────
+    // ----- HEADER -----
     header: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 48,
-        paddingVertical: 16,
+        paddingVertical: 20,
         backgroundColor: C.white,
         borderBottomWidth: 1,
         borderBottomColor: C.gray200,
@@ -59,40 +58,39 @@ const S = StyleSheet.create({
     headerLeft: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 14,
+        gap: 16,
     },
-    headerAccentBar: {
-        width: 3,
-        height: 24,
+    headerAccent: {
+        width: 4,
+        height: 28,
         backgroundColor: C.red,
         borderRadius: 2,
     },
     headerTitle: {
         fontFamily: F.bold,
-        fontSize: 11,
+        fontSize: 16,
         color: C.ink,
         textTransform: "uppercase",
         letterSpacing: 2,
     },
     headerSub: {
-        fontSize: 8,
+        fontSize: 11,
         color: C.gray400,
-        letterSpacing: 1,
         marginTop: 2,
     },
     headerLogo: {
-        width: 88,
-        height: 26,
+        width: 90,
+        height: 28,
         objectFit: "contain",
     },
 
-    // ── FOOTER ─────────────────────────────────────────────────
+    // ----- FOOTER -----
     footer: {
         position: "absolute",
         bottom: 0,
         left: 0,
         right: 0,
-        height: 32,
+        height: 36,
         backgroundColor: C.ink,
         flexDirection: "row",
         alignItems: "center",
@@ -100,15 +98,14 @@ const S = StyleSheet.create({
         paddingHorizontal: 48,
     },
     footerText: {
-        fontSize: 7,
+        fontSize: 10,
         color: C.gray400,
-        letterSpacing: 0.8,
+        letterSpacing: 0.5,
     },
     footerPageNum: {
-        fontSize: 7,
+        fontSize: 10,
         color: C.white,
         fontFamily: F.bold,
-        letterSpacing: 1,
     },
     footerDot: {
         width: 4,
@@ -117,45 +114,42 @@ const S = StyleSheet.create({
         backgroundColor: C.red,
     },
 
-    // ── BODY ───────────────────────────────────────────────────
+    // ----- BODY -----
     body: {
         flex: 1,
         paddingHorizontal: 48,
-        paddingTop: 24,
+        paddingTop: 30,
         paddingBottom: 40,
     },
 
-    // ── SECTION TITLE ──────────────────────────────────────────
+    // ----- SECTION TITLE -----
     sectionTitle: {
         fontFamily: F.bold,
-        fontSize: 9,
+        fontSize: 16, // Augmenté pour plus de lisibilité
         color: C.red,
         textTransform: "uppercase",
         letterSpacing: 3,
-        marginBottom: 20,
+        marginBottom: 24,
+        textAlign: "center", // Centré pour plus d'impact
     },
 
-    // ─────────────────────────────────────────────────────────
-    // 1. PAGE DE GARDE
-    // ─────────────────────────────────────────────────────────
+    // ----- COVER -----
     coverPage: {
         flex: 1,
         flexDirection: "row",
     },
-
-    // Colonne gauche noire (40%)
     coverLeft: {
         width: "40%",
         backgroundColor: C.ink,
-        padding: 44,
+        padding: 48,
         justifyContent: "space-between",
     },
     coverLogoBox: {
         backgroundColor: C.white,
-        borderRadius: 4,
-        padding: 8,
+        borderRadius: 6,
+        padding: 10,
         width: 110,
-        height: 44,
+        height: 46,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -164,43 +158,43 @@ const S = StyleSheet.create({
         height: 30,
         objectFit: "contain",
     },
-    coverTextBlock: {
+    coverContent: {
         flex: 1,
         justifyContent: "center",
     },
-    coverRedLine: {
-        width: 32,
+    coverAccentLine: {
+        width: 50,
         height: 3,
         backgroundColor: C.red,
-        marginBottom: 18,
+        marginBottom: 24,
     },
     coverEyebrow: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 14, // Augmenté
         color: C.red,
         textTransform: "uppercase",
         letterSpacing: 3,
-        marginBottom: 14,
+        marginBottom: 16,
     },
     coverTitle: {
         fontFamily: F.bold,
-        fontSize: 28,
+        fontSize: 36,
         color: C.white,
-        lineHeight: 1.25,
-        marginBottom: 10,
+        lineHeight: 1.2,
+        marginBottom: 12,
     },
     coverCampaignName: {
         fontFamily: F.bold,
-        fontSize: 16,
+        fontSize: 20,
         color: C.red,
-        marginBottom: 16,
+        marginBottom: 20,
     },
     coverDesc: {
-        fontSize: 9,
+        fontSize: 14, // Augmenté
         color: C.gray400,
         lineHeight: 1.6,
     },
-    coverBottomMeta: {
+    coverMeta: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
@@ -212,12 +206,9 @@ const S = StyleSheet.create({
         backgroundColor: C.red,
     },
     coverMetaText: {
-        fontSize: 7,
+        fontSize: 10,
         color: C.gray600,
-        letterSpacing: 0.8,
     },
-
-    // Colonne droite — photo (60%)
     coverRight: {
         width: "60%",
         position: "relative",
@@ -227,117 +218,117 @@ const S = StyleSheet.create({
         height: "100%",
         objectFit: "cover",
     },
-    coverImageOverlay: {
+    coverOverlay: {
         position: "absolute",
         bottom: 0,
         left: 0,
         right: 0,
-        height: 80,
+        height: 100,
         backgroundColor: C.ink,
-        opacity: 0.5,
+        opacity: 0.4,
     },
     coverTag: {
         position: "absolute",
-        bottom: 24,
-        left: 24,
+        bottom: 30,
+        left: 30,
         backgroundColor: C.red,
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-        borderRadius: 2,
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        borderRadius: 3,
     },
     coverTagText: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 12, // Augmenté
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 2,
     },
 
-    // ─────────────────────────────────────────────────────────
-    // 2. STATISTIQUES
-    // ─────────────────────────────────────────────────────────
-    statsBigRow: {
+    // ----- STATS -----
+    statsRow: {
         flexDirection: "row",
-        gap: 16,
-        marginBottom: 16,
+        gap: 20,
+        marginBottom: 20,
     },
-    statHero: {
+    statCard: {
         flex: 1,
-        backgroundColor: C.ink,
-        borderRadius: 6,
-        padding: 32,
-        justifyContent: "space-between",
-        minHeight: 110,
-    },
-    statHeroAccent: {
-        backgroundColor: C.red,
-    },
-    statHeroVal: {
-        fontFamily: F.bold,
-        fontSize: 52,
-        color: C.white,
-        lineHeight: 1,
-    },
-    statHeroLabel: {
-        fontFamily: F.bold,
-        fontSize: 8,
-        color: C.white,
-        textTransform: "uppercase",
-        letterSpacing: 2,
-        opacity: 0.7,
-    },
-    statsSmallRow: {
-        flexDirection: "row",
-        gap: 16,
-    },
-    statSmall: {
-        flex: 1,
+        backgroundColor: C.offwhite,
+        borderRadius: 8,
+        padding: 24,
         borderWidth: 1,
         borderColor: C.gray200,
-        borderRadius: 6,
-        padding: 20,
+    },
+    statCardAccent: {
+        backgroundColor: C.ink,
+        borderColor: C.ink,
+    },
+    statValue: {
+        fontFamily: F.bold,
+        fontSize: 48,
+        color: C.ink,
+        lineHeight: 1,
+        marginBottom: 8,
+    },
+    statValueLight: {
+        color: C.white,
+    },
+    statLabel: {
+        fontSize: 12, // Augmenté
+        color: C.gray600,
+        textTransform: "uppercase",
+        letterSpacing: 1.5,
+    },
+    statLabelLight: {
+        color: C.gray400,
+    },
+    statSmallRow: {
+        flexDirection: "row",
+        gap: 20,
+    },
+    statSmallCard: {
+        flex: 1,
         flexDirection: "row",
         alignItems: "center",
         gap: 16,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: C.gray200,
+        borderRadius: 8,
     },
-    statSmallIconBar: {
+    statSmallBar: {
         width: 3,
-        height: 36,
+        height: 40,
         backgroundColor: C.red,
         borderRadius: 2,
     },
-    statSmallVal: {
+    statSmallValue: {
         fontFamily: F.bold,
-        fontSize: 18,
+        fontSize: 22,
         color: C.ink,
         marginBottom: 4,
     },
     statSmallLabel: {
-        fontSize: 7,
+        fontSize: 10,
         color: C.gray400,
         textTransform: "uppercase",
-        letterSpacing: 1.5,
+        letterSpacing: 1,
     },
 
-    // ─────────────────────────────────────────────────────────
-    // 3. TABLEAU PLAQUES
-    // ─────────────────────────────────────────────────────────
+    // ----- TABLEAU -----
     tableContainer: {
-        borderRadius: 6,
+        borderRadius: 8,
         overflow: "hidden",
         borderWidth: 1,
         borderColor: C.gray200,
     },
-    tableHeaderRow: {
+    tableHeader: {
         backgroundColor: C.ink,
-        height: 28,
-        flexDirection: "row",
+        paddingVertical: 10,
         alignItems: "center",
-        justifyContent: "center",
     },
     tableHeaderText: {
         fontFamily: F.bold,
-        fontSize: 7,
+        fontSize: 12, // Augmenté
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 2,
@@ -347,50 +338,42 @@ const S = StyleSheet.create({
     },
     tableCell: {
         flex: 1,
-        height: 28,
+        height: 36, // Augmenté pour plus d'espace
         justifyContent: "center",
         alignItems: "center",
         borderRightWidth: 1,
         borderBottomWidth: 1,
         borderColor: C.gray200,
-        backgroundColor: C.white,
     },
     tableCellAlt: {
         backgroundColor: C.offwhite,
     },
     tableCellMissing: {
-        backgroundColor: C.redSoft,
+        backgroundColor: C.redLight,
     },
     tableCellText: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 12, // Augmenté
         color: C.ink,
-        letterSpacing: 0.5,
     },
     tableCellTextMissing: {
         color: C.red,
     },
     tableNote: {
-        marginTop: 14,
-        flexDirection: "row",
-        alignItems: "flex-start",
-        gap: 12,
+        marginTop: 20,
+        padding: 16,
         backgroundColor: C.offwhite,
-        borderRadius: 4,
-        padding: 12,
-        borderLeftWidth: 3,
+        borderLeftWidth: 4,
         borderLeftColor: C.red,
+        borderRadius: 4,
     },
     tableNoteText: {
-        fontSize: 8,
+        fontSize: 12, // Augmenté
         color: C.gray600,
-        flex: 1,
         lineHeight: 1.6,
     },
 
-    // ─────────────────────────────────────────────────────────
-    // 4. INTERCALAIRE
-    // ─────────────────────────────────────────────────────────
+    // ----- DIVIDER -----
     dividerPage: {
         flex: 1,
         flexDirection: "row",
@@ -405,96 +388,108 @@ const S = StyleSheet.create({
         flex: 1,
         backgroundColor: C.ink,
         justifyContent: "center",
-        alignItems: "flex-start",
         padding: 52,
     },
     dividerNumber: {
         fontFamily: F.bold,
-        fontSize: 120,
+        fontSize: 140,
         color: C.white,
-        opacity: 0.08,
-        lineHeight: 1,
+        opacity: 0.1,
         position: "absolute",
         top: 20,
-        left: 40,
+        left: 30,
     },
     dividerEyebrow: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 14, // Augmenté
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 4,
         opacity: 0.7,
-        marginBottom: 16,
+        marginBottom: 20,
     },
     dividerTitle: {
         fontFamily: F.bold,
-        fontSize: 42,
+        fontSize: 44,
         color: C.white,
-        lineHeight: 1.15,
-        letterSpacing: 1,
+        lineHeight: 1.1,
     },
     dividerSub: {
-        fontSize: 10,
+        fontSize: 14, // Augmenté
         color: C.white,
         opacity: 0.5,
-        marginTop: 16,
-        lineHeight: 1.5,
+        marginTop: 20,
+        lineHeight: 1.6,
+    },
+    dividerList: {
+        marginTop: 30,
+    },
+    dividerListItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 12,
+    },
+    dividerListDot: {
+        width: 20,
+        height: 1,
+        backgroundColor: C.red,
+    },
+    dividerListText: {
+        fontSize: 12, // Augmenté
+        color: C.gray400,
+        flex: 1,
     },
 
-    // ─────────────────────────────────────────────────────────
-    // 5. ALBUM PHOTO
-    // ─────────────────────────────────────────────────────────
+    // ----- PHOTO GRID -----
     photoGrid: {
-        flexDirection: "row",
-        gap: 16,
         flex: 1,
-        paddingBottom: 0,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 40,
+        paddingVertical: 20,
     },
     photoCard: {
-        flex: 1,
-        height: "100%",
-        flexDirection: "column",
-        borderRadius: 6,
+        width: "45%",
+        borderRadius: 8,
         overflow: "hidden",
         borderWidth: 1,
         borderColor: C.gray200,
+        backgroundColor: C.white,
     },
-    photoImg: {
-        flex: 1,
+    photoImage: {
         width: "100%",
+        height: 200, // Augmenté pour plus de visibilité
         objectFit: "cover",
     },
     photoCaption: {
         backgroundColor: C.ink,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
+        gap: 12,
     },
     photoCaptionDot: {
-        width: 5,
-        height: 5,
+        width: 6,
+        height: 6,
         borderRadius: 3,
         backgroundColor: C.red,
     },
     photoCaptionLabel: {
-        fontSize: 7,
+        fontSize: 10,
         color: C.gray400,
         textTransform: "uppercase",
         letterSpacing: 1.5,
-        marginBottom: 2,
     },
     photoCaptionValue: {
         fontFamily: F.bold,
-        fontSize: 9,
+        fontSize: 14, // Augmenté
         color: C.white,
     },
 
-    // ─────────────────────────────────────────────────────────
-    // 6. CONCLUSION
-    // ─────────────────────────────────────────────────────────
+    // ----- CONCLUSION -----
     conclusionPage: {
         flex: 1,
         flexDirection: "row",
@@ -502,70 +497,84 @@ const S = StyleSheet.create({
     conclusionLeft: {
         flex: 1,
         backgroundColor: C.ink,
-        padding: 52,
-        justifyContent: "space-between",
+        padding: 60,
+        justifyContent: "center", // Centré verticalement
+        alignItems: "center", // Centré horizontalement
     },
     conclusionRight: {
-        width: "36%",
+        width: "35%",
         backgroundColor: C.red,
         padding: 40,
-        justifyContent: "space-between",
+        justifyContent: "center",
+        alignItems: "center",
     },
     conclusionEyebrow: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 14, // Augmenté
         color: C.red,
         textTransform: "uppercase",
         letterSpacing: 3,
-        marginBottom: 18,
+        marginBottom: 20,
+        textAlign: "center", // Centré
     },
     conclusionTitle: {
         fontFamily: F.bold,
-        fontSize: 26,
+        fontSize: 32,
         color: C.white,
         lineHeight: 1.3,
-        marginBottom: 20,
+        marginBottom: 24,
+        textAlign: "center", // Centré
     },
     conclusionBody: {
-        fontSize: 10,
-        color: C.gray400,
+        fontSize: 14, // Augmenté
+        color: C.gray200,
         lineHeight: 1.8,
+        textAlign: "center", // Centré
+        maxWidth: "85%",
     },
     conclusionLogo: {
         width: 100,
         height: 32,
         objectFit: "contain",
+        marginTop: 20,
     },
-    contactSectionTitle: {
+    contactSection: {
+        width: "100%",
+        alignItems: "center", // Centré
+    },
+    contactTitle: {
         fontFamily: F.bold,
-        fontSize: 8,
+        fontSize: 14, // Augmenté
         color: C.white,
         textTransform: "uppercase",
         letterSpacing: 3,
-        marginBottom: 24,
-        opacity: 0.7,
+        marginBottom: 30,
+        textAlign: "center", // Centré
     },
     contactItem: {
-        marginBottom: 20,
+        marginBottom: 24,
+        alignItems: "center", // Centré
     },
-    contactItemLabel: {
-        fontSize: 7,
+    contactLabel: {
+        fontSize: 10,
         color: C.white,
-        opacity: 0.5,
+        opacity: 0.6,
         textTransform: "uppercase",
         letterSpacing: 1.5,
         marginBottom: 4,
     },
-    contactItemValue: {
+    contactValue: {
         fontFamily: F.bold,
-        fontSize: 11,
+        fontSize: 16, // Augmenté
         color: C.white,
     },
     conclusionTagline: {
-        fontSize: 8,
+        fontSize: 12, // Augmenté
         color: C.white,
         opacity: 0.4,
         fontFamily: F.obl,
+        marginTop: 20,
+        textAlign: "center", // Centré
     },
 });
 
@@ -603,21 +612,25 @@ const fmt = (d: string | Date | null | undefined) => {
     if (!d) return "—";
     try {
         return new Date(String(d)).toLocaleDateString("fr-FR", {
-            day: "2-digit", month: "2-digit", year: "numeric",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
         });
-    } catch { return String(d); }
+    } catch {
+        return String(d);
+    }
 };
 
 // ============================================================
-// COMPOSANTS PARTAGÉS
+// COMPOSANTS PARTAGÉS (inchangés)
 // ============================================================
 const Header = ({ title }: { title: string }) => (
     <View style={S.header} fixed>
         <View style={S.headerLeft}>
-            <View style={S.headerAccentBar} />
+            <View style={S.headerAccent} />
             <View>
                 <Text style={S.headerTitle}>{title}</Text>
-                <Text style={S.headerSub}>ReseauPub — Rapport Campagne Tricycles</Text>
+                <Text style={S.headerSub}>ReseauPub — Rapport Campagne</Text>
             </View>
         </View>
         <Image src={IMG_LOGO_MIXTE} style={S.headerLogo} />
@@ -638,84 +651,82 @@ const Footer = () => (
 );
 
 // ============================================================
-// 1. PAGE DE GARDE
+// 1. PAGE DE COUVERTURE (inchangée)
 // ============================================================
 const CoverSlide = ({ campagneNom }: { campagneNom: string }) => (
     <Page size="A4" orientation="landscape" style={S.page}>
         <View style={S.coverPage}>
-
-            {/* Colonne gauche noire */}
             <View style={S.coverLeft}>
                 <View style={S.coverLogoBox}>
                     <Image src={IMG_LOGO_MIXTE} style={S.coverLogo} />
                 </View>
-
-                <View style={S.coverTextBlock}>
-                    <View style={S.coverRedLine} />
-                    <Text style={S.coverEyebrow}>Rapport de Campagne</Text>
+                <View style={S.coverContent}>
+                    <View style={S.coverAccentLine} />
+                    <Text style={S.coverEyebrow}>Rapport de campagne</Text>
                     <Text style={S.coverTitle}>Tricycles</Text>
                     <Text style={S.coverCampaignName}>{campagneNom}</Text>
                     <Text style={S.coverDesc}>
-                        Récapitulatif des déploiements,{"\n"}
-                        statistiques et preuves visuelles.
+                        Récapitulatif des déploiements, statistiques et preuves visuelles.
                     </Text>
                 </View>
-
-                <View style={S.coverBottomMeta}>
+                <View style={S.coverMeta}>
                     <View style={S.coverMetaDot} />
                     <Text style={S.coverMetaText}>
                         Généré le {new Date().toLocaleDateString("fr-FR")}
                     </Text>
                 </View>
             </View>
-
-            {/* Colonne droite — image */}
             <View style={S.coverRight}>
                 <Image src={IMG_TRICYCLES} style={S.coverImage} />
-                <View style={S.coverImageOverlay} />
+                <View style={S.coverOverlay} />
                 <View style={S.coverTag}>
                     <Text style={S.coverTagText}>Campagne terrain</Text>
                 </View>
             </View>
-
         </View>
     </Page>
 );
 
 // ============================================================
-// 2. STATISTIQUES
+// 2. STATISTIQUES (inchangé)
 // ============================================================
 const StatsSlide = ({ data }: { data: ReportData }) => (
     <Page size="A4" orientation="landscape" style={S.page}>
-        <Header title="Statistiques Globales" />
+        <Header title="Statistiques globales" />
         <View style={S.body}>
-            <Text style={S.sectionTitle}>Vue d'ensemble de la campagne</Text>
-
-            <View style={S.statsBigRow}>
-                <View style={S.statHero}>
-                    <Text style={S.statHeroVal}>{data.kpis.nbPrestatairesCible ?? "—"}</Text>
-                    <Text style={S.statHeroLabel}>Tricycles demandés</Text>
+            <Text style={S.sectionTitle}>Vue d'ensemble</Text>
+            <View style={S.statsRow}>
+                <View style={S.statCard}>
+                    <Text style={S.statValue}>{data.kpis.nbPrestatairesCible ?? "—"}</Text>
+                    <Text style={S.statLabel}>Tricycles demandés</Text>
                 </View>
-                <View style={[S.statHero, S.statHeroAccent]}>
-                    <Text style={S.statHeroVal}>{data.kpis.totalPrestataires}</Text>
-                    <Text style={S.statHeroLabel}>Panneaux affichés</Text>
+                <View style={[S.statCard, S.statCardAccent]}>
+                    <Text style={[S.statValue, S.statValueLight]}>{data.kpis.totalPrestataires}</Text>
+                    <Text style={[S.statLabel, S.statLabelLight]}>Panneaux affichés</Text>
                 </View>
             </View>
-
-            <View style={S.statsSmallRow}>
-                {[
-                    { val: fmt(data.campagne.dateDebut), label: "Date de démarrage" },
-                    { val: `${data.kpis.dureejours ?? "—"} jrs`, label: "Durée de la campagne" },
-                    { val: fmt(data.campagne.dateFin), label: "Fin de campagne" },
-                ].map((item, i) => (
-                    <View key={i} style={S.statSmall}>
-                        <View style={S.statSmallIconBar} />
-                        <View>
-                            <Text style={S.statSmallVal}>{item.val}</Text>
-                            <Text style={S.statSmallLabel}>{item.label}</Text>
-                        </View>
+            <View style={S.statSmallRow}>
+                <View style={S.statSmallCard}>
+                    <View style={S.statSmallBar} />
+                    <View>
+                        <Text style={S.statSmallValue}>{fmt(data.campagne.dateDebut)}</Text>
+                        <Text style={S.statSmallLabel}>Date de démarrage</Text>
                     </View>
-                ))}
+                </View>
+                <View style={S.statSmallCard}>
+                    <View style={S.statSmallBar} />
+                    <View>
+                        <Text style={S.statSmallValue}>{data.kpis.dureejours ?? "—"} jrs</Text>
+                        <Text style={S.statSmallLabel}>Durée</Text>
+                    </View>
+                </View>
+                <View style={S.statSmallCard}>
+                    <View style={S.statSmallBar} />
+                    <View>
+                        <Text style={S.statSmallValue}>{fmt(data.campagne.dateFin)}</Text>
+                        <Text style={S.statSmallLabel}>Fin de campagne</Text>
+                    </View>
+                </View>
             </View>
         </View>
         <Footer />
@@ -723,26 +734,18 @@ const StatsSlide = ({ data }: { data: ReportData }) => (
 );
 
 // ============================================================
-// 3. RÉCAPITULATIF DES PLAQUES
+// 3. RÉCAPITULATIF DES PLAQUES (inchangé)
 // ============================================================
-const COLS = 6;
-const CELLS_PER_PAGE = COLS * 11;
-
-const RecapPlaquesSlide = ({
-    prestataires,
-}: {
-    prestataires: ReportData["prestataires"];
-}) => {
+const RecapPlaquesSlide = ({ prestataires }: { prestataires: ReportData["prestataires"] }) => {
     const sansPlaqueCount = prestataires.filter(
         (p) => !p.plaque || p.plaque.trim() === ""
     ).length;
 
+    const MAX_ROWS = 12;
+    const CELLS_PER_PAGE = 6 * MAX_ROWS;
     const pages: ReportData["prestataires"][] = [];
-    const MAX_ROWS = 12; // Adjusted rows per page based on new padding
-    const CELLS_PER_PAGE_DYNAMIC = COLS * MAX_ROWS;
-
-    for (let i = 0; i < prestataires.length; i += CELLS_PER_PAGE_DYNAMIC) {
-        pages.push(prestataires.slice(i, i + CELLS_PER_PAGE_DYNAMIC));
+    for (let i = 0; i < prestataires.length; i += CELLS_PER_PAGE) {
+        pages.push(prestataires.slice(i, i + CELLS_PER_PAGE));
     }
     if (pages.length === 0) pages.push([]);
 
@@ -750,58 +753,64 @@ const RecapPlaquesSlide = ({
         <>
             {pages.map((pageData, pageIdx) => {
                 const rows: ReportData["prestataires"][] = [];
-                for (let i = 0; i < pageData.length; i += COLS)
-                    rows.push(pageData.slice(i, i + COLS));
+                for (let i = 0; i < pageData.length; i += 6) {
+                    rows.push(pageData.slice(i, i + 6));
+                }
 
                 return (
                     <Page key={pageIdx} size="A4" orientation="landscape" style={S.page}>
-                        <Header title="Numéros Matricules" />
+                        <Header title="Numéros matricules" />
                         <View style={S.body}>
                             <Text style={S.sectionTitle}>
-                                Récapitulatif des {prestataires.length} tricycles déployés
+                                Récapitulatif des {prestataires.length} tricycles
                             </Text>
                             <View style={S.tableContainer}>
-                                <View style={S.tableHeaderRow}>
-                                    <Text style={S.tableHeaderText}>
-                                        Numéros d'immatriculation des tricycles
-                                    </Text>
+                                <View style={S.tableHeader}>
+                                    <Text style={S.tableHeaderText}>Numéros d'immatriculation</Text>
                                 </View>
                                 {rows.map((row, rIdx) => (
                                     <View key={rIdx} style={S.tableRow}>
                                         {row.map((p, cIdx) => {
-                                            const has = p.plaque && p.plaque.trim().length > 0;
+                                            const hasPlaque = p.plaque && p.plaque.trim().length > 0;
                                             const isAlt = rIdx % 2 === 1;
+                                            const globalIndex = pageIdx * CELLS_PER_PAGE + rIdx * 6 + cIdx + 1;
                                             return (
                                                 <View
                                                     key={cIdx}
                                                     style={[
                                                         S.tableCell,
-                                                        isAlt && !has ? S.tableCellMissing : {},
-                                                        !isAlt && !has ? S.tableCellMissing : {},
-                                                        isAlt && has ? S.tableCellAlt : {},
+                                                        isAlt && S.tableCellAlt,
+                                                        !hasPlaque && S.tableCellMissing,
                                                     ]}
                                                 >
-                                                    <Text style={[S.tableCellText, !has ? S.tableCellTextMissing : {}]}>
-                                                        {has ? p.plaque : "—"}
+                                                    <Text
+                                                        style={[
+                                                            S.tableCellText,
+                                                            !hasPlaque && S.tableCellTextMissing,
+                                                        ]}
+                                                    >
+                                                        {globalIndex}. {hasPlaque ? p.plaque : "—"}
                                                     </Text>
                                                 </View>
                                             );
                                         })}
-                                        {Array.from({ length: COLS - row.length }).map((_, i) => (
-                                            <View key={`e${i}`} style={[S.tableCell, rIdx % 2 === 1 ? S.tableCellAlt : {}]} />
+                                        {Array.from({ length: 6 - row.length }).map((_, i) => (
+                                            <View
+                                                key={`empty-${i}`}
+                                                style={[S.tableCell, rIdx % 2 === 1 && S.tableCellAlt]}
+                                            />
                                         ))}
                                     </View>
                                 ))}
                             </View>
-
                             {pageIdx === pages.length - 1 && (
                                 <View style={S.tableNote}>
                                     <Text style={S.tableNoteText}>
                                         <Text style={{ fontFamily: F.bold }}>Note : </Text>
-                                        {prestataires.length} tricycles déployés au total.
+                                        {prestataires.length} tricycles déployés.
                                         {sansPlaqueCount > 0
-                                            ? ` ${sansPlaqueCount} tricycle(s) sans numéro matricule identifié, indiqués par « — » en surbrillance.`
-                                            : " Toutes les plaques ont été identifiées avec succès."}
+                                            ? ` ${sansPlaqueCount} sans numéro (signalés par « — »).`
+                                            : " Toutes les plaques sont renseignées."}
                                     </Text>
                                 </View>
                             )}
@@ -815,7 +824,7 @@ const RecapPlaquesSlide = ({
 };
 
 // ============================================================
-// 4. INTERCALAIRE ALBUM
+// 4. INTERCALAIRE ALBUM (inchangé)
 // ============================================================
 const AlbumDividerSlide = () => (
     <Page size="A4" orientation="landscape" style={S.page}>
@@ -825,32 +834,30 @@ const AlbumDividerSlide = () => (
                 <View>
                     <Text style={S.dividerEyebrow}>Section suivante</Text>
                     <Text style={S.dividerTitle}>Album{"\n"}Photos</Text>
-                    <Text style={S.dividerSub}>
-                        Preuves visuelles de déploiement{"\n"}terrain des tricycles.
-                    </Text>
+                    <Text style={S.dividerSub}>Preuves visuelles de déploiement terrain.</Text>
                 </View>
             </View>
             <View style={S.dividerRight}>
-                <Text style={{ fontFamily: F.bold, fontSize: 9, color: C.gray400, textTransform: "uppercase", letterSpacing: 2 }}>
-                    Ce que vous allez voir
-                </Text>
-                {[
-                    "Photos de déploiement sur le terrain",
-                    "Numéros matricule associés",
-                    "Couverture visuelle complète",
-                ].map((item, i) => (
-                    <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 16 }}>
-                        <View style={{ width: 20, height: 1, backgroundColor: C.red }} />
-                        <Text style={{ fontSize: 9, color: C.gray400, flex: 1 }}>{item}</Text>
-                    </View>
-                ))}
+                <Text style={[S.dividerEyebrow, { opacity: 0.8 }]}>Au programme</Text>
+                <View style={S.dividerList}>
+                    {[
+                        "Photos de déploiement sur le terrain",
+                        "Numéros matricule associés",
+                        "Couverture visuelle complète",
+                    ].map((item, i) => (
+                        <View key={i} style={S.dividerListItem}>
+                            <View style={S.dividerListDot} />
+                            <Text style={S.dividerListText}>{item}</Text>
+                        </View>
+                    ))}
+                </View>
             </View>
         </View>
     </Page>
 );
 
 // ============================================================
-// 5. ALBUM PHOTO — 2 par page
+// 5. ALBUM PHOTO (disposition diagonale corrigée)
 // ============================================================
 const VisualEvidenceSlide = ({
     visualEvidence,
@@ -858,33 +865,44 @@ const VisualEvidenceSlide = ({
     visualEvidence: ReportData["visualEvidence"];
 }) => {
     if (visualEvidence.length === 0) return null;
+
     const groups: ReportData["visualEvidence"][] = [];
-    for (let i = 0; i < visualEvidence.length; i += 2)
+    for (let i = 0; i < visualEvidence.length; i += 2) {
         groups.push(visualEvidence.slice(i, i + 2));
+    }
 
     return (
         <>
             {groups.map((group, pageIdx) => (
                 <Page key={pageIdx} size="A4" orientation="landscape" style={S.page}>
-                    <Header title="Preuves Visuelles" />
-                    <View style={[S.body, { paddingTop: 20 }]}>
+                    <Header title="Preuves visuelles" />
+                    <View style={[S.body, { justifyContent: "center" }]}>
                         <View style={S.photoGrid}>
-                            {group.map((photo, pIdx) => (
-                                <View key={pIdx} style={S.photoCard}>
-                                    <Image src={photo.url} style={S.photoImg} />
-                                    <View style={S.photoCaption}>
-                                        <View style={S.photoCaptionDot} />
-                                        <View>
-                                            <Text style={S.photoCaptionLabel}>Numéro matricule</Text>
-                                            <Text style={S.photoCaptionValue}>
-                                                {photo.plaque && photo.plaque.trim().length > 0
-                                                    ? photo.plaque
-                                                    : "Non renseigné"}
-                                            </Text>
+                            {group.map((photo, idx) => {
+                                // Positionnement diagonal
+                                const positionStyle =
+                                    group.length === 1
+                                        ? { alignSelf: "center" }
+                                        : idx === 0
+                                            ? { alignSelf: "flex-start", marginTop: 20 }
+                                            : { alignSelf: "flex-end", marginBottom: 20 };
+                                return (
+                                    <View key={idx} style={[S.photoCard, positionStyle]}>
+                                        <Image src={photo.url} style={S.photoImage} />
+                                        <View style={S.photoCaption}>
+                                            <View style={S.photoCaptionDot} />
+                                            <View>
+                                                <Text style={S.photoCaptionLabel}>Numéro matricule</Text>
+                                                <Text style={S.photoCaptionValue}>
+                                                    {photo.plaque && photo.plaque.trim().length > 0
+                                                        ? photo.plaque
+                                                        : "Non renseigné"}
+                                                </Text>
+                                            </View>
                                         </View>
                                     </View>
-                                </View>
-                            ))}
+                                );
+                            })}
                         </View>
                     </View>
                     <Footer />
@@ -895,15 +913,13 @@ const VisualEvidenceSlide = ({
 };
 
 // ============================================================
-// 6. CONCLUSION
+// 6. CONCLUSION (centrage corrigé)
 // ============================================================
 const ConclusionSlide = () => (
     <Page size="A4" orientation="landscape" style={S.page}>
         <View style={S.conclusionPage}>
-
-            {/* Gauche — texte */}
             <View style={S.conclusionLeft}>
-                <View>
+                <View style={{ alignItems: "center" }}>
                     <Text style={S.conclusionEyebrow}>Merci de votre confiance</Text>
                     <Text style={S.conclusionTitle}>
                         Un partenariat solide,{"\n"}une communication efficace.
@@ -916,34 +932,29 @@ const ConclusionSlide = () => (
                 </View>
                 <Image src={IMG_LOGO_MIXTE} style={S.conclusionLogo} />
             </View>
-
-            {/* Droite rouge — contacts */}
             <View style={S.conclusionRight}>
-                <Text style={S.contactSectionTitle}>Nous contacter</Text>
-                <View>
+                <View style={S.contactSection}>
+                    <Text style={S.contactTitle}>Nous contacter</Text>
                     <View style={S.contactItem}>
-                        <Text style={S.contactItemLabel}>Téléphone</Text>
-                        <Text style={S.contactItemValue}>+229 01 69 81 30 30</Text>
+                        <Text style={S.contactLabel}>Téléphone</Text>
+                        <Text style={S.contactValue}>+229 01 69 81 30 30</Text>
                     </View>
                     <View style={S.contactItem}>
-                        <Text style={S.contactItemLabel}>Email</Text>
-                        <Text style={S.contactItemValue}>info@reseaupub.com</Text>
+                        <Text style={S.contactLabel}>Email</Text>
+                        <Text style={S.contactValue}>info@reseaupub.com</Text>
                     </View>
                 </View>
-                <Text style={S.conclusionTagline}>
-                    La communication, c'est notre terrain.
-                </Text>
+                <Text style={S.conclusionTagline}>La communication, c'est notre terrain.</Text>
             </View>
-
         </View>
     </Page>
 );
 
 // ============================================================
-// EXPORT
+// COMPOSANT PRINCIPAL (inchangé)
 // ============================================================
 export default function CampaignReport({ data }: { data: ReportData }) {
-    const enhVisualEvidence = data.visualEvidence.map((ve) => {
+    const enhancedVisualEvidence = data.visualEvidence.map((ve) => {
         const prest = data.prestataires.find(
             (p) => `${p.prenom} ${p.nom}`.trim() === ve.prestataire
         );
@@ -951,15 +962,12 @@ export default function CampaignReport({ data }: { data: ReportData }) {
     });
 
     return (
-        <Document
-            title={`RAPPORT_CAMPAGNE_TRICYCLES_${data.campagne.nom ?? ""}`}
-            author="RESEAUPUB"
-        >
+        <Document title={`RAPPORT_CAMPAGNE_TRICYCLES_${data.campagne.nom ?? ""}`} author="RESEAUPUB">
             <CoverSlide campagneNom={data.campagne.nom ?? ""} />
             <StatsSlide data={data} />
             <RecapPlaquesSlide prestataires={data.prestataires} />
             <AlbumDividerSlide />
-            <VisualEvidenceSlide visualEvidence={enhVisualEvidence} />
+            <VisualEvidenceSlide visualEvidence={enhancedVisualEvidence} />
             <ConclusionSlide />
         </Document>
     );
